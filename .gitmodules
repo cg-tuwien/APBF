@@ -1,0 +1,3 @@
+[submodule "exekutor"]
+	path = exekutor
+	url = https://github.com/cg-tuwien/Exekutor.git
