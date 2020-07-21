@@ -16,19 +16,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\color.frag">
+    <None Include="shaders\red.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\passthrough.vert">
+    <None Include="shaders\instanced.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\roundandround.comp">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\framebuffer.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\stdafx.cpp">
       <Filter>precompiled_headers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\main.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -38,5 +41,10 @@
     <ClInclude Include="source\targetver.hpp">
       <Filter>precompiled_headers</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="exekutor\assets\1st_party\models\sphere.obj">
+      <Filter>assets</Filter>
+    </Object>
   </ItemGroup>
 </Project>

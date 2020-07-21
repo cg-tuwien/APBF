@@ -1,0 +1,52 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// ---------------- application data ------------------
+layout(set = 0, binding = 0) uniform application_data
+{
+	mat4 mViewMatrix;
+	mat4 mProjMatrix;
+	vec4 mTime;
+} appData;
+// ----------------------------------------------------
+
+// ------------------ particle data -------------------
+struct particle {
+	vec4 mOriginalPositionRand;
+	vec4 mCurrentPositionRadius;
+};
+
+layout(set = 1, binding = 0) buffer Particles
+{
+	particle mParticles[];
+} particlesBuffer;
+// ----------------------------------------------------
+
+// -------------------- aabb data ---------------------
+struct aabb
+{
+	vec3 mMinBounds;
+	vec3 mMaxBounds;
+};
+
+layout(std430, set = 1, binding = 1) buffer Aabbs
+{
+	aabb mAabbs[];
+} aabbsBuffer;
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+
+	// Animate particles:
+	vec3 origPos = particlesBuffer.mParticles[id].mOriginalPositionRand.xyz;
+	float f = particlesBuffer.mParticles[id].mOriginalPositionRand.w;
+	vec3 posOffset = vec3(sin(f * appData.mTime[0]), cos(f * appData.mTime[0]), 0.0f);
+	particlesBuffer.mParticles[id].mCurrentPositionRadius.xyz = origPos + posOffset;
+
+	// Update AABBs:
+	aabbsBuffer.mAabbs[id].mMinBounds = vec3(particlesBuffer.mParticles[id].mCurrentPositionRadius.xyz) - vec3(particlesBuffer.mParticles[id].mCurrentPositionRadius.w);
+	aabbsBuffer.mAabbs[id].mMaxBounds = vec3(particlesBuffer.mParticles[id].mCurrentPositionRadius.xyz) + vec3(particlesBuffer.mParticles[id].mCurrentPositionRadius.w);
+}
