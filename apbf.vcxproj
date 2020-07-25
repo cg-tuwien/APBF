@@ -20,21 +20,30 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\append_list.comp" />
+    <None Include="shaders\dispatch_indirect.comp" />
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
     <None Include="shaders\instanced.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\shader_provider.cpp" />
     <ClCompile Include="source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Publish_Vulkan|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug_Vulkan|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release_Vulkan|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\gpu_list.h" />
+    <ClInclude Include="source\list_definitions.h" />
+    <ClInclude Include="source\list_interface.h" />
+    <ClInclude Include="source\shader_provider.h" />
     <ClInclude Include="source\stdafx.hpp" />
     <ClInclude Include="source\targetver.hpp" />
+    <ClInclude Include="source\test.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="exekutor\assets\1st_party\models\sphere.obj">

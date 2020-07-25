@@ -1,6 +1,12 @@
 #include <exekutor.hpp>
 #include <imgui.h>
 #include <random>
+#include "shader_provider.h"
+#include "gpu_list.h"
+
+#ifdef _DEBUG
+#include "Test.h"
+#endif
 
 using namespace ak;
 using namespace xk;
@@ -21,10 +27,15 @@ class apbf : public invokee
 public: // v== xk::invokee overrides which will be invoked by the framework ==v
 	apbf(ak::queue& aQueue)
 		: mQueue{ &aQueue }
-	{ }
+	{
+		shader_provider::set_queue(aQueue);
+	}
 
 	void initialize() override
 	{
+#ifdef _DEBUG
+		pbd::test::test_quick();
+#endif
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -88,14 +99,6 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		// Load a sphere model for drawing a single particle:
 		auto sphere = model_t::load_from_file("assets/sphere.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
-
-		// Create a compute pipeline for modifying the particles:
-		mComputePipeline = context().create_compute_pipeline_for(
-			"shaders/roundandround.comp",
-			binding(0, 0, mCameraDataBuffer[0]),
-			binding(1, 0, mParticlesBuffer[0]),
-			binding(1, 1, mAabbsBuffer[0])
-		);
 		
 		// Create a graphics pipeline for drawing the particles:
 		mGraphicsPipeline = context().create_graphics_pipeline_for(
@@ -180,6 +183,15 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 
 		application_data cd{ mQuakeCam.view_matrix(), mQuakeCam.projection_matrix(), glm::vec4{ time().time_since_start(), time().delta_time(), 0.f, 0.f } };
 		mCameraDataBuffer[ifi]->fill(&cd, 0, ak::sync::not_required());
+
+		shader_provider::start_recording();
+
+		// COMPUTE
+
+		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mAabbsBuffer[ifi], mNumParticles);
+		mParticlesBuffer[ifi]->meta<storage_buffer_meta>().num_elements();
+
+		shader_provider::end_recording();
 		
 		// Get a command pool to allocate command buffers from:
 		auto& commandPool = xk::context().get_command_pool_for_single_use_command_buffers(*mQueue);
@@ -187,16 +199,6 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		// Create a command buffer and render into the *current* swap chain image:
 		auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 		cmdBfr->begin_recording();
-
-		// COMPUTE
-		
-		cmdBfr->bind_pipeline(mComputePipeline);
-		cmdBfr->bind_descriptors(mComputePipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-			binding(0, 0, mCameraDataBuffer[ifi]),
-			binding(1, 0, mParticlesBuffer[ifi]),
-			binding(1, 1, mAabbsBuffer[ifi])
-		}));
-		cmdBfr->handle().dispatch(mNumParticles, 1, 1);
 
 		// BUILD ACCELERATION STRUCTURES
 
@@ -232,6 +234,11 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		mainWnd->handle_lifetime(std::move(cmdBfr));
 	}
 
+	void finalize() override
+	{
+		pbd::gpu_list<4>::cleanup();
+	}
+
 
 private: // v== Member variables ==v
 
@@ -251,7 +258,6 @@ private: // v== Member variables ==v
 	std::vector<top_level_acceleration_structure> mTopLevelAS;
 	std::vector<std::vector<ak::geometry_instance>> mGeometryInstances;
 
-	compute_pipeline mComputePipeline;
 	graphics_pipeline mGraphicsPipeline;
 	ray_tracing_pipeline mRayTracingPipeline;
 	

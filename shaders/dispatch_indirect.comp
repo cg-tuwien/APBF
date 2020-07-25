@@ -1,0 +1,25 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// --------------------- buffers ----------------------
+layout(set = 0, binding = 0) buffer ThreadCount    { uint    threadCount[]; };
+layout(set = 1, binding = 0) buffer WorkgroupCount { uint workgroupCount[]; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mLocalSizeX;
+	uint mLocalSizeY;
+	uint mLocalSizeZ;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	workgroupCount[0] = (threadCount[0] + mLocalSizeX - 1) / mLocalSizeX;
+	workgroupCount[1] = (threadCount[1] + mLocalSizeY - 1) / mLocalSizeY;
+	workgroupCount[2] = (threadCount[2] + mLocalSizeZ - 1) / mLocalSizeZ;
+	workgroupCount[1] = 1;
+	workgroupCount[2] = 1;
+}

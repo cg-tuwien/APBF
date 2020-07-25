@@ -14,6 +14,12 @@
     <Filter Include="source">
       <UniqueIdentifier>{1864a082-1e1c-4d66-82ea-437cc786ede4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\pbd">
+      <UniqueIdentifier>{d2e114be-3178-475a-a8b1-3079bf59f7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\pbd\gpu_lists">
+      <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
@@ -25,6 +31,13 @@
     <None Include="shaders\roundandround.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="exekutor\assets\1st_party\models\sphere.obj" />
+    <None Include="shaders\append_list.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\dispatch_indirect.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -32,6 +45,12 @@
     </ClCompile>
     <ClCompile Include="source\main.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\shader_provider.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\test.cpp">
+      <Filter>source\pbd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -41,10 +60,20 @@
     <ClInclude Include="source\targetver.hpp">
       <Filter>precompiled_headers</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="exekutor\assets\1st_party\models\sphere.obj">
-      <Filter>assets</Filter>
-    </Object>
+    <ClInclude Include="source\shader_provider.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\gpu_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\list_definitions.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\list_interface.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\test.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
