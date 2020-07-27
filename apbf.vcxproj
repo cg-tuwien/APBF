@@ -15,11 +15,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="exekutor\visual_studio\exekutor\exekutor.vcxproj">
+    <ProjectReference Include="gears_vk\visual_studio\gears_vk\gears-vk.vcxproj">
       <Project>{602f842f-50c1-466d-8696-1707937d8ab9}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\point.vert" />
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
     <None Include="shaders\instanced.vert" />
@@ -37,7 +38,7 @@
     <ClInclude Include="source\targetver.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="exekutor\assets\1st_party\models\sphere.obj">
+    <None Include="gears_vk\assets\1st_party\models\sphere.obj">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
@@ -76,25 +77,25 @@
   <ImportGroup Label="Shared" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Vulkan|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="exekutor\visual_studio\props\solution_directories.props" />
-    <Import Project="exekutor\visual_studio\props\linked_libs_debug.props" />
-    <Import Project="exekutor\visual_studio\props\rendering_api_vulkan.props" />
-    <Import Project="exekutor\visual_studio\props\external_dependencies.props" />
-    <Import Project="exekutor\visual_studio\props\extra_debug_dependencies.props" />
+    <Import Project="gears_vk\visual_studio\props\solution_directories.props" />
+    <Import Project="gears_vk\visual_studio\props\linked_libs_debug.props" />
+    <Import Project="gears_vk\visual_studio\props\rendering_api_vulkan.props" />
+    <Import Project="gears_vk\visual_studio\props\external_dependencies.props" />
+    <Import Project="gears_vk\visual_studio\props\extra_debug_dependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vulkan|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="exekutor\visual_studio\props\solution_directories.props" />
-    <Import Project="exekutor\visual_studio\props\linked_libs_release.props" />
-    <Import Project="exekutor\visual_studio\props\rendering_api_vulkan.props" />
-    <Import Project="exekutor\visual_studio\props\external_dependencies.props" />
+    <Import Project="gears_vk\visual_studio\props\solution_directories.props" />
+    <Import Project="gears_vk\visual_studio\props\linked_libs_release.props" />
+    <Import Project="gears_vk\visual_studio\props\rendering_api_vulkan.props" />
+    <Import Project="gears_vk\visual_studio\props\external_dependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Publish_Vulkan|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="exekutor\visual_studio\props\solution_directories.props" />
-    <Import Project="exekutor\visual_studio\props\linked_libs_release.props" />
-    <Import Project="exekutor\visual_studio\props\rendering_api_vulkan.props" />
-    <Import Project="exekutor\visual_studio\props\external_dependencies.props" />
+    <Import Project="gears_vk\visual_studio\props\solution_directories.props" />
+    <Import Project="gears_vk\visual_studio\props\linked_libs_release.props" />
+    <Import Project="gears_vk\visual_studio\props\rendering_api_vulkan.props" />
+    <Import Project="gears_vk\visual_studio\props\external_dependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Vulkan|x64'">
