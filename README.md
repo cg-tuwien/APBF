@@ -13,7 +13,7 @@ TBD.
 
 You might want to have all submodules checked-out to their `master` branch. You can do so using:      
 `git submodule foreach --recursive git checkout master`.       
-There are two submodules: One under `exekutor/` (referencing https://github.com/cg-tuwien/Exekutor) and another under `exekutor/auto_vk/` (referencing https://github.com/cg-tuwien/Auto-Vk).    
+There are two submodules: One under `gears_vk/` (referencing https://github.com/cg-tuwien/Gears-Vk) and another under `gears_vk/auto_vk/` (referencing https://github.com/cg-tuwien/Auto-Vk).    
 
 To update the submodules on a daily basis, use one of the following commands:
 * `git submodule update --recursive`

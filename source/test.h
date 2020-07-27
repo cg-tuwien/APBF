@@ -1,5 +1,5 @@
 #pragma once
-#include <exekutor.hpp>
+#include <gvk.hpp>
 
 namespace pbd
 {
@@ -12,7 +12,7 @@ namespace pbd
 		static void test_quick();
 
 		template <class T>
-		static bool validate_list(const ak::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName);
+		static bool validate_list(const avk::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName);
 		template <class T>
 		static bool approximately_equal(T v1, T v2);
 
@@ -40,11 +40,11 @@ namespace pbd
 
 
 	template<class T>
-	inline bool test::validate_list(const ak::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName)
+	inline bool test::validate_list(const avk::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName)
 	{
 		auto data = std::vector<T>();
 		data.resize(pExpectedData.size());
-		pList->read(data.data(), 0, ak::sync::wait_idle(true));
+		pList->read(data.data(), 0, avk::sync::wait_idle(true));
 		/*auto pData = pList->map(Buffer::MapType::Read);
 		for (auto i = 0u; i < expectedData.size(); i++)
 		{

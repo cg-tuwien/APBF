@@ -1,4 +1,4 @@
-#include <exekutor.hpp>
+#include <gvk.hpp>
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
@@ -8,10 +8,7 @@
 #include "Test.h"
 #endif
 
-using namespace ak;
-using namespace xk;
-
-class apbf : public invokee
+class apbf : public gvk::invokee
 {
 	struct particle {
 	    glm::vec4 mOriginalPositionRand;
@@ -24,8 +21,8 @@ class apbf : public invokee
 		glm::vec4 mTime;
 	};
 
-public: // v== xk::invokee overrides which will be invoked by the framework ==v
-	apbf(ak::queue& aQueue)
+public: // v== gvk::invokee overrides which will be invoked by the framework ==v
+	apbf(avk::queue& aQueue)
 		: mQueue{ &aQueue }
 	{
 		shader_provider::set_queue(aQueue);
@@ -33,6 +30,9 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 
 	void initialize() override
 	{
+		using namespace avk;
+		using namespace gvk;
+
 #ifdef _DEBUG
 		pbd::test::test_quick();
 #endif
@@ -40,16 +40,16 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
 		// Create a descriptor cache that helps us to conveniently create descriptor sets:
-		mDescriptorCache = xk::context().create_descriptor_cache();
+		mDescriptorCache = context().create_descriptor_cache();
 
 		// Create the camera and buffers that will contain camera data:
 		mQuakeCam.set_translation({ 0.0f, 0.0f, 0.0f });
 		mQuakeCam.set_perspective_projection(glm::radians(60.0f), mainWnd->aspect_ratio(), 0.5f, 500.0f);
 		current_composition()->add_element(mQuakeCam);
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
-			mCameraDataBuffer.emplace_back(xk::context().create_buffer(
-				ak::memory_usage::host_coherent, {},
-				ak::uniform_buffer_meta::create_from_data(application_data{})
+			mCameraDataBuffer.emplace_back(context().create_buffer(
+				memory_usage::host_coherent, {},
+				uniform_buffer_meta::create_from_data(application_data{})
 			));
 		}
 		
@@ -60,9 +60,9 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		std::uniform_real_distribution<float> randomFrequency(0.5f, 3.0f);
 		std::uniform_real_distribution<float> randomRadius(0.01f, 0.1f);
 		const float dist = 2.0f;
-		for (int x = 0; x < 40; ++x) {
-			for (int y = 0; y < 20; ++y) {
-				for (int z = 0; z < 30; ++z) {
+		for (int x = 0; x < 60; ++x) {
+			for (int y = 0; y < 50; ++y) {
+				for (int z = 0; z < 40; ++z) {
 					const auto pos = glm::vec3{ x, y, -z - 3.0f };
 					testParticles.emplace_back(particle{
 						glm::vec4{ pos, randomFrequency(generator) },
@@ -72,13 +72,14 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 			}
 		}
 		mNumParticles = static_cast<uint32_t>(testParticles.size());
-
+		
 		// Alloc buffers and ray tracing acceleration structures (one for each frame in flight), fill only mParticlesBuffers:
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			auto& pb = mParticlesBuffer.emplace_back(context().create_buffer(
 				memory_usage::device, {}, 
 				storage_buffer_meta::create_from_data(testParticles),
-				instance_buffer_meta::create_from_data(testParticles)
+				instance_buffer_meta::create_from_data(testParticles),
+				vertex_buffer_meta::create_from_data(testParticles)
 			));
 			pb->fill(testParticles.data(), 0, sync::wait_idle());
 			
@@ -88,7 +89,7 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 				aabb_buffer_meta::create_from_num_elements(mNumParticles)
 			));
 
-			auto& blas = mBottomLevelAS.emplace_back(context().create_bottom_level_acceleration_structure({ ak::acceleration_structure_size_requirements::from_aabbs(mNumParticles) }, true));
+			auto& blas = mBottomLevelAS.emplace_back(context().create_bottom_level_acceleration_structure({ acceleration_structure_size_requirements::from_aabbs(mNumParticles) }, true));
 			mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(mNumParticles, true));
 			auto& gi = mGeometryInstances.emplace_back();
 			for (auto& p : testParticles) {
@@ -100,10 +101,10 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		auto sphere = model_t::load_from_file("assets/sphere.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
 		
-		// Create a graphics pipeline for drawing the particles:
-		mGraphicsPipeline = context().create_graphics_pipeline_for(
+		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
+		mGraphicsPipelineInstanced = context().create_graphics_pipeline_for(
 			// Shaders to be used with this pipeline:
-			vertex_shader("shaders/instanced.vert"),
+			vertex_shader("shaders/instanced.vert"), 
 			fragment_shader("shaders/red.frag"),
 			// Declare the vertex input to the shaders:
 			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
@@ -135,8 +136,47 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 			binding(0, 0, mCameraDataBuffer[0])
 		);
 
+		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
+		//mTest = context().create_buffer(memory_usage::device, {}, vertex_buffer_meta::create_from_data(four));
+		//mTest->fill(four.data(), 0, sync::wait_idle());
+		
+		// Create a graphics pipeline for drawing the particles that uses point primitives:
+		mGraphicsPipelinePoint = context().create_graphics_pipeline_for(
+			// Shaders to be used with this pipeline:
+			vertex_shader("shaders/point.vert"), 
+			fragment_shader("shaders/red.frag"),
+			cfg::polygon_drawing::config_for_points(), cfg::rasterizer_geometry_mode::rasterize_geometry, cfg::culling_mode::disabled,
+			// Declare the vertex input to the shaders:
+			//vertex_input_location(0, 0, vk::Format::eR16G16B16A16Sfloat, 0).from_buffer_at_binding(0), // Stream particle positions from buffer at index 0
+			vertex_input_location(0, &particle::mCurrentPositionRadius).from_buffer_at_binding(0),
+			context().create_renderpass({
+					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
+					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
+				},
+				[](renderpass_sync& aRpSync){
+					// Synchronize with everything that comes BEFORE:
+					if (aRpSync.is_external_pre_sync()) {
+						aRpSync.mSourceStage                    = pipeline_stage::compute_shader;
+						aRpSync.mSourceMemoryDependency         = memory_access::shader_buffers_and_images_write_access;
+						aRpSync.mDestinationStage               = pipeline_stage::vertex_input;
+						aRpSync.mDestinationMemoryDependency    = memory_access::any_vertex_input_read_access;
+					}
+					// Synchronize with everything that comes AFTER:
+					if (aRpSync.is_external_post_sync()) {
+						aRpSync.mSourceStage                    = pipeline_stage::color_attachment_output;
+						aRpSync.mDestinationStage               = pipeline_stage::color_attachment_output;
+						aRpSync.mSourceMemoryDependency         = memory_access::color_attachment_write_access;
+						aRpSync.mDestinationMemoryDependency    = memory_access::color_attachment_write_access;
+					}
+				}
+			),
+			// Further config for the pipeline:
+			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
+			binding(0, 0, mCameraDataBuffer[0])
+		);
+
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
-		auto imguiManager = xk::current_composition()->element_by_type<xk::imgui_manager>();
+		auto imguiManager = current_composition()->element_by_type<imgui_manager>();
 		if (nullptr != imguiManager) {
 			imguiManager->add_callback([this](){
 		        ImGui::Begin("Info & Settings");
@@ -150,6 +190,19 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 			        values.erase(values.begin());
 		        }
 	            ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
+
+				ImGui::Separator();
+
+				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
+				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points"};
+				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
+
+				ImGui::Separator();
+
+				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
+
+				ImGui::Separator();
+
 		        ImGui::End();
 			});
 		}
@@ -157,8 +210,10 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 
 	void update() override
 	{
-		if (xk::input().key_pressed(xk::key_code::f1)) {
-			auto imguiManager = xk::current_composition()->element_by_type<xk::imgui_manager>();
+		using namespace gvk;
+
+		if (input().key_pressed(key_code::f1)) {
+			auto imguiManager = current_composition()->element_by_type<imgui_manager>();
 			if (mQuakeCam.is_enabled()) {
 				mQuakeCam.disable();
 				if (nullptr != imguiManager) { imguiManager->enable_user_interaction(true); }
@@ -170,19 +225,22 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		}
 		
 		// On Esc pressed,
-		if (xk::input().key_pressed(xk::key_code::escape)) {
+		if (input().key_pressed(key_code::escape)) {
 			// stop the current composition:
-			xk::current_composition()->stop();
+			current_composition()->stop();
 		}
 	}
 
 	void render() override
 	{
-		auto* mainWnd = xk::context().main_window();
+		using namespace avk;
+		using namespace gvk;
+
+		auto* mainWnd = context().main_window();
 		const auto ifi = mainWnd->current_in_flight_index();
 
 		application_data cd{ mQuakeCam.view_matrix(), mQuakeCam.projection_matrix(), glm::vec4{ time().time_since_start(), time().delta_time(), 0.f, 0.f } };
-		mCameraDataBuffer[ifi]->fill(&cd, 0, ak::sync::not_required());
+		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
 
 		shader_provider::start_recording();
 
@@ -194,7 +252,7 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 		shader_provider::end_recording();
 		
 		// Get a command pool to allocate command buffers from:
-		auto& commandPool = xk::context().get_command_pool_for_single_use_command_buffers(*mQueue);
+		auto& commandPool = context().get_command_pool_for_single_use_command_buffers(*mQueue);
 
 		// Create a command buffer and render into the *current* swap chain image:
 		auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -216,12 +274,23 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 
 		// GRAPHICS
 
-		cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipeline->get_renderpass(), mainWnd->current_backbuffer());
-		cmdBfr->bind_pipeline(mGraphicsPipeline);
-		cmdBfr->bind_descriptors(mGraphicsPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-			binding(0, 0, mCameraDataBuffer[ifi])
-		}));
-		cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi]);
+		if (0 == mRenderingMethod) {
+			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
+			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced);
+			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+				binding(0, 0, mCameraDataBuffer[ifi])
+			}));
+			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi]);
+		}
+		else {
+			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelinePoint->get_renderpass(), mainWnd->current_backbuffer());
+			cmdBfr->bind_pipeline(mGraphicsPipelinePoint);
+			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+				binding(0, 0, mCameraDataBuffer[ifi])
+			}));
+			cmdBfr->draw_vertices(*mParticlesBuffer[ifi]);
+		}
+		
 		cmdBfr->end_render_pass();
 		cmdBfr->end_recording();
 
@@ -242,36 +311,46 @@ public: // v== xk::invokee overrides which will be invoked by the framework ==v
 
 private: // v== Member variables ==v
 
-	queue* mQueue;
-	descriptor_cache mDescriptorCache;
+	avk::queue* mQueue;
+	avk::descriptor_cache mDescriptorCache;
 
-	quake_camera mQuakeCam;
-	std::vector<buffer> mCameraDataBuffer;
+	gvk::quake_camera mQuakeCam;
+	std::vector<avk::buffer> mCameraDataBuffer;
 
 	uint32_t mNumParticles;
-	std::vector<buffer> mParticlesBuffer;
-	std::vector<buffer> mAabbsBuffer;
-	buffer mSphereVertexBuffer;
-	buffer mSphereIndexBuffer;
+	std::vector<avk::buffer> mParticlesBuffer;
+	std::vector<avk::buffer> mAabbsBuffer;
+	avk::buffer mSphereVertexBuffer;
+	avk::buffer mSphereIndexBuffer;
 
-	std::vector<bottom_level_acceleration_structure> mBottomLevelAS;
-	std::vector<top_level_acceleration_structure> mTopLevelAS;
-	std::vector<std::vector<ak::geometry_instance>> mGeometryInstances;
+	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
+	std::vector<avk::top_level_acceleration_structure> mTopLevelAS;
+	std::vector<std::vector<avk::geometry_instance>> mGeometryInstances;
 
-	graphics_pipeline mGraphicsPipeline;
-	ray_tracing_pipeline mRayTracingPipeline;
+	//avk::compute_pipeline mComputePipeline;
+	avk::graphics_pipeline mGraphicsPipelineInstanced;
+	avk::graphics_pipeline mGraphicsPipelinePoint;
+	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
-	std::vector<image_view> mOffscreenImages;
+	std::vector<avk::image_view> mOffscreenImages;
+
+	//avk::buffer mTest;
+	
+	// Settings from the UI:
+	int mRenderingMethod = 0;
 	
 }; // class apbf
 
 int main() // <== Starting point ==
 {
+	using namespace avk;
+	using namespace gvk;
+
 	try {
 		auto mainWnd = context().create_window("APBF");
 		mainWnd->set_resolution({ 1920, 1080 });
 		mainWnd->set_additional_back_buffer_attachments({ 
-			ak::attachment::declare(vk::Format::eD32Sfloat, ak::on_load::clear, ak::depth_stencil(), ak::on_store::dont_care)
+			attachment::declare(vk::Format::eD32Sfloat, on_load::clear, depth_stencil(), on_store::dont_care)
 		});
 		mainWnd->set_presentaton_mode(presentation_mode::mailbox);
 		mainWnd->set_number_of_concurrent_frames(3u);
@@ -284,9 +363,9 @@ int main() // <== Starting point ==
 		auto app = apbf(singleQueue);
 		auto ui = imgui_manager(singleQueue);
 
-		execute(
+		start(
 			application_name("APBF"),
-			xk::required_device_extensions()
+			required_device_extensions()
 				.add_extension(VK_KHR_RAY_TRACING_EXTENSION_NAME)
 				.add_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME)
 				.add_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
@@ -298,8 +377,8 @@ int main() // <== Starting point ==
 			ui
 		);		
 	}
-	catch (xk::logic_error&) {}
-	catch (xk::runtime_error&) {}
-	catch (ak::logic_error&) {}
-	catch (ak::runtime_error&) {}
+	catch (avk::logic_error&) {}
+	catch (avk::runtime_error&) {}
+	catch (gvk::logic_error&) {}
+	catch (gvk::runtime_error&) {}
 }

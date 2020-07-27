@@ -28,24 +28,24 @@ namespace pbd
 		gpu_list operator+(const gpu_list& aRhs) const;
 
 		void set_owner(list_interface<gpu_list<4ui64>>* aOwner);
-		const ak::buffer& read_buffer() const;
+		const avk::buffer& read_buffer() const;
 		/// <summary><para>Request a buffer for writing. The buffer is valid until another function of this object is called, or until this object is copied.</para></summary>
-		ak::buffer& write_buffer();
+		avk::buffer& write_buffer();
 
 		static void cleanup();
 
 	private:
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
-		void copy_list(const ak::buffer& aSource, const ak::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
-		void copy_bytes(const ak::buffer& aSource, const ak::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
-		void copy_scattered_read(const ak::buffer& aSource, const ak::buffer& aTarget, const ak::buffer& aEditList, const ak::buffer& aWrittenLength);
+		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
+		void copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
+		void copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength);
 
 		class gpu_list_data
 		{
 		public:
-			gpu_list_data(ak::buffer aBuffer, ak::buffer aLength) : mBuffer{ std::move(aBuffer) }, mLength{ std::move(aLength) } {}
-			ak::buffer mBuffer;
-			ak::buffer mLength;
+			gpu_list_data(avk::buffer aBuffer, avk::buffer aLength) : mBuffer{ std::move(aBuffer) }, mLength{ std::move(aLength) } {}
+			avk::buffer mBuffer;
+			avk::buffer mLength;
 		};
 
 		std::shared_ptr<gpu_list_data> mData;
@@ -89,7 +89,7 @@ inline void pbd::gpu_list<Stride>::set_length(size_t aLength)
 
 	prepare_for_edit(mRequestedLength, true);
 	auto length = static_cast<uint32_t>(aLength);
-	mData->mLength->fill(&length, 0, ak::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+	mData->mLength->fill(&length, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
 	shader_provider::sync_after_transfer();
 }
 
@@ -116,13 +116,13 @@ inline void pbd::gpu_list<Stride>::set_owner(list_interface<gpu_list<4ui64>>* aO
 }
 
 template<size_t Stride>
-inline const ak::buffer& pbd::gpu_list<Stride>::read_buffer() const
+inline const avk::buffer& pbd::gpu_list<Stride>::read_buffer() const
 {
 	return mData->mBuffer;
 }
 
 template<size_t Stride>
-inline ak::buffer& pbd::gpu_list<Stride>::write_buffer()
+inline avk::buffer& pbd::gpu_list<Stride>::write_buffer()
 {
 	prepare_for_edit(mRequestedLength, true);
 	return mData->mBuffer;
@@ -170,7 +170,7 @@ inline pbd::gpu_list<Stride> pbd::gpu_list<Stride>::operator+(const gpu_list& aR
 template<size_t Stride>
 inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded)
 {
-	auto currentCapacity = mData == nullptr ? 0ui64 : mData->mBuffer->meta<ak::storage_buffer_meta>().total_size() / Stride;
+	auto currentCapacity = mData == nullptr ? 0ui64 : mData->mBuffer->meta<avk::storage_buffer_meta>().total_size() / Stride;
 
 	if (currentCapacity   == 0 && aNeededLength   ==             0) return;
 	if (mData.use_count() == 2 && currentCapacity >= aNeededLength) return;
@@ -193,18 +193,18 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_list(const ak::buffer& aSource, const ak::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
+inline void pbd::gpu_list<Stride>::copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
 {
 	copy_bytes(aSource, aTarget, aCopiedLength * Stride, aSourceOffset * Stride, aTargetOffset * Stride);
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_bytes(const ak::buffer& aSource, const ak::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
+inline void pbd::gpu_list<Stride>::copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
 {
 	if (aCopiedLength == 0) return;
 
-	assert(aSource->meta<ak::storage_buffer_meta>().total_size() >= aSourceOffset + aCopiedLength);
-	assert(aTarget->meta<ak::storage_buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
+	assert(aSource->meta<avk::storage_buffer_meta>().total_size() >= aSourceOffset + aCopiedLength);
+	assert(aTarget->meta<avk::storage_buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
 
 	auto copyRegion = vk::BufferCopy{}
 		.setSrcOffset(aSourceOffset)
@@ -215,13 +215,13 @@ inline void pbd::gpu_list<Stride>::copy_bytes(const ak::buffer& aSource, const a
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_scattered_read(const ak::buffer& aSource, const ak::buffer& aTarget, const ak::buffer& aEditList, const ak::buffer& aWrittenLength)
+inline void pbd::gpu_list<Stride>::copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength)
 {
 	// TODO!!!
 
 	//auto& pScatteredRead = ShaderProvider::computeShader(ListType, "copy_scattered_read");
 	/*auto& pScatteredRead = ShaderProvider::computeShader(get_shader_filename(), "copy_scattered_read");
-	assert(target->meta<ak::storage_buffer_meta>().num_elements() >= writtenLength);
+	assert(target->meta<avk::storage_buffer_meta>().num_elements() >= writtenLength);
 
 	pScatteredRead.vars()["PerCallCB"]["elementCount"] = static_cast<uint32_t>(writtenLength);
 	pScatteredRead.vars()->setStructuredBuffer("gSourceBuffer", source);
@@ -238,9 +238,9 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 	std::shared_ptr<gpu_list_data>* bestExisting = nullptr;
 	for (auto& data : mReservedLists)
 	{
-		if (data.use_count() == 1 && data->mBuffer->meta<ak::storage_buffer_meta>().total_size() >= minSize)
+		if (data.use_count() == 1 && data->mBuffer->meta<avk::storage_buffer_meta>().total_size() >= minSize)
 		{
-			if (bestExisting == nullptr || (*bestExisting)->mBuffer->meta<ak::storage_buffer_meta>().total_size() > data->mBuffer->meta<ak::storage_buffer_meta>().total_size())
+			if (bestExisting == nullptr || (*bestExisting)->mBuffer->meta<avk::storage_buffer_meta>().total_size() > data->mBuffer->meta<avk::storage_buffer_meta>().total_size())
 			{
 				bestExisting = &data;
 			}
@@ -248,14 +248,14 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 	}
 	if (bestExisting == nullptr) {
 
-		auto newBuffer = xk::context().create_buffer(
-			ak::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
-			ak::storage_buffer_meta::create_from_size(aMinLength * Stride),
-			ak::instance_buffer_meta::create_from_element_size(Stride, aMinLength) // TODO should this be avoided?
+		auto newBuffer = gvk::context().create_buffer(
+			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
+			avk::storage_buffer_meta::create_from_size(aMinLength * Stride),
+			avk::instance_buffer_meta::create_from_element_size(Stride, aMinLength) // TODO should this be avoided?
 		);
-		auto newLengthBuffer = xk::context().create_buffer(
-			ak::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
-			ak::storage_buffer_meta::create_from_size(4)
+		auto newLengthBuffer = gvk::context().create_buffer(
+			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
+			avk::storage_buffer_meta::create_from_size(4)
 		);
 		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthBuffer)));
 		if (mReservedLists.size() >= 50)

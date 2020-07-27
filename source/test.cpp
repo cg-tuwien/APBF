@@ -62,8 +62,8 @@ bool pbd::test::gpu_list_concatenation()
 	listA.set_length(listAData.size());
 	listB.set_length(listBData.size());
 	listA.request_length(listAData.size() + listBData.size());
-	listA.write_buffer()->fill(listAData.data(), 0, ak::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
-	listB.write_buffer()->fill(listBData.data(), 0, ak::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	listA.write_buffer()->fill(listAData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	listB.write_buffer()->fill(listBData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
 	listA += listB;
 	listAData.insert(listAData.end(), listBData.begin(), listBData.end());
 	shader_provider::end_recording();
