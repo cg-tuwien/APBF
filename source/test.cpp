@@ -5,6 +5,7 @@ void pbd::test::test_all()
 {
 	auto failCount = 0u;
 	if (!gpu_list_concatenation())              failCount++;
+	if (!gpu_list_concatenation2())             failCount++;
 	if (!gpu_list_apply_edit())                 failCount++;
 /*	if (!indexedList_writeDecreasingSequence()) failCount++;
 	if (!indexedList_applyHiddenEdit())         failCount++;
@@ -33,6 +34,7 @@ void pbd::test::test_quick()
 {
 	auto failCount = 0u;
 	if (!gpu_list_concatenation())              failCount++;
+	if (!gpu_list_concatenation2())             failCount++;
 	if (!gpu_list_apply_edit())                 failCount++;
 /*	if (!indexedList_writeDecreasingSequence()) failCount++;
 	if (!indexedList_applyHiddenEdit())         failCount++;
@@ -68,6 +70,29 @@ bool pbd::test::gpu_list_concatenation()
 	listAData.insert(listAData.end(), listBData.begin(), listBData.end());
 	shader_provider::end_recording();
 	return validate_list(listA.read_buffer(), listAData, "gpu_list concatenation");
+}
+
+bool pbd::test::gpu_list_concatenation2()
+{
+	shader_provider::start_recording();
+	auto listAData = std::vector<glm::vec3>({ glm::vec3(0, 2, 61.5), glm::vec3(13.65, 4.65, 234) });
+	auto listBData = std::vector<glm::vec3>({ glm::vec3(1, 0, 2.5) });
+	auto listCData = std::vector<glm::vec3>({ glm::vec3(8, 2, 1), glm::vec3(2, 4, 9) });
+	auto listA = pbd::gpu_list<12>();
+	auto listB = pbd::gpu_list<12>();
+	auto listC = pbd::gpu_list<12>();
+	listA.set_length(listAData.size());
+	listB.set_length(listBData.size());
+	listC.set_length(listCData.size());
+	listB.request_length(listAData.size() + listBData.size() + listCData.size());
+	listA.write_buffer()->fill(listAData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	listB.write_buffer()->fill(listBData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	listC.write_buffer()->fill(listCData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	listB = listA + listB + listC;
+	listAData.insert(listAData.end(), listBData.begin(), listBData.end());
+	listAData.insert(listAData.end(), listCData.begin(), listCData.end());
+	shader_provider::end_recording();
+	return validate_list(listB.read_buffer(), listAData, "gpu_list concatenation 2");
 }
 
 bool pbd::test::gpu_list_apply_edit()

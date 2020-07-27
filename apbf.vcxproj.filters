@@ -31,12 +31,17 @@
     <None Include="shaders\roundandround.comp">
       <Filter>shaders</Filter>
     </None>
-    <None Include="gears_vk\assets\1st_party\models\sphere.obj" />
     <None Include="shaders\append_list.comp">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\point.vert">
       <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\dispatch_indirect.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="gears_vk\assets\1st_party\models\sphere.obj">
+      <Filter>assets</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

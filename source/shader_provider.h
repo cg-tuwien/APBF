@@ -5,13 +5,18 @@
 class shader_provider
 {
 public:
+	struct changing_length
+	{
+		avk::buffer& mOldLength;
+		avk::buffer& mNewLength;
+	};
 	// TODO maybe add an init_all() function
 	static void set_queue(avk::queue& aQueue);
 	static void start_recording();
 	static void end_recording();
 	static avk::command_buffer& cmd_bfr();
 	static void roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, uint32_t aParticleCount);
-	static void append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const avk::buffer& aTargetListLength, const avk::buffer& aAppendingListLength);
+	static void append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const changing_length& aTargetListLength, const avk::buffer& aAppendingListLength, uint32_t aStride);
 
 	static void sync_after_compute();
 	static void sync_after_transfer();

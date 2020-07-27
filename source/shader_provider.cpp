@@ -34,9 +34,6 @@ void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buff
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/roundandround.comp",
-//		avk::binding<avk::buffer>(0, 0, 1u),
-//		avk::binding<avk::buffer>(1, 0, 1u),
-//		avk::binding<avk::buffer>(1, 1, 1u)
 		avk::binding(0, 0, aAppData),
 		avk::binding(1, 0, aParticles),
 		avk::binding(1, 1, aAabbs)
@@ -50,23 +47,28 @@ void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buff
 	dispatch(aParticleCount, 1u, 1u, 256u);
 }
 
-void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const avk::buffer& aTargetListLength, const avk::buffer& aAppendingListLength)
+void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const changing_length& aTargetListLength, const avk::buffer& aAppendingListLength, uint32_t aStride)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/append_list.comp",
 		avk::binding(0, 0, aTargetList),
 		avk::binding(0, 1, aAppendingList),
-		avk::binding(1, 0, aTargetListLength),
-		avk::binding(1, 1, aAppendingListLength)
+		avk::binding(1, 0, aTargetListLength.mOldLength),
+		avk::binding(1, 1, aAppendingListLength),
+		avk::binding(1, 2, aTargetListLength.mNewLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, 4 }
 	);
+	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
 	prepare_dispatch_indirect(aAppendingListLength);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::binding(0, 0, aTargetList),
 		avk::binding(0, 1, aAppendingList),
-		avk::binding(1, 0, aTargetListLength),
-		avk::binding(1, 1, aAppendingListLength)
+		avk::binding(1, 0, aTargetListLength.mOldLength),
+		avk::binding(1, 1, aAppendingListLength),
+		avk::binding(1, 2, aTargetListLength.mNewLength)
 	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }
 

@@ -17,6 +17,7 @@ namespace pbd
 		static bool approximately_equal(T v1, T v2);
 
 		static bool gpu_list_concatenation();
+		static bool gpu_list_concatenation2();
 		static bool gpu_list_apply_edit();
 /*		static bool indexedList_writeDecreasingSequence();
 		static bool indexedList_applyHiddenEdit();

@@ -18,9 +18,8 @@ namespace pbd
 
 		void set_length(size_t aLength);
 		void request_length(size_t aLength);
-		//size_t length() const;
-		//gpu_list& resize(size_t newSize);
-		//gpu_list subset(size_t from, size_t length);
+		avk::buffer& length() const;
+		const shader_provider::changing_length changing_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
 		gpu_list& operator=(const gpu_list& aRhs);
@@ -43,9 +42,11 @@ namespace pbd
 		class gpu_list_data
 		{
 		public:
-			gpu_list_data(avk::buffer aBuffer, avk::buffer aLength) : mBuffer{ std::move(aBuffer) }, mLength{ std::move(aLength) } {}
+			gpu_list_data(avk::buffer aBuffer, avk::buffer aLengthA, avk::buffer aLengthB) : mBuffer{ std::move(aBuffer) }, mLengthA{ std::move(aLengthA) }, mLengthB{ std::move(aLengthB) }, mLengthAIsActive{ true } {}
 			avk::buffer mBuffer;
-			avk::buffer mLength;
+			avk::buffer mLengthA;
+			avk::buffer mLengthB;
+			bool mLengthAIsActive;
 		};
 
 		std::shared_ptr<gpu_list_data> mData;
@@ -88,8 +89,8 @@ inline void pbd::gpu_list<Stride>::set_length(size_t aLength)
 	if (mRequestedLength < aLength) mRequestedLength = aLength;
 
 	prepare_for_edit(mRequestedLength, true);
-	auto length = static_cast<uint32_t>(aLength);
-	mData->mLength->fill(&length, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+	auto l = static_cast<uint32_t>(aLength);
+	length()->fill(&l, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
 	shader_provider::sync_after_transfer();
 }
 
@@ -100,13 +101,26 @@ inline void pbd::gpu_list<Stride>::request_length(size_t aLength)
 }
 
 template<size_t Stride>
+inline avk::buffer& pbd::gpu_list<Stride>::length() const
+{
+	return mData->mLengthAIsActive ? mData->mLengthA : mData->mLengthB;
+}
+
+template<size_t Stride>
+inline const shader_provider::changing_length pbd::gpu_list<Stride>::changing_length()
+{
+	mData->mLengthAIsActive = !mData->mLengthAIsActive;
+	return mData->mLengthAIsActive ? shader_provider::changing_length{ mData->mLengthB, mData->mLengthA } : shader_provider::changing_length{ mData->mLengthA, mData->mLengthB };
+}
+
+template<size_t Stride>
 inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource)
 {
 	if (mOwner != aEditSource && mOwner != nullptr) mOwner->apply_edit(aEditList, this);
 
 	auto oldData = mData; // TODO does write_buffer() really create a new buffer?
 	prepare_for_edit(mRequestedLength);
-	copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.read_buffer(), aEditList.mData->mLength);
+	copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.read_buffer(), aEditList.length());
 }
 
 template<size_t Stride>
@@ -154,7 +168,7 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::operator+=(const gpu_list& 
 	if (aRhs.mData == nullptr) return *this;
 
 	prepare_for_edit(mRequestedLength, true);
-	shader_provider::append_list(mData->mBuffer, aRhs.mData->mBuffer, mData->mLength, aRhs.mData->mLength);
+	shader_provider::append_list(mData->mBuffer, aRhs.mData->mBuffer, changing_length(), aRhs.length(), Stride);
 	return *this;
 }
 
@@ -182,7 +196,7 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 	if (oldData == nullptr) {
 		set_length(0);
 	} else {
-		copy_bytes(oldData->mLength, mData->mLength, 4);
+		copy_bytes(oldData->mLengthAIsActive ? oldData->mLengthA : oldData->mLengthB, length(), 4);
 	}
 
 	if (aCurrentContentNeeded)
@@ -253,11 +267,15 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 			avk::storage_buffer_meta::create_from_size(aMinLength * Stride),
 			avk::instance_buffer_meta::create_from_element_size(Stride, aMinLength) // TODO should this be avoided?
 		);
-		auto newLengthBuffer = gvk::context().create_buffer(
+		auto newLengthABuffer = gvk::context().create_buffer(
 			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
 			avk::storage_buffer_meta::create_from_size(4)
 		);
-		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthBuffer)));
+		auto newLengthBBuffer = gvk::context().create_buffer(
+			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
+			avk::storage_buffer_meta::create_from_size(4)
+		);
+		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthABuffer), std::move(newLengthBBuffer)));
 		if (mReservedLists.size() >= 50)
 		{
 			LOG_DEBUG("high number of reserved GPU buffers (" + std::to_string(mReservedLists.size()) + ")");

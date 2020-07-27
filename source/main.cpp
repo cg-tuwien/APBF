@@ -306,6 +306,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	void finalize() override
 	{
 		pbd::gpu_list<4>::cleanup();
+		pbd::gpu_list<12>::cleanup();
 	}
 
 
