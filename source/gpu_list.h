@@ -18,7 +18,7 @@ namespace pbd
 
 		void set_length(size_t aLength);
 		void request_length(size_t aLength);
-		avk::buffer& length() const;
+		avk::buffer& length() const; // TODO becomes outdated if a subsequent call of write_buffer() causes duplication!
 		const shader_provider::changing_length changing_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
@@ -37,7 +37,6 @@ namespace pbd
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
 		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
 		void copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
-		void copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength);
 
 		class gpu_list_data
 		{
@@ -118,9 +117,9 @@ inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_i
 {
 	if (mOwner != aEditSource && mOwner != nullptr) mOwner->apply_edit(aEditList, this);
 
-	auto oldData = mData; // TODO does write_buffer() really create a new buffer?
+	auto oldData = mData;
 	prepare_for_edit(mRequestedLength);
-	copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.read_buffer(), aEditList.length());
+	shader_provider::copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.read_buffer(), aEditList.length(), length(), Stride);
 }
 
 template<size_t Stride>
@@ -226,23 +225,6 @@ inline void pbd::gpu_list<Stride>::copy_bytes(const avk::buffer& aSource, const 
 		.setSize(aCopiedLength);
 	shader_provider::cmd_bfr()->handle().copyBuffer(aSource->buffer_handle(), aTarget->buffer_handle(), { copyRegion });
 	shader_provider::sync_after_transfer();
-}
-
-template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength)
-{
-	// TODO!!!
-
-	//auto& pScatteredRead = ShaderProvider::computeShader(ListType, "copy_scattered_read");
-	/*auto& pScatteredRead = ShaderProvider::computeShader(get_shader_filename(), "copy_scattered_read");
-	assert(target->meta<avk::storage_buffer_meta>().num_elements() >= writtenLength);
-
-	pScatteredRead.vars()["PerCallCB"]["elementCount"] = static_cast<uint32_t>(writtenLength);
-	pScatteredRead.vars()->setStructuredBuffer("gSourceBuffer", source);
-	pScatteredRead.vars()->setStructuredBuffer("gTargetBuffer", target);
-	pScatteredRead.vars()->setStructuredBuffer("gScatterBuffer", editList);
-
-	pScatteredRead.dispatch(static_cast<uint32_t>(writtenLength));*/
 }
 
 template<size_t Stride>

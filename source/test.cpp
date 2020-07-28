@@ -1,5 +1,4 @@
 #include "test.h"
-#include "gpu_list.h"
 
 void pbd::test::test_all()
 {
@@ -97,23 +96,18 @@ bool pbd::test::gpu_list_concatenation2()
 
 bool pbd::test::gpu_list_apply_edit()
 {
-	/*auto listData       = std::vector<uint32_t>({ 77u, 3u, 9999u, 4294967295u, 0u });
+	shader_provider::start_recording();
+	auto listData       = std::vector<uint32_t>({ 77u, 3u, 9999u, 4294967295u, 0u });
 	auto editListData   = std::vector<uint32_t>({ 1u, 3u, 1u, 4u });
 	auto expectedResult = std::vector<uint32_t>({ 3u, 4294967295u, 3u, 0u });
-	auto list     = GpuList<GpuListType::Uint>();
-	auto editList = GpuList<GpuListType::Uint>();
-	    list.resize(    listData.size());
-	editList.resize(editListData.size());
-	fillList(    list.getWriteBuffer(),     listData);
-	fillList(editList.getWriteBuffer(), editListData);
-	list.applyEdit(editList, nullptr);
-	auto result = list.length() == 4;
-	if (!result)
-	{
-		logWarning("TEST FAIL: GpuList::applyEdit() - expected list length 4 but got list length " + std::to_string(list.length()));
-	}
-	return validateList(list.getReadBuffer(), expectedResult, "GpuList::applyEdit()") && result;*/
-	return true;
+	auto     list = to_gpu_list(listData);
+	auto editList = to_gpu_list(editListData);
+	list.apply_edit(editList, nullptr);
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(list.length(), editListData.size(), "gpu_list::apply_edit() length") && pass;
+	pass = validate_list(list.read_buffer(), expectedResult, "gpu_list::apply_edit()") && pass;
+	return pass;
 }
 
 /*bool pbd::test::indexedList_writeDecreasingSequence()
@@ -536,3 +530,14 @@ bool pbd::test::mergeGeneratorGrid()
 	pass = validateList(mergeList.get<MergeList::id::particleB>().getIndexReadBuffer(), expectedListB, "merge generator grid mergeList B") && pass;
 	return pass;
 }*/
+
+bool pbd::test::validate_length(const avk::buffer& aLength, size_t aExpectedLength, const std::string& aTestName)
+{
+	auto data = 0u;
+	aLength->read(&data, 0, avk::sync::wait_idle(true));
+	if (data != aExpectedLength) {
+		LOG_WARNING("TEST FAIL: [" + aTestName + "]");
+		return false;
+	}
+	return true;
+}

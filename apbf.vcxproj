@@ -20,6 +20,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\copy_scattered_read.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
