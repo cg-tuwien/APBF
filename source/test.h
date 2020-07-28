@@ -49,7 +49,7 @@ namespace pbd
 	{
 		auto result = pbd::gpu_list<sizeof(T)>();
 		result.set_length(aData.size());
-		result.write_buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+		result.write().buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
 		return result;
 	}
 
