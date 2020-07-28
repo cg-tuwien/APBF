@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
-#include "gpu_list.h"
+#include "list_definitions.h"
 
 #ifdef _DEBUG
 #include "Test.h"

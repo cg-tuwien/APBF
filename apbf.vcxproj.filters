@@ -83,5 +83,8 @@
     <ClInclude Include="source\test.h">
       <Filter>source\pbd</Filter>
     </ClInclude>
+    <ClInclude Include="source\uninterleaved_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

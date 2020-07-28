@@ -46,6 +46,7 @@
     <ClInclude Include="source\stdafx.hpp" />
     <ClInclude Include="source\targetver.hpp" />
     <ClInclude Include="source\test.h" />
+    <ClInclude Include="source\uninterleaved_list.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">

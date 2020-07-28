@@ -16,10 +16,10 @@ namespace pbd
 		gpu_list(const gpu_list& aGpuList);
 		~gpu_list() = default;
 
+		avk::buffer& length() const;
+		const shader_provider::changing_length changing_length(); // TODO maybe replace with set_length(avk::buffer)?
 		gpu_list& set_length(size_t aLength);
 		gpu_list& request_length(size_t aLength);
-		avk::buffer& length() const;
-		const shader_provider::changing_length changing_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
 		gpu_list& operator=(const gpu_list& aRhs);
