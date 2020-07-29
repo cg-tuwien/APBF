@@ -26,6 +26,10 @@
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
     <None Include="shaders\instanced.vert" />
+    <None Include="shaders\rt_hit_green.rchit" />
+    <None Include="shaders\rt_hit_miss.rmiss" />
+    <None Include="shaders\rt_stupid_intersection.rint" />
+    <None Include="shaders\rt_trace_rays.rgen" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\shader_provider.cpp" />

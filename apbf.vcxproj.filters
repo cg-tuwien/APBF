@@ -20,6 +20,9 @@
     <Filter Include="source\pbd\gpu_lists">
       <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\ray_tracing">
+      <UniqueIdentifier>{52dc4c51-ac11-4aa2-b17a-c24d5f3821e9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
@@ -42,6 +45,18 @@
     </None>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">
       <Filter>assets</Filter>
+    </None>
+    <None Include="shaders\rt_hit_green.rchit">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_hit_miss.rmiss">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_stupid_intersection.rint">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_trace_rays.rgen">
+      <Filter>shaders\ray_tracing</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

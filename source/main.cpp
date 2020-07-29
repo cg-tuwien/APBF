@@ -8,6 +8,11 @@
 #include "Test.h"
 #endif
 
+#define BLAS_CENTRIC
+#if !defined(BLAS_CENTRIC)
+#define INST_CENTRIC
+#endif
+
 class apbf : public gvk::invokee
 {
 	struct particle {
@@ -19,6 +24,13 @@ class apbf : public gvk::invokee
 		glm::mat4 mViewMatrix;
 		glm::mat4 mProjMatrix;
 		glm::vec4 mTime;
+	};
+
+	struct aligned_aabb
+	{
+		glm::vec3 mMinBounds;
+		glm::vec3 mMaxBounds;
+		glm::vec2 _align;
 	};
 
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
@@ -60,19 +72,19 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		std::uniform_real_distribution<float> randomFrequency(0.5f, 3.0f);
 		std::uniform_real_distribution<float> randomRadius(0.01f, 0.1f);
 		const float dist = 2.0f;
-		for (int x = 0; x < 60; ++x) {
-			for (int y = 0; y < 50; ++y) {
-				for (int z = 0; z < 40; ++z) {
+		for (int x = 0; x < 10; ++x) {
+			for (int y = 0; y < 1; ++y) {
+				for (int z = 0; z < 1; ++z) {
 					const auto pos = glm::vec3{ x, y, -z - 3.0f };
 					testParticles.emplace_back(particle{
 						glm::vec4{ pos, randomFrequency(generator) },
-						glm::vec4{ pos, randomRadius(generator) },
+						glm::vec4{ pos, randomRadius(generator)    },
 					});
 				}
 			}
 		}
 		mNumParticles = static_cast<uint32_t>(testParticles.size());
-		
+
 		// Alloc buffers and ray tracing acceleration structures (one for each frame in flight), fill only mParticlesBuffers:
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			auto& pb = mParticlesBuffer.emplace_back(context().create_buffer(
@@ -85,16 +97,32 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			
 			mAabbsBuffer.emplace_back(context().create_buffer(
 				memory_usage::device, {},
-				storage_buffer_meta::create_from_size(sizeof(aabb) * mNumParticles),
-				aabb_buffer_meta::create_from_num_elements(mNumParticles)
+				storage_buffer_meta::create_from_size(sizeof(aligned_aabb) * mNumParticles),
+				aabb_buffer_meta::create_from_num_elements(mNumParticles, sizeof(aligned_aabb))
 			));
 
+			// One AABB for every particle:
 			auto& blas = mBottomLevelAS.emplace_back(context().create_bottom_level_acceleration_structure({ acceleration_structure_size_requirements::from_aabbs(mNumParticles) }, true));
-			mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(mNumParticles, true));
-			auto& gi = mGeometryInstances.emplace_back();
+			std::vector<aabb> temp;
+			std::vector<aligned_aabb> tempAligned;
 			for (auto& p : testParticles) {
-				gi.push_back(context().create_geometry_instance(blas));
+				temp.push_back(aabb{ 
+					{{ p.mCurrentPositionRadius.x - p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.y - p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.z - p.mCurrentPositionRadius.w }},
+					{{ p.mCurrentPositionRadius.x + p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.y + p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.z + p.mCurrentPositionRadius.w }}
+				});
+				tempAligned.push_back(aligned_aabb{ 
+					glm::vec3{ p.mCurrentPositionRadius.x - p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.y - p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.z - p.mCurrentPositionRadius.w },
+					glm::vec3{ p.mCurrentPositionRadius.x + p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.y + p.mCurrentPositionRadius.w, p.mCurrentPositionRadius.z + p.mCurrentPositionRadius.w },
+					glm::vec2{}
+				});
 			}
+			blas->build(temp);
+
+			//mAabbsBuffer.back()->fill(tempAligned.data(), 0, sync::wait_idle());
+			//blas->build(mAabbsBuffer.back());
+			
+			auto& tlas = mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(1u, true)); // All into one single top-level instance
+			tlas->build({ context().create_geometry_instance(blas) });
 		}
 		
 		// Load a sphere model for drawing a single particle:
@@ -175,6 +203,32 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			binding(0, 0, mCameraDataBuffer[0])
 		);
 
+		// Create offscreen image views to ray-trace into, one for each frame in flight:
+		const auto wdth = mainWnd->resolution().x;
+		const auto hght = mainWnd->resolution().y;
+		const auto frmt = format_from_window_color_buffer(mainWnd);
+		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
+			auto& imv = mOffscreenImageViews.emplace_back(context().create_image_view(context().create_image(wdth, hght, frmt, 1, avk::memory_usage::device, avk::image_usage::general_storage_image)));
+			imv->get_image().transition_to_layout();
+			assert((mOffscreenImageViews.back()->config().subresourceRange.aspectMask & vk::ImageAspectFlagBits::eColor) == vk::ImageAspectFlagBits::eColor);
+		}
+		
+		// Create ray tracing pipeline to render the particles using ray tracing:
+		mRayTracingPipeline = context().create_ray_tracing_pipeline_for(
+			define_shader_table(
+				"shaders/ray_tracing/rt_trace_rays.rgen",
+				procedural_hit_group::create_with_rint_and_rchit("shaders/ray_tracing/rt_stupid_intersection.rint", "shaders/ray_tracing/rt_hit_green.rchit"),
+				"shaders/ray_tracing/rt_hit_miss.rmiss"
+			),
+			context().get_max_ray_tracing_recursion_depth(),
+			// Define push constants and descriptor bindings:
+			binding(0, 0, mCameraDataBuffer[0]),
+			binding(1, 0, mParticlesBuffer[0]),
+			binding(1, 1, mAabbsBuffer[0]->as_storage_buffer()),
+			binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
+			binding(2, 1, mTopLevelAS[0])                               // Just take any, this is just to define the layout
+		);
+		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
 		auto imguiManager = current_composition()->element_by_type<imgui_manager>();
 		if (nullptr != imguiManager) {
@@ -194,7 +248,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
-				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points"};
+				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing"};
 				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
 
 				ImGui::Separator();
@@ -260,38 +314,94 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// BUILD ACCELERATION STRUCTURES
 
-		cmdBfr->establish_global_memory_barrier(
-			pipeline_stage::compute_shader,                        /* -> */ pipeline_stage::acceleration_structure_build,
-			memory_access::shader_buffers_and_images_write_access, /* -> */ memory_access::acceleration_structure_any_access
-		);
-		mBottomLevelAS[ifi]->build(mAabbsBuffer[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		//cmdBfr->establish_global_memory_barrier(
+		//	pipeline_stage::compute_shader,                        /* -> */ pipeline_stage::acceleration_structure_build,
+		//	memory_access::shader_buffers_and_images_write_access, /* -> */ memory_access::acceleration_structure_any_access
+		//);
+		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
+		//
+		//mBottomLevelAS[ifi]->build(mAabbsBuffer[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		//// TODO: switch to     ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
 
 		//cmdBfr->establish_global_memory_barrier(
 		//	pipeline_stage::acceleration_structure_build,       /* -> */ pipeline_stage::acceleration_structure_build,
 		//	memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_any_access
 		//);
-		//mTopLevelAS[ifi]->build(mGeometryInstances[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {})); // TODO: <--- crashes here. There must be a bug hiding somewhere.
+		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
+
+		//mTopLevelAS[ifi]->build({ context().create_geometry_instance(mBottomLevelAS[ifi]) }, {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		//// TODO: switch to  ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
+
+		//cmdBfr->establish_global_memory_barrier(
+		//	pipeline_stage::acceleration_structure_build,       /* -> */ pipeline_stage::ray_tracing_shaders,
+		//	memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_read_access
+		//);
+		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 
 		// GRAPHICS
 
-		if (0 == mRenderingMethod) {
+		switch(mRenderingMethod) {
+		case 0: // "Instanced Spheres"
+
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced);
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi]);
-		}
-		else {
+			cmdBfr->end_render_pass();
+
+			break;
+		case 1: // "Points"
+
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelinePoint->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelinePoint);
 			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_vertices(*mParticlesBuffer[ifi]);
+			cmdBfr->end_render_pass();
+
+			break;
+		case 2: // "Ray Tracing"
+
+			cmdBfr->bind_pipeline(mRayTracingPipeline);
+			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+				binding(0, 0, mCameraDataBuffer[ifi]),
+				binding(1, 0, mParticlesBuffer[ifi]),
+				binding(1, 1, mAabbsBuffer[ifi]->as_storage_buffer()),
+				binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
+				binding(2, 1, mTopLevelAS[ifi])                              
+			}));
+
+			// Do it:
+			cmdBfr->trace_rays(
+				for_each_pixel(mainWnd),
+				mRayTracingPipeline->shader_binding_table(),
+				using_raygen_group_at_index(0),
+				using_miss_group_at_index(0),
+				using_hit_group_at_index(0)
+			);
+			
+			// Sync ray tracing with transfer:
+			cmdBfr->establish_global_memory_barrier(
+				pipeline_stage::ray_tracing_shaders,                      pipeline_stage::transfer,
+				memory_access::shader_buffers_and_images_write_access,    memory_access::transfer_read_access
+			);
+			
+			copy_image_to_another(mOffscreenImageViews[ifi]->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+			
+			// Make sure to properly sync with ImGui manager which comes afterwards (it uses a graphics pipeline):
+			cmdBfr->establish_global_memory_barrier(
+				pipeline_stage::transfer,                                  pipeline_stage::color_attachment_output,
+				memory_access::transfer_write_access,                      memory_access::color_attachment_write_access
+			);
+			
+			break;
+		default:
+			throw std::runtime_error(fmt::format("Invalid mRenderingMethod[{}]", mRenderingMethod));
 		}
 		
-		cmdBfr->end_render_pass();
 		cmdBfr->end_recording();
 
 		// The swap chain provides us with an "image available semaphore" for the current frame.
@@ -326,19 +436,18 @@ private: // v== Member variables ==v
 
 	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
 	std::vector<avk::top_level_acceleration_structure> mTopLevelAS;
-	std::vector<std::vector<avk::geometry_instance>> mGeometryInstances;
 
 	//avk::compute_pipeline mComputePipeline;
 	avk::graphics_pipeline mGraphicsPipelineInstanced;
 	avk::graphics_pipeline mGraphicsPipelinePoint;
 	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
-	std::vector<avk::image_view> mOffscreenImages;
+	std::vector<avk::image_view> mOffscreenImageViews;
 
 	//avk::buffer mTest;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 0;
+	int mRenderingMethod = 2;
 	
 }; // class apbf
 
