@@ -8,10 +8,7 @@
 #include "Test.h"
 #endif
 
-#define BLAS_CENTRIC
-#if !defined(BLAS_CENTRIC)
-#define INST_CENTRIC
-#endif
+#include "../shaders/cpu_gpu_shared_config.h"
 
 class apbf : public gvk::invokee
 {
@@ -72,9 +69,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		std::uniform_real_distribution<float> randomFrequency(0.5f, 3.0f);
 		std::uniform_real_distribution<float> randomRadius(0.01f, 0.1f);
 		const float dist = 2.0f;
-		for (int x = 0; x < 10; ++x) {
-			for (int y = 0; y < 1; ++y) {
-				for (int z = 0; z < 1; ++z) {
+		for (int x = 0; x < 64; ++x) {
+			for (int y = 0; y < 48; ++y) {
+				for (int z = 0; z < 32; ++z) {
 					const auto pos = glm::vec3{ x, y, -z - 3.0f };
 					testParticles.emplace_back(particle{
 						glm::vec4{ pos, randomFrequency(generator) },
@@ -85,6 +82,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 		mNumParticles = static_cast<uint32_t>(testParticles.size());
 
+#if INST_CENTRIC
+		mSingleBlas = context().create_bottom_level_acceleration_structure({ acceleration_structure_size_requirements::from_aabbs(1u) }, false);
+		mSingleBlas->build({ aabb{ {{ -0.5f, -0.5f, -0.5f }}, {{  0.5f,  0.5f,  0.5f }} } }); // One single AABB with side length 1 for each axis
+#endif
+		
 		// Alloc buffers and ray tracing acceleration structures (one for each frame in flight), fill only mParticlesBuffers:
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			auto& pb = mParticlesBuffer.emplace_back(context().create_buffer(
@@ -94,7 +96,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				vertex_buffer_meta::create_from_data(testParticles)
 			));
 			pb->fill(testParticles.data(), 0, sync::wait_idle());
-			
+
+#if BLAS_CENTRIC
 			mAabbsBuffer.emplace_back(context().create_buffer(
 				memory_usage::device, {},
 				storage_buffer_meta::create_from_size(sizeof(aligned_aabb) * mNumParticles),
@@ -120,9 +123,33 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 			//mAabbsBuffer.back()->fill(tempAligned.data(), 0, sync::wait_idle());
 			//blas->build(mAabbsBuffer.back());
-			
+
 			auto& tlas = mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(1u, true)); // All into one single top-level instance
 			tlas->build({ context().create_geometry_instance(blas) });
+#else
+			static_assert(INST_CENTRIC);
+			
+			auto& gib = mGeometryInstanceBuffers.emplace_back(context().create_buffer(
+				memory_usage::device, vk::BufferUsageFlagBits::eRayTracingKHR | vk::BufferUsageFlagBits::eShaderDeviceAddressKHR, 
+				storage_buffer_meta::create_from_size(sizeof(VkAccelerationStructureInstanceKHR) * mNumParticles)
+			));
+			
+			std::vector<geometry_instance> temp;
+			uint32_t customIndex = 0;
+			for (const auto& p : testParticles) {
+				auto pos = glm::vec3{p.mCurrentPositionRadius.x, p.mCurrentPositionRadius.y, p.mCurrentPositionRadius.z};
+				auto scl = glm::vec3{p.mCurrentPositionRadius.w};
+				temp.push_back(
+					context().create_geometry_instance(mSingleBlas)
+					.set_transform_column_major(to_array(glm::translate(glm::mat4{1.0f}, pos) * glm::scale(scl)))
+						.set_custom_index(customIndex++)
+						.set_flags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque)
+				);
+			}
+			
+			auto& tlas = mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(temp.size(), true)); // One top level instance per particle
+			tlas->build(temp);
+#endif
 		}
 		
 		// Load a sphere model for drawing a single particle:
@@ -224,7 +251,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			// Define push constants and descriptor bindings:
 			binding(0, 0, mCameraDataBuffer[0]),
 			binding(1, 0, mParticlesBuffer[0]),
+#if BLAS_CENTRIC
 			binding(1, 1, mAabbsBuffer[0]->as_storage_buffer()),
+#endif
 			binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
 			binding(2, 1, mTopLevelAS[0])                               // Just take any, this is just to define the layout
 		);
@@ -300,7 +329,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// COMPUTE
 
+#if BLAS_CENTRIC
 		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mAabbsBuffer[ifi], mNumParticles);
+#else
+		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mNumParticles);
+#endif
 		mParticlesBuffer[ifi]->meta<storage_buffer_meta>().num_elements();
 
 		shader_provider::end_recording();
@@ -320,7 +353,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		//);
 		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 		//
-		//mBottomLevelAS[ifi]->build(mAabbsBuffer[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		//mBottomLevelAS[ifi]->update(mAabbsBuffer[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
 		//// TODO: switch to     ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
 
 		//cmdBfr->establish_global_memory_barrier(
@@ -329,7 +362,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		//);
 		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 
-		//mTopLevelAS[ifi]->build({ context().create_geometry_instance(mBottomLevelAS[ifi]) }, {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		//mTopLevelAS[ifi]->update({ context().create_geometry_instance(mBottomLevelAS[ifi]) }, {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
 		//// TODO: switch to  ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
 
 		//cmdBfr->establish_global_memory_barrier(
@@ -369,7 +402,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi]),
 				binding(1, 0, mParticlesBuffer[ifi]),
+#if BLAS_CENTRIC
 				binding(1, 1, mAabbsBuffer[ifi]->as_storage_buffer()),
+#endif
 				binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
 				binding(2, 1, mTopLevelAS[ifi])                              
 			}));
@@ -430,11 +465,19 @@ private: // v== Member variables ==v
 
 	uint32_t mNumParticles;
 	std::vector<avk::buffer> mParticlesBuffer;
+#if BLAS_CENTRIC
 	std::vector<avk::buffer> mAabbsBuffer;
+#endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
 
+#if BLAS_CENTRIC
 	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
+#else
+	static_assert(INST_CENTRIC);
+	avk::bottom_level_acceleration_structure mSingleBlas;
+	std::vector<avk::buffer> mGeometryInstanceBuffers;
+#endif
 	std::vector<avk::top_level_acceleration_structure> mTopLevelAS;
 
 	//avk::compute_pipeline mComputePipeline;
@@ -482,6 +525,9 @@ int main() // <== Starting point ==
 				.add_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME)
 				.add_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME)
 				.add_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME),
+			[](vk::PhysicalDeviceFeatures& deviceFeatures) {
+				deviceFeatures.shaderInt64 = VK_TRUE;
+			},
 			mainWnd,
 			app,
 			ui

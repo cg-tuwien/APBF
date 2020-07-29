@@ -8,6 +8,7 @@ layout(set = 1, binding = 0) buffer WorkgroupCount { uint workgroupCount[]; };
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
+	uint mScalingFactor;
 	uint mLocalSizeX;
 	uint mLocalSizeY;
 	uint mLocalSizeZ;
@@ -17,9 +18,9 @@ layout(push_constant) uniform PushConstants {
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	workgroupCount[0] = (threadCount[0] + mLocalSizeX - 1) / mLocalSizeX;
-	workgroupCount[1] = (threadCount[1] + mLocalSizeY - 1) / mLocalSizeY;
-	workgroupCount[2] = (threadCount[2] + mLocalSizeZ - 1) / mLocalSizeZ;
+	workgroupCount[0] = (threadCount[0] * mScalingFactor + mLocalSizeX - 1) / mLocalSizeX;
+//	workgroupCount[1] = (threadCount[1] * mScalingFactor + mLocalSizeY - 1) / mLocalSizeY;
+//	workgroupCount[2] = (threadCount[2] * mScalingFactor + mLocalSizeZ - 1) / mLocalSizeZ;
 	workgroupCount[1] = 1;
 	workgroupCount[2] = 1;
 }

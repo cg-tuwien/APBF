@@ -16,8 +16,8 @@ namespace pbd
 		gpu_list(const gpu_list& aGpuList);
 		~gpu_list() = default;
 
-		void set_length(size_t aLength);
-		void request_length(size_t aLength);
+		gpu_list& set_length(size_t aLength);
+		gpu_list& request_length(size_t aLength);
 		avk::buffer& length() const;
 		const shader_provider::changing_length changing_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
@@ -26,10 +26,12 @@ namespace pbd
 		gpu_list& operator+=(const gpu_list& aRhs);
 		gpu_list operator+(const gpu_list& aRhs) const;
 
-		void set_owner(list_interface<gpu_list<4ui64>>* aOwner);
-		const avk::buffer& read_buffer() const;
-		/// <summary><para>Request a buffer for writing. The buffer is valid until another function of this object is called, or until this object is copied.</para></summary>
-		avk::buffer& write_buffer();
+		gpu_list& set_owner(list_interface<gpu_list<4ui64>>* aOwner);
+		/// <summary><para>Request the buffer containing the list. The buffer is valid until another function of this object is called, or until this object is copied.</para></summary>
+		avk::buffer& buffer() const;
+
+		/// <summary><para>Request write access to the list. The intended use is: gpu_list.write().buffer() and gpu_list.write().length().</para></summary>
+		gpu_list& write();
 
 		static void cleanup();
 
@@ -37,7 +39,6 @@ namespace pbd
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
 		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
 		void copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
-		void copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength);
 
 		class gpu_list_data
 		{
@@ -84,20 +85,21 @@ inline pbd::gpu_list<Stride>::gpu_list(const gpu_list& aGpuList)
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::set_length(size_t aLength)
+inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(size_t aLength)
 {
 	if (mRequestedLength < aLength) mRequestedLength = aLength;
 
-	prepare_for_edit(mRequestedLength, true);
 	auto l = static_cast<uint32_t>(aLength);
-	length()->fill(&l, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+	write().length()->fill(&l, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
 	shader_provider::sync_after_transfer();
+	return *this;
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::request_length(size_t aLength)
+inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::request_length(size_t aLength)
 {
 	mRequestedLength = aLength;
+	return *this;
 }
 
 template<size_t Stride>
@@ -109,6 +111,7 @@ inline avk::buffer& pbd::gpu_list<Stride>::length() const
 template<size_t Stride>
 inline const shader_provider::changing_length pbd::gpu_list<Stride>::changing_length()
 {
+	write();
 	mData->mLengthAIsActive = !mData->mLengthAIsActive;
 	return mData->mLengthAIsActive ? shader_provider::changing_length{ mData->mLengthB, mData->mLengthA } : shader_provider::changing_length{ mData->mLengthA, mData->mLengthB };
 }
@@ -118,28 +121,29 @@ inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_i
 {
 	if (mOwner != aEditSource && mOwner != nullptr) mOwner->apply_edit(aEditList, this);
 
-	auto oldData = mData; // TODO does write_buffer() really create a new buffer?
+	auto oldData = mData;
 	prepare_for_edit(mRequestedLength);
-	copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.read_buffer(), aEditList.length());
+	shader_provider::copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.buffer(), aEditList.length(), length(), Stride);
 }
 
 template<size_t Stride>
-inline void pbd::gpu_list<Stride>::set_owner(list_interface<gpu_list<4ui64>>* aOwner)
+inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_owner(list_interface<gpu_list<4ui64>>* aOwner)
 {
 	mOwner = aOwner;
+	return *this;
 }
 
 template<size_t Stride>
-inline const avk::buffer& pbd::gpu_list<Stride>::read_buffer() const
+inline avk::buffer& pbd::gpu_list<Stride>::buffer() const
 {
 	return mData->mBuffer;
 }
 
 template<size_t Stride>
-inline avk::buffer& pbd::gpu_list<Stride>::write_buffer()
+inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::write()
 {
 	prepare_for_edit(mRequestedLength, true);
-	return mData->mBuffer;
+	return *this;
 }
 
 template<size_t Stride>
@@ -167,8 +171,7 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::operator+=(const gpu_list& 
 
 	if (aRhs.mData == nullptr) return *this;
 
-	prepare_for_edit(mRequestedLength, true);
-	shader_provider::append_list(mData->mBuffer, aRhs.mData->mBuffer, changing_length(), aRhs.length(), Stride);
+	shader_provider::append_list(write().buffer(), aRhs.mData->mBuffer, changing_length(), aRhs.length(), Stride);
 	return *this;
 }
 
@@ -226,23 +229,6 @@ inline void pbd::gpu_list<Stride>::copy_bytes(const avk::buffer& aSource, const 
 		.setSize(aCopiedLength);
 	shader_provider::cmd_bfr()->handle().copyBuffer(aSource->buffer_handle(), aTarget->buffer_handle(), { copyRegion });
 	shader_provider::sync_after_transfer();
-}
-
-template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_scattered_read(const avk::buffer& aSource, const avk::buffer& aTarget, const avk::buffer& aEditList, const avk::buffer& aWrittenLength)
-{
-	// TODO!!!
-
-	//auto& pScatteredRead = ShaderProvider::computeShader(ListType, "copy_scattered_read");
-	/*auto& pScatteredRead = ShaderProvider::computeShader(get_shader_filename(), "copy_scattered_read");
-	assert(target->meta<avk::storage_buffer_meta>().num_elements() >= writtenLength);
-
-	pScatteredRead.vars()["PerCallCB"]["elementCount"] = static_cast<uint32_t>(writtenLength);
-	pScatteredRead.vars()->setStructuredBuffer("gSourceBuffer", source);
-	pScatteredRead.vars()->setStructuredBuffer("gTargetBuffer", target);
-	pScatteredRead.vars()->setStructuredBuffer("gScatterBuffer", editList);
-
-	pScatteredRead.dispatch(static_cast<uint32_t>(writtenLength));*/
 }
 
 template<size_t Stride>

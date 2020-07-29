@@ -1,0 +1,32 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer SourceList { uint sourceList[]; };
+layout(set = 0, binding = 1) buffer TargetList { uint targetList[]; };
+layout(set = 0, binding = 2) buffer EditList   { uint   editList[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer EditListLength      { uint      editListLength; };
+layout(set = 1, binding = 1) buffer NewTargetListLength { uint newTargetListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mStride;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+
+	if (id >= editListLength * mStride) return;
+	if (id == 0) newTargetListLength = editListLength;
+
+	for (uint b = 0; b < mStride; b++) {
+		targetList[id * mStride + b] = sourceList[editList[id] * mStride + b];
+	}
+}

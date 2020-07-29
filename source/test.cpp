@@ -1,5 +1,4 @@
 #include "test.h"
-#include "gpu_list.h"
 
 void pbd::test::test_all()
 {
@@ -59,17 +58,12 @@ bool pbd::test::gpu_list_concatenation()
 	shader_provider::start_recording();
 	auto listAData = std::vector<uint32_t>({3u, 64u, 12683u, 4294967295u});
 	auto listBData = std::vector<uint32_t>({432587u, 0u, 5436u});
-	auto listA = pbd::gpu_list<4>();
-	auto listB = pbd::gpu_list<4>();
-	listA.set_length(listAData.size());
-	listB.set_length(listBData.size());
-	listA.request_length(listAData.size() + listBData.size());
-	listA.write_buffer()->fill(listAData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
-	listB.write_buffer()->fill(listBData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	auto listA = to_gpu_list(listAData).request_length(listAData.size() + listBData.size());
+	auto listB = to_gpu_list(listBData);
 	listA += listB;
 	listAData.insert(listAData.end(), listBData.begin(), listBData.end());
 	shader_provider::end_recording();
-	return validate_list(listA.read_buffer(), listAData, "gpu_list concatenation");
+	return validate_list(listA.buffer(), listAData, "gpu_list concatenation");
 }
 
 bool pbd::test::gpu_list_concatenation2()
@@ -78,42 +72,30 @@ bool pbd::test::gpu_list_concatenation2()
 	auto listAData = std::vector<glm::vec3>({ glm::vec3(0, 2, 61.5), glm::vec3(13.65, 4.65, 234) });
 	auto listBData = std::vector<glm::vec3>({ glm::vec3(1, 0, 2.5) });
 	auto listCData = std::vector<glm::vec3>({ glm::vec3(8, 2, 1), glm::vec3(2, 4, 9) });
-	auto listA = pbd::gpu_list<12>();
-	auto listB = pbd::gpu_list<12>();
-	auto listC = pbd::gpu_list<12>();
-	listA.set_length(listAData.size());
-	listB.set_length(listBData.size());
-	listC.set_length(listCData.size());
-	listB.request_length(listAData.size() + listBData.size() + listCData.size());
-	listA.write_buffer()->fill(listAData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
-	listB.write_buffer()->fill(listBData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
-	listC.write_buffer()->fill(listCData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+	auto listA = to_gpu_list(listAData);
+	auto listB = to_gpu_list(listBData).request_length(listAData.size() + listBData.size() + listCData.size());
+	auto listC = to_gpu_list(listCData);
 	listB = listA + listB + listC;
 	listAData.insert(listAData.end(), listBData.begin(), listBData.end());
 	listAData.insert(listAData.end(), listCData.begin(), listCData.end());
 	shader_provider::end_recording();
-	return validate_list(listB.read_buffer(), listAData, "gpu_list concatenation 2");
+	return validate_list(listB.buffer(), listAData, "gpu_list concatenation 2");
 }
 
 bool pbd::test::gpu_list_apply_edit()
 {
-	/*auto listData       = std::vector<uint32_t>({ 77u, 3u, 9999u, 4294967295u, 0u });
+	shader_provider::start_recording();
+	auto listData       = std::vector<uint32_t>({ 77u, 3u, 9999u, 4294967295u, 0u });
 	auto editListData   = std::vector<uint32_t>({ 1u, 3u, 1u, 4u });
 	auto expectedResult = std::vector<uint32_t>({ 3u, 4294967295u, 3u, 0u });
-	auto list     = GpuList<GpuListType::Uint>();
-	auto editList = GpuList<GpuListType::Uint>();
-	    list.resize(    listData.size());
-	editList.resize(editListData.size());
-	fillList(    list.getWriteBuffer(),     listData);
-	fillList(editList.getWriteBuffer(), editListData);
-	list.applyEdit(editList, nullptr);
-	auto result = list.length() == 4;
-	if (!result)
-	{
-		logWarning("TEST FAIL: GpuList::applyEdit() - expected list length 4 but got list length " + std::to_string(list.length()));
-	}
-	return validateList(list.getReadBuffer(), expectedResult, "GpuList::applyEdit()") && result;*/
-	return true;
+	auto     list = to_gpu_list(listData);
+	auto editList = to_gpu_list(editListData);
+	list.apply_edit(editList, nullptr);
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(list.length(), editListData.size(), "gpu_list::apply_edit() length") && pass;
+	pass = validate_list(list.buffer(), expectedResult, "gpu_list::apply_edit()") && pass;
+	return pass;
 }
 
 /*bool pbd::test::indexedList_writeDecreasingSequence()
@@ -536,3 +518,14 @@ bool pbd::test::mergeGeneratorGrid()
 	pass = validateList(mergeList.get<MergeList::id::particleB>().getIndexReadBuffer(), expectedListB, "merge generator grid mergeList B") && pass;
 	return pass;
 }*/
+
+bool pbd::test::validate_length(const avk::buffer& aLength, size_t aExpectedLength, const std::string& aTestName)
+{
+	auto data = 0u;
+	aLength->read(&data, 0, avk::sync::wait_idle(true));
+	if (data != aExpectedLength) {
+		LOG_WARNING("TEST FAIL: [" + aTestName + "]");
+		return false;
+	}
+	return true;
+}

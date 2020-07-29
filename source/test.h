@@ -1,5 +1,6 @@
 #pragma once
 #include <gvk.hpp>
+#include "gpu_list.h"
 
 namespace pbd
 {
@@ -12,7 +13,10 @@ namespace pbd
 		static void test_quick();
 
 		template <class T>
-		static bool validate_list(const avk::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName);
+		static pbd::gpu_list<sizeof(T)> to_gpu_list(const std::vector<T>& aData);
+		static bool validate_length(const avk::buffer& aLength, size_t aExpectedLength, const std::string& aTestName);
+		template <class T>
+		static bool validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName);
 		template <class T>
 		static bool approximately_equal(T v1, T v2);
 
@@ -41,24 +45,26 @@ namespace pbd
 
 
 	template<class T>
-	inline bool test::validate_list(const avk::buffer& pList, const std::vector<T>& pExpectedData, const std::string& pTestName)
+	inline pbd::gpu_list<sizeof(T)> test::to_gpu_list(const std::vector<T>& aData)
+	{
+		auto result = pbd::gpu_list<sizeof(T)>();
+		result.set_length(aData.size());
+		result.write().buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+		return result;
+	}
+
+	template<class T>
+	inline bool test::validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName)
 	{
 		auto data = std::vector<T>();
-		data.resize(pExpectedData.size());
-		pList->read(data.data(), 0, avk::sync::wait_idle(true));
-		/*auto pData = pList->map(Buffer::MapType::Read);
-		for (auto i = 0u; i < expectedData.size(); i++)
-		{
-			auto address = static_cast<void*>(static_cast<char*>(pData) + i * pList->getElementSize()); // hopefully char* is always 1 byte
-			data.push_back(*static_cast<T*>(address));
-		}
-		pList->unmap();*/
+		data.resize(aList->meta<avk::storage_buffer_meta>().total_size() / sizeof(T));
+		aList->read(data.data(), 0, avk::sync::wait_idle(true));
 
-		for (auto i = 0u; i < pExpectedData.size(); i++)
+		for (auto i = 0u; i < aExpectedData.size(); i++)
 		{
-			if (!approximately_equal(pExpectedData[i], data[i]))
+			if (!approximately_equal(aExpectedData[i], data[i]))
 			{
-				LOG_WARNING("TEST FAIL: [" + pTestName + "] - at list index " + std::to_string(i));
+				LOG_WARNING("TEST FAIL: [" + aTestName + "] - at list index " + std::to_string(i));
 				return false;
 			}
 		}

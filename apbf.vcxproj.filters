@@ -46,6 +46,9 @@
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">
       <Filter>assets</Filter>
     </None>
+    <None Include="shaders\copy_scattered_read.comp">
+      <Filter>shaders</Filter>
+    </None>
     <None Include="shaders\rt_hit_green.rchit">
       <Filter>shaders\ray_tracing</Filter>
     </None>
@@ -94,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="source\test.h">
       <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\cpu_gpu_shared_config.h">
+      <Filter>shaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
