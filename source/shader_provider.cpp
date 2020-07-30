@@ -36,13 +36,13 @@ void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buff
 		"shaders/roundandround.comp",
 		avk::binding(0, 0, aAppData),
 		avk::binding(1, 0, aParticles),
-		avk::binding(1, 1, aAabbs)
+		avk::binding(1, 1, aAabbs->as_storage_buffer())
 	);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::binding(0, 0, aAppData),
 		avk::binding(1, 0, aParticles),
-		avk::binding(1, 1, aAabbs)
+		avk::binding(1, 1, aAabbs->as_storage_buffer())
 	}));
 	dispatch(aParticleCount);
 }
