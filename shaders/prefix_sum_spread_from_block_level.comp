@@ -1,0 +1,32 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define BLOCKSIZE 512
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set = 0, binding = 2) buffer InGroupSumBuffer  { uint  inGroupSumBuffer[]; };
+layout(set = 0, binding = 3) buffer LengthsAndOffsets { uint lengthsAndOffsets[]; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mRecursionDepth;
+};
+// ----------------------------------------------------
+
+shared uvec2 prefixSumStorage[BLOCKSIZE];
+
+layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	uint bufferLength = lengthsAndOffsets[mRecursionDepth];
+	uint bufferOffset = lengthsAndOffsets[mRecursionDepth + 4u];
+	uint grpSumOffset = lengthsAndOffsets[mRecursionDepth + 5u];
+	
+	if (id >= bufferLength) return;
+
+	outBuffer[bufferOffset + id] = inBuffer[bufferOffset + id] + (gl_WorkGroupID.x == 0u ? 0u : inGroupSumBuffer[grpSumOffset + gl_WorkGroupID.x - 1u]);
+}

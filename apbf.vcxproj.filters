@@ -46,6 +46,15 @@
     <None Include="shaders\copy_scattered_read.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\write_increasing_sequence.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_apply_on_block_level.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_spread_from_block_level.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -58,6 +67,9 @@
       <Filter>source\pbd</Filter>
     </ClCompile>
     <ClCompile Include="source\test.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\algorithms.cpp">
       <Filter>source\pbd</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,6 +97,12 @@
     </ClInclude>
     <ClInclude Include="source\uninterleaved_list.h">
       <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\indexed_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\algorithms.h">
+      <Filter>source\pbd</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

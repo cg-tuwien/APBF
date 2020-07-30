@@ -1,0 +1,68 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define BLOCKSIZE 512
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set = 0, binding = 2) buffer OutGroupSumBuffer { uint outGroupSumBuffer[]; };
+layout(set = 0, binding = 3) buffer LengthsAndOffsets { uint lengthsAndOffsets[]; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mRecursionDepth;
+};
+// ----------------------------------------------------
+
+shared uvec2 prefixSumStorage[BLOCKSIZE];
+
+uint prefixSum(in uint localId, in uint value, out uint total) {
+	prefixSumStorage[localId][0] = value;
+	uint prefixSumSrc = 0;
+	barrier();
+
+	for (uint i = 0; i < log2(BLOCKSIZE); i++)
+	{
+		uint sumOffset = uint(pow(2, i));
+		prefixSumStorage[localId][1u - prefixSumSrc] = prefixSumStorage[localId][prefixSumSrc] + (localId < sumOffset ? 0u : prefixSumStorage[localId - sumOffset][prefixSumSrc]);
+		prefixSumSrc = 1u - prefixSumSrc;
+		barrier();
+	}
+	total = prefixSumStorage[BLOCKSIZE - 1][prefixSumSrc];
+	return prefixSumStorage[localId][prefixSumSrc];
+}
+
+layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	uint bufferLength = lengthsAndOffsets[mRecursionDepth];
+	uint bufferOffset = lengthsAndOffsets[mRecursionDepth + 4u];
+	uint grpSumOffset = lengthsAndOffsets[mRecursionDepth + 5u];
+	if (mRecursionDepth == 0u) {
+		bufferOffset = 0u;
+		grpSumOffset = 10u;
+		if (id == 0u) {
+			lengthsAndOffsets[mRecursionDepth + 4u] = bufferOffset;
+			lengthsAndOffsets[mRecursionDepth + 5u] = grpSumOffset;
+		}
+	}
+	if (id == 0u) {
+		lengthsAndOffsets[mRecursionDepth + 1u] = gl_NumWorkGroups.x;
+		lengthsAndOffsets[mRecursionDepth + 6u] = gl_NumWorkGroups.x + grpSumOffset;
+	}
+
+	bool outOfRange = id >= bufferLength;
+	uint totalSum;
+	uint result = prefixSum(gl_LocalInvocationID.x, outOfRange ? 0u : inBuffer[bufferOffset + id], totalSum);
+
+	if (!outOfRange) outBuffer[bufferOffset + id] = result;
+
+	// store group sum
+	if (gl_LocalInvocationID.x == BLOCKSIZE - 1)
+	{
+		outGroupSumBuffer[grpSumOffset + gl_WorkGroupID.x] = totalSum;
+	}
+}

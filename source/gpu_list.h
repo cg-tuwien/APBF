@@ -1,5 +1,5 @@
 #pragma once
-#include "shader_provider.h"
+#include "algorithms.h"
 #include "list_interface.h"
 
 namespace pbd
@@ -20,6 +20,7 @@ namespace pbd
 		const shader_provider::changing_length changing_length(); // TODO maybe replace with set_length(avk::buffer)?
 		gpu_list& set_length(size_t aLength);
 		gpu_list& request_length(size_t aLength);
+		size_t requested_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
 		gpu_list& operator=(const gpu_list& aRhs);
@@ -38,7 +39,6 @@ namespace pbd
 	private:
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
 		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
-		void copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
 
 		class gpu_list_data
 		{
@@ -100,6 +100,12 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::request_length(size_t aLeng
 {
 	mRequestedLength = aLength;
 	return *this;
+}
+
+template<size_t Stride>
+inline size_t pbd::gpu_list<Stride>::requested_length()
+{
+	return mRequestedLength;
 }
 
 template<size_t Stride>
@@ -199,7 +205,7 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 	if (oldData == nullptr) {
 		set_length(0);
 	} else {
-		copy_bytes(oldData->mLengthAIsActive ? oldData->mLengthA : oldData->mLengthB, length(), 4);
+		algorithms::copy_bytes(oldData->mLengthAIsActive ? oldData->mLengthA : oldData->mLengthB, length(), 4);
 	}
 
 	if (aCurrentContentNeeded)
@@ -212,23 +218,7 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 template<size_t Stride>
 inline void pbd::gpu_list<Stride>::copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
 {
-	copy_bytes(aSource, aTarget, aCopiedLength * Stride, aSourceOffset * Stride, aTargetOffset * Stride);
-}
-
-template<size_t Stride>
-inline void pbd::gpu_list<Stride>::copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
-{
-	if (aCopiedLength == 0) return;
-
-	assert(aSource->meta<avk::storage_buffer_meta>().total_size() >= aSourceOffset + aCopiedLength);
-	assert(aTarget->meta<avk::storage_buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
-
-	auto copyRegion = vk::BufferCopy{}
-		.setSrcOffset(aSourceOffset)
-		.setDstOffset(aTargetOffset)
-		.setSize(aCopiedLength);
-	shader_provider::cmd_bfr()->handle().copyBuffer(aSource->buffer_handle(), aTarget->buffer_handle(), { copyRegion });
-	shader_provider::sync_after_transfer();
+	algorithms::copy_bytes(aSource, aTarget, aCopiedLength * Stride, aSourceOffset * Stride, aTargetOffset * Stride);
 }
 
 template<size_t Stride>

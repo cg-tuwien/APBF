@@ -2,19 +2,19 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer TargetList    { uint    targetList[]; };
-layout(set = 0, binding = 1) buffer AppendingList { uint appendingList[]; };
+layout(set = 0, binding = 0) buffer TargetList { uint targetList[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer TargetListLength    { uint    targetListLength; };
-layout(set = 1, binding = 1) buffer AppendingListLength { uint appendingListLength; };
+layout(set = 1, binding = 0) buffer SequenceMinValue    { uint    sequenceMinValue; };
+layout(set = 1, binding = 1) buffer NewSequenceMinValue { uint newSequenceMinValue; };
 layout(set = 1, binding = 2) buffer NewTargetListLength { uint newTargetListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	uint mStride;
+	uint mValueUpperBound;
+	uint mSequenceLength;
 };
 // ----------------------------------------------------
 
@@ -23,8 +23,12 @@ void main()
 {
 	uint id = gl_GlobalInvocationID.x;
 
-	if (id >= appendingListLength * mStride) return;
-	if (id == 0) newTargetListLength = min(targetListLength + appendingListLength, targetList.length() / mStride);
+	uint sequenceLength = min(min(targetList.length(), mSequenceLength), mValueUpperBound - sequenceMinValue);
+	if (id == 0) {
+		newSequenceMinValue = sequenceMinValue + sequenceLength;
+		newTargetListLength = sequenceLength;
+	}
+	if (id >= sequenceLength) return;
 
-	targetList[targetListLength * mStride + id] = appendingList[id];
+	targetList[id] = sequenceMinValue + id;
 }
