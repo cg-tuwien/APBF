@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
-#include "gpu_list.h"
+#include "list_definitions.h"
 
 #ifdef _DEBUG
 #include "Test.h"
@@ -43,7 +43,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		using namespace gvk;
 
 #ifdef _DEBUG
-		pbd::test::test_quick();
+		pbd::test::test_all();
 #endif
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();

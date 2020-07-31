@@ -24,6 +24,9 @@
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
+    <None Include="shaders\prefix_sum_apply_on_block_level.comp" />
+    <None Include="shaders\prefix_sum_spread_from_block_level.comp" />
+    <None Include="shaders\radix_sort_apply_on_block_level.comp" />
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
     <None Include="shaders\instanced.vert" />
@@ -31,8 +34,10 @@
     <None Include="shaders\rt_hit_miss.rmiss" />
     <None Include="shaders\rt_stupid_intersection.rint" />
     <None Include="shaders\rt_trace_rays.rgen" />
+    <None Include="shaders\write_increasing_sequence.comp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\algorithms.cpp" />
     <ClCompile Include="source\shader_provider.cpp" />
     <ClCompile Include="source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Publish_Vulkan|x64'">Create</PrecompiledHeader>
@@ -44,13 +49,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
+    <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\gpu_list.h" />
+    <ClInclude Include="source\indexed_list.h" />
     <ClInclude Include="source\list_definitions.h" />
     <ClInclude Include="source\list_interface.h" />
     <ClInclude Include="source\shader_provider.h" />
     <ClInclude Include="source\stdafx.hpp" />
     <ClInclude Include="source\targetver.hpp" />
     <ClInclude Include="source\test.h" />
+    <ClInclude Include="source\uninterleaved_list.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">

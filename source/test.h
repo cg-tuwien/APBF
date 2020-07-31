@@ -1,6 +1,6 @@
 #pragma once
 #include <gvk.hpp>
-#include "gpu_list.h"
+#include "list_definitions.h"
 
 namespace pbd
 {
@@ -16,24 +16,24 @@ namespace pbd
 		static pbd::gpu_list<sizeof(T)> to_gpu_list(const std::vector<T>& aData);
 		static bool validate_length(const avk::buffer& aLength, size_t aExpectedLength, const std::string& aTestName);
 		template <class T>
-		static bool validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName);
+		static bool validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName, uint32_t aOffset = 0u);
 		template <class T>
 		static bool approximately_equal(T v1, T v2);
 
 		static bool gpu_list_concatenation();
 		static bool gpu_list_concatenation2();
 		static bool gpu_list_apply_edit();
-/*		static bool indexedList_writeDecreasingSequence();
-		static bool indexedList_applyHiddenEdit();
-		static bool indexedList_applyHiddenEdit2();
-		static bool indexedList_applyHiddenEdit3();
-		static bool prefixSum();
-		static bool longPrefixSum();
-		static bool veryLongPrefixSum();
+		static bool indexed_list_write_increasing_sequence();
+//		static bool indexedList_applyHiddenEdit();
+//		static bool indexedList_applyHiddenEdit2();
+//		static bool indexedList_applyHiddenEdit3();
+		static bool prefix_sum();
+		static bool long_prefix_sum();
+		static bool very_long_prefix_sum();
 		static bool sort();
-		static bool sortManyValues();
-		static bool sortSmallValues();
-		static bool sortManySmallValues();
+//		static bool sortManyValues();
+		static bool sort_small_values();
+/*		static bool sortManySmallValues();
 		static bool sortByPositions();
 		static bool deleteThese();
 		static bool merge();
@@ -54,7 +54,7 @@ namespace pbd
 	}
 
 	template<class T>
-	inline bool test::validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName)
+	inline bool test::validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName, uint32_t aOffset)
 	{
 		auto data = std::vector<T>();
 		data.resize(aList->meta<avk::storage_buffer_meta>().total_size() / sizeof(T));
@@ -62,9 +62,9 @@ namespace pbd
 
 		for (auto i = 0u; i < aExpectedData.size(); i++)
 		{
-			if (!approximately_equal(aExpectedData[i], data[i]))
+			if (!approximately_equal(aExpectedData[i], data[i + aOffset]))
 			{
-				LOG_WARNING("TEST FAIL: [" + aTestName + "] - at list index " + std::to_string(i));
+				LOG_WARNING("TEST FAIL: [" + aTestName + "] - at list index " + std::to_string(i + aOffset));
 				return false;
 			}
 		}

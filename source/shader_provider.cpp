@@ -44,11 +44,12 @@ void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buff
 		avk::binding(1, 0, aParticles),
 		avk::binding(1, 1, aAabbs->as_storage_buffer())
 	}));
-	dispatch(aParticleCount, 1u, 1u, 256u);
+	dispatch(aParticleCount);
 }
 
 void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const changing_length& aTargetListLength, const avk::buffer& aAppendingListLength, uint32_t aStride)
 {
+	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/append_list.comp",
 		avk::binding(0, 0, aTargetList),
@@ -56,10 +57,9 @@ void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buf
 		avk::binding(1, 0, aTargetListLength.mOldLength),
 		avk::binding(1, 1, aAppendingListLength),
 		avk::binding(1, 2, aTargetListLength.mNewLength),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, 4 }
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
-	prepare_dispatch_indirect(aAppendingListLength, aStride);
+	prepare_dispatch_indirect(aAppendingListLength, 0u, aStride);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::binding(0, 0, aTargetList),
@@ -74,6 +74,7 @@ void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buf
 
 void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, const avk::buffer& aNewTargetListLength, uint32_t aStride)
 {
+	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/copy_scattered_read.comp",
 		avk::binding(0, 0, aSourceList),
@@ -81,9 +82,8 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::binding(0, 2, aEditList),
 		avk::binding(1, 0, aEditListLength),
 		avk::binding(1, 1, aNewTargetListLength),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, 4 }
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
 	prepare_dispatch_indirect(aEditListLength);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
@@ -92,6 +92,101 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::binding(0, 2, aEditList),
 		avk::binding(1, 0, aEditListLength),
 		avk::binding(1, 1, aNewTargetListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::write_increasing_sequence(const avk::buffer& aTargetList, const avk::buffer& aNewTargetListLength, const changing_length& aSequenceMinValue, uint32_t aValueUpperBound, uint32_t aSequenceLength)
+{
+	struct push_constants { uint32_t mValueUpperBound; uint32_t mSequenceLength; } pushConstants{ aValueUpperBound, aSequenceLength };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/write_increasing_sequence.comp",
+		avk::binding(0, 0, aTargetList),
+		avk::binding(1, 0, aSequenceMinValue.mOldLength),
+		avk::binding(1, 1, aSequenceMinValue.mNewLength),
+		avk::binding(1, 2, aNewTargetListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aTargetList),
+		avk::binding(1, 0, aSequenceMinValue.mOldLength),
+		avk::binding(1, 1, aSequenceMinValue.mNewLength),
+		avk::binding(1, 2, aNewTargetListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch(aSequenceLength);
+}
+
+void shader_provider::prefix_sum_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aOutGroupSumBuffer, const avk::buffer& aLengthsAndOffsets, uint32_t aRecursionDepth)
+{
+	struct push_constants { uint32_t mRecursionDepth; } pushConstants{ aRecursionDepth };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/prefix_sum_apply_on_block_level.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aOutGroupSumBuffer),
+		avk::binding(0, 3, aLengthsAndOffsets),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aLengthsAndOffsets, aRecursionDepth, 1u, 512u);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aOutGroupSumBuffer),
+		avk::binding(0, 3, aLengthsAndOffsets)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::prefix_sum_spread_from_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aInGroupSumBuffer, const avk::buffer& aLengthsAndOffsets, uint32_t aRecursionDepth)
+{
+	struct push_constants { uint32_t mRecursionDepth; } pushConstants{ aRecursionDepth };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/prefix_sum_spread_from_block_level.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInGroupSumBuffer),
+		avk::binding(0, 3, aLengthsAndOffsets),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aLengthsAndOffsets, aRecursionDepth, 1u, 512u);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInGroupSumBuffer),
+		avk::binding(0, 3, aLengthsAndOffsets)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::radix_sort_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aInSecondBuffer, const avk::buffer& aOutSecondBuffer, const avk::buffer& aOutHistogramTable, const avk::buffer& aBufferLength, uint32_t aHistogramTableOffset, uint32_t aSubkeyOffset, uint32_t aSubkeyLength)
+{
+	struct push_constants { uint32_t mHistogramTableOffset, mSubkeyOffset, mSubkeyLength; } pushConstants{ aHistogramTableOffset, aSubkeyOffset, aSubkeyLength };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/radix_sort_apply_on_block_level.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInSecondBuffer),
+		avk::binding(0, 3, aOutSecondBuffer),
+		avk::binding(0, 4, aOutHistogramTable),
+		avk::binding(0, 5, aBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 512u);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInSecondBuffer),
+		avk::binding(0, 3, aOutSecondBuffer),
+		avk::binding(0, 4, aOutHistogramTable),
+		avk::binding(0, 5, aBufferLength)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -142,15 +237,15 @@ void shader_provider::dispatch(uint32_t aX, uint32_t aY, uint32_t aZ, uint32_t a
 	sync_after_compute();
 }
 
-void shader_provider::prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aScalingFactor, uint32_t aLocalSizeX, uint32_t aLocalSizeY, uint32_t aLocalSizeZ)
+void shader_provider::prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aOffset, uint32_t aScalingFactor, uint32_t aLocalSizeX, uint32_t aLocalSizeY, uint32_t aLocalSizeZ)
 {
+	struct push_constants { uint32_t mOffset, mScalingFactor, mX, mY, mZ; } pushConstants{ aOffset, aScalingFactor, aLocalSizeX, aLocalSizeY, aLocalSizeZ };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/dispatch_indirect.comp",
 		avk::binding(0, 0, aXyz),
 		avk::binding(1, 0, workgroup_count_buffer()),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, 16 }
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	struct push_constants { uint32_t mScalingFactor, mX, mY, mZ; } pushConstants{ aScalingFactor, aLocalSizeX, aLocalSizeY, aLocalSizeZ };
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::binding(0, 0, aXyz),

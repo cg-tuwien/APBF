@@ -1,15 +1,15 @@
 #pragma once
 
 #include "gpu_list.h"
-#include "GpuListUninterleaved.h"
-#include "IndexedList.h"
+#include "uninterleaved_list.h"
+//#include "indexed_list.h"
 
 namespace pbd
 {
-	enum class HiddenParticlesEnum { position, velocity, mass, phase, radius, posBackup };
-	using HiddenParticles = GpuListUninterleaved<HiddenParticlesEnum, GpuList<GpuListType::Int3>, GpuList<GpuListType::Float3>, GpuList<GpuListType::Float>, GpuList<GpuListType::Uint>, GpuList<GpuListType::Float>, GpuList<GpuListType::Int3>>;
-	using Particles = IndexedList<HiddenParticles>;
+	enum class hidden_particles_enum { position, velocity, mass, phase, radius, pos_backup };
+	using hidden_particles = uninterleaved_list<hidden_particles_enum, gpu_list<12>, gpu_list<12>, gpu_list<4>, gpu_list<4>, gpu_list<4>, gpu_list<12>>;
+//	using particles = indexed_list<hidden_particles>;
 
-	enum class NeighborhoodInfoEnum { cellStart, cellEnd };
-	using NeighborhoodInfo = GpuListUninterleaved<NeighborhoodInfoEnum, GpuList<GpuListType::Uint>, GpuList<GpuListType::Uint>>;
+//	enum class NeighborhoodInfoEnum { cellStart, cellEnd };
+//	using NeighborhoodInfo = GpuListUninterleaved<NeighborhoodInfoEnum, GpuList<GpuListType::Uint>, GpuList<GpuListType::Uint>>;
 }
