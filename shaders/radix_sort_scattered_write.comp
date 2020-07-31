@@ -1,0 +1,53 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define BLOCKSIZE 512
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set = 0, binding = 2) buffer InSecondBuffer    { uint    inSecondBuffer[]; };
+layout(set = 0, binding = 3) buffer OutSecondBuffer   { uint   outSecondBuffer[]; };
+layout(set = 0, binding = 4) buffer InHistogramTable  { uint  inHistogramTable[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer BufferLength { uint bufferLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mSubkeyOffset; // e.g. subkey == 00000000000000001111000000000000 => offset = 12
+	uint mSubkeyLength; // e.g.                                            => length = 4; upper limit is ld(BLOCKSIZE) because prefixSumStorage is re-used for bucket offsets
+};
+// ----------------------------------------------------
+
+shared uvec4 temp[BLOCKSIZE];
+
+layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	
+	uint bucketCount = uint(pow(2u, mSubkeyLength));
+	//uint blockCount = (bufferLength + BLOCKSIZE - 1u) / BLOCKSIZE;
+	uint blockCount = gl_NumWorkGroups.x;
+	uint mask = bucketCount - 1u;
+
+	uint fullValue   = id < bufferLength ?       inBuffer[id] : 4294967295u;
+	uint secondValue = id < bufferLength ? inSecondBuffer[id] : 4294967295u;
+	uint value = (fullValue >> mSubkeyOffset) & mask;
+	temp[gl_LocalInvocationID.x].x = value;
+	barrier();
+
+	if (gl_LocalInvocationID.x == 0u || temp[gl_LocalInvocationID.x - 1u].x != value)
+	{
+		temp[value].y = gl_LocalInvocationID.x;
+	}
+	barrier();
+
+	uint globalBucketOffset = (value == 0u && gl_WorkGroupID.x == 0u) ? 0u : inHistogramTable[value * blockCount + gl_WorkGroupID.x - 1u];
+	uint localOffsetInBucket = gl_LocalInvocationID.x - temp[value].y;
+	outBuffer      [globalBucketOffset + localOffsetInBucket] = fullValue;
+	outSecondBuffer[globalBucketOffset + localOffsetInBucket] = secondValue;
+}

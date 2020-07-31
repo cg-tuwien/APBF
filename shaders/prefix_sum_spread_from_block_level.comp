@@ -12,6 +12,7 @@ layout(set = 0, binding = 3) buffer LengthsAndOffsets { uint lengthsAndOffsets[]
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
+	uint mLengthsAndOffsetsOffset;
 	uint mRecursionDepth;
 };
 // ----------------------------------------------------
@@ -22,9 +23,9 @@ layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
 	uint id = gl_GlobalInvocationID.x;
-	uint bufferLength = lengthsAndOffsets[mRecursionDepth];
-	uint bufferOffset = lengthsAndOffsets[mRecursionDepth + 4u];
-	uint grpSumOffset = lengthsAndOffsets[mRecursionDepth + 5u];
+	uint bufferLength = lengthsAndOffsets[mLengthsAndOffsetsOffset + mRecursionDepth];
+	uint bufferOffset = lengthsAndOffsets[mLengthsAndOffsetsOffset + mRecursionDepth + 4u];
+	uint grpSumOffset = lengthsAndOffsets[mLengthsAndOffsetsOffset + mRecursionDepth + 5u];
 	
 	if (id >= bufferLength) return;
 

@@ -9,15 +9,16 @@ layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]
 layout(set = 0, binding = 2) buffer InSecondBuffer    { uint    inSecondBuffer[]; };
 layout(set = 0, binding = 3) buffer OutSecondBuffer   { uint   outSecondBuffer[]; };
 layout(set = 0, binding = 4) buffer OutHistogramTable { uint outHistogramTable[]; };
+layout(set = 0, binding = 5) buffer LengthsAndOffsets { uint lengthsAndOffsets[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 0, binding = 5) buffer BufferLength { uint bufferLength; };
+layout(set = 1, binding = 0) buffer BufferLength { uint bufferLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	uint mHistogramTableOffset;
+	uint mLengthsAndOffsetsOffset;
 	uint mSubkeyOffset; // e.g. subkey == 00000000000000001111000000000000 => offset = 12
 	uint mSubkeyLength; // e.g.                                            => length = 4; upper limit is ld(BLOCKSIZE) because prefixSumStorage is re-used for bucket offsets
 };
@@ -99,18 +100,20 @@ void main()
 		barrier();
 		if (gl_LocalInvocationID.x < bucketCount)
 		{
-			outHistogramTable[mHistogramTableOffset + gl_LocalInvocationID.x * blockCount + gl_WorkGroupID.x] = prefixSumStorage[gl_LocalInvocationID.x].y - prefixSumStorage[gl_LocalInvocationID.x].x;
+			outHistogramTable[gl_LocalInvocationID.x * blockCount + gl_WorkGroupID.x] = prefixSumStorage[gl_LocalInvocationID.x].y - prefixSumStorage[gl_LocalInvocationID.x].x;
 		}
 
 		// write histogram table length for subsequent prefix sum call
 		if (id == 0u)
 		{
-			outHistogramTable[0] = bucketCount * blockCount;
+			lengthsAndOffsets[mLengthsAndOffsetsOffset + 0] = bucketCount * blockCount;
+			lengthsAndOffsets[mLengthsAndOffsetsOffset + 4] = 0;
+			lengthsAndOffsets[mLengthsAndOffsetsOffset + 5] = bucketCount * blockCount;
 		}
 	} else
-	// write histogram table length for subsequent prefix sum call
+	// write 0 so that possible subsequent prefix sum call will get dispatch_indirect(0, 1, 1) => no execution
 	if (id == 0u)
 	{
-		outHistogramTable[0] = 0u;
+		lengthsAndOffsets[mLengthsAndOffsetsOffset] = 0u;
 	}
 }

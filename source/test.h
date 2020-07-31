@@ -10,7 +10,6 @@ namespace pbd
 		test() = delete;
 
 		static void test_all();
-		static void test_quick();
 
 		template <class T>
 		static pbd::gpu_list<sizeof(T)> to_gpu_list(const std::vector<T>& aData);
@@ -31,10 +30,10 @@ namespace pbd
 		static bool long_prefix_sum();
 		static bool very_long_prefix_sum();
 		static bool sort();
-//		static bool sortManyValues();
+		static bool sort_many_values();
 		static bool sort_small_values();
-/*		static bool sortManySmallValues();
-		static bool sortByPositions();
+		static bool sort_many_small_values();
+/*		static bool sortByPositions();
 		static bool deleteThese();
 		static bool merge();
 		static bool mergeGenerator();
@@ -49,7 +48,8 @@ namespace pbd
 	{
 		auto result = pbd::gpu_list<sizeof(T)>();
 		result.set_length(aData.size());
-		result.write().buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
+		algorithms::copy_bytes(aData.data(), result.write().buffer(), aData.size() * sizeof(T));
+		//result.write().buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
 		return result;
 	}
 
