@@ -111,7 +111,7 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::share_hidden_da
 template<class DataList>
 inline void pbd::indexed_list<DataList>::delete_these()
 {
-	auto helper_list_length = mHiddenData->mData.buffer()->meta<avk::storage_buffer_meta>().total_size();
+	auto helper_list_length = mHiddenData->mData.buffer()->meta_at_index<avk::buffer_meta>().total_size();
 	auto helperList   = gpu_list<4ui64>();
 	auto prefix_helper = gpu_list<4ui64>();
 	helperList.request_length(helper_list_length);

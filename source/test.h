@@ -57,7 +57,7 @@ namespace pbd
 	inline bool test::validate_list(const avk::buffer& aList, const std::vector<T>& aExpectedData, const std::string& aTestName, uint32_t aOffset)
 	{
 		auto data = std::vector<T>();
-		data.resize(aList->meta<avk::storage_buffer_meta>().total_size() / sizeof(T));
+		data.resize(aList->meta_at_index<avk::buffer_meta>().total_size() / sizeof(T));
 		aList->read(data.data(), 0, avk::sync::wait_idle(true));
 
 		for (auto i = 0u; i < aExpectedData.size(); i++)

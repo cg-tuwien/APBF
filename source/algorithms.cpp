@@ -4,8 +4,8 @@ void pbd::algorithms::copy_bytes(const avk::buffer& aSource, const avk::buffer& 
 {
 	if (aCopiedLength == 0) return;
 
-	assert(aSource->meta<avk::storage_buffer_meta>().total_size() >= aSourceOffset + aCopiedLength);
-	assert(aTarget->meta<avk::storage_buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
+	assert(aSource->meta_at_index<avk::buffer_meta>().total_size() >= aSourceOffset + aCopiedLength);
+	assert(aTarget->meta_at_index<avk::buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
 
 	auto copyRegion = vk::BufferCopy{}
 		.setSrcOffset(aSourceOffset)
@@ -20,11 +20,11 @@ void pbd::algorithms::copy_bytes(const void* aSource, const avk::buffer& aTarget
 	if (aCopiedLength == 0) return;
 
 	aSource = static_cast<const void*>(static_cast<const char8_t*>(aSource) + aSourceOffset);
-	assert(aTarget->meta<avk::storage_buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
+	assert(aTarget->meta_at_index<avk::buffer_meta>().total_size() >= aTargetOffset + aCopiedLength);
 
 	auto stagingBuffer = gvk::context().create_buffer(
 		avk::memory_usage::host_coherent, vk::BufferUsageFlagBits::eTransferSrc,
-		avk::storage_buffer_meta::create_from_size(aCopiedLength)
+		avk::generic_buffer_meta::create_from_size(aCopiedLength)
 	);
 	stagingBuffer->fill(aSource, 0, avk::sync::wait_idle());
 	shader_provider::sync_after_transfer();
@@ -60,9 +60,9 @@ void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecon
 	auto subkeyLength = 4u;
 	auto blocksize = 512u;
 	auto bucketCount = static_cast<uint32_t>(pow(2u, subkeyLength));
-	auto maxValueCount = static_cast<uint32_t>(aValues->meta<avk::storage_buffer_meta>().total_size()) / 4u;
+	auto maxValueCount = static_cast<uint32_t>(aValues->meta_at_index<avk::buffer_meta>().total_size()) / 4u;
 	auto maxHistogramTableCount = bucketCount * ((maxValueCount + blocksize - 1u) / blocksize);
-	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta<avk::storage_buffer_meta>().total_size()) / 4u - 10u;
+	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta_at_index<avk::buffer_meta>().total_size()) / 4u - 10u;
 	auto doPrefixSum = maxValueCount > blocksize;
 
 	auto& histogramTable = aHelperList;
@@ -88,8 +88,8 @@ void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecon
 
 void pbd::algorithms::prefix_sum(const avk::buffer& aValues, const avk::buffer& aHelperList, const avk::buffer& aValueCount, const avk::buffer* aResult)
 {
-	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta<avk::storage_buffer_meta>().total_size()) / 4u - 10u;
-	auto maxValueCount = static_cast<uint32_t>(aValues->meta<avk::storage_buffer_meta>().total_size()) / 4u;
+	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta_at_index<avk::buffer_meta>().total_size()) / 4u - 10u;
+	auto maxValueCount = static_cast<uint32_t>(aValues->meta_at_index<avk::buffer_meta>().total_size()) / 4u;
 	copy_bytes(aValueCount, aHelperList, 4, 0, lengthsAndOffsetsOffset * 4);
 	copy_bytes(zero(), aHelperList, 4, 0, (lengthsAndOffsetsOffset + 4) * 4);
 	copy_bytes(zero(), aHelperList, 4, 0, (lengthsAndOffsetsOffset + 5) * 4);
@@ -102,7 +102,7 @@ void pbd::algorithms::prefix_sum(const avk::buffer& aValues, const avk::buffer& 
 	// uint 0-3 are the number of values for the recursion depths 0-3, respectively
 	// uint 4-9 are the offsets of the values and the resulting group sums (uint 5 is the group sum offset for recursion 0 and the value offset for recursion 1)
 	
-	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta<avk::storage_buffer_meta>().total_size()) / 4u - 10u;
+	auto lengthsAndOffsetsOffset = static_cast<uint32_t>(aHelperList->meta_at_index<avk::buffer_meta>().total_size()) / 4u - 10u;
 
 	auto groupsize = 512u;
 	shader_provider::prefix_sum_apply_on_block_level(aValues, aResult, aHelperList, aHelperList, lengthsAndOffsetsOffset, aRecursionDepth);
