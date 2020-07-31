@@ -193,7 +193,7 @@ inline pbd::gpu_list<Stride> pbd::gpu_list<Stride>::operator+(const gpu_list& aR
 template<size_t Stride>
 inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded)
 {
-	auto currentCapacity = mData == nullptr ? 0ui64 : mData->mBuffer->meta<avk::storage_buffer_meta>().total_size() / Stride;
+	auto currentCapacity = mData == nullptr ? 0ui64 : mData->mBuffer->meta_at_index<avk::buffer_meta>().total_size() / Stride;
 
 	if (currentCapacity   == 0 && aNeededLength   ==             0) return;
 	if (mData.use_count() == 2 && currentCapacity >= aNeededLength) return;
@@ -228,9 +228,9 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 	std::shared_ptr<gpu_list_data>* bestExisting = nullptr;
 	for (auto& data : mReservedLists)
 	{
-		if (data.use_count() == 1 && data->mBuffer->meta<avk::storage_buffer_meta>().total_size() >= minSize)
+		if (data.use_count() == 1 && data->mBuffer->meta_at_index<avk::buffer_meta>().total_size() >= minSize)
 		{
-			if (bestExisting == nullptr || (*bestExisting)->mBuffer->meta<avk::storage_buffer_meta>().total_size() > data->mBuffer->meta<avk::storage_buffer_meta>().total_size())
+			if (bestExisting == nullptr || (*bestExisting)->mBuffer->meta_at_index<avk::buffer_meta>().total_size() > data->mBuffer->meta_at_index<avk::buffer_meta>().total_size())
 			{
 				bestExisting = &data;
 			}

@@ -73,6 +73,9 @@
     <None Include="shaders\radix_sort_apply_on_block_level.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\radix_sort_scattered_write.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
