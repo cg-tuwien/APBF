@@ -84,7 +84,21 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 #if INST_CENTRIC
 		mSingleBlas = context().create_bottom_level_acceleration_structure({ acceleration_structure_size_requirements::from_aabbs(1u) }, false);
-		mSingleBlas->build({ aabb{ {{ -0.5f, -0.5f, -0.5f }}, {{  0.5f,  0.5f,  0.5f }} } }); // One single AABB with side length 1 for each axis
+		mSingleBlas->build({ VkAabbPositionsKHR{ /* min: */ -1.f, -1.f, -1.f,  /* max: */ 1.f,  1.f,  1.f } });
+
+		std::vector<geometry_instance> geomInstInitData;
+		uint32_t customIndex = 0;
+		for (const auto& p : testParticles) {
+			auto pos = glm::vec3{p.mCurrentPositionRadius.x, p.mCurrentPositionRadius.y, p.mCurrentPositionRadius.z};
+			auto scl = glm::vec3{p.mCurrentPositionRadius.w};
+			geomInstInitData.push_back(
+				context().create_geometry_instance(mSingleBlas)
+				.set_transform_column_major(to_array(glm::translate(glm::mat4{1.0f}, pos) * glm::scale(scl)))
+					.set_custom_index(customIndex++)
+					.set_flags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque)
+			);
+		}
+		auto geomInstInitDataForGpu = convert_for_gpu_usage(geomInstInitData);
 #endif
 		
 		// Alloc buffers and ray tracing acceleration structures (one for each frame in flight), fill only mParticlesBuffers:
@@ -130,25 +144,14 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			static_assert(INST_CENTRIC);
 			
 			auto& gib = mGeometryInstanceBuffers.emplace_back(context().create_buffer(
-				memory_usage::device, vk::BufferUsageFlagBits::eRayTracingKHR | vk::BufferUsageFlagBits::eShaderDeviceAddressKHR, 
-				storage_buffer_meta::create_from_size(sizeof(VkAccelerationStructureInstanceKHR) * mNumParticles)
+				memory_usage::device, {},
+				storage_buffer_meta::create_from_data(geomInstInitDataForGpu),
+				geometry_instance_buffer_meta::create_from_data(geomInstInitDataForGpu)
 			));
+			gib->fill(geomInstInitDataForGpu.data(), 1, sync::wait_idle());
 			
-			std::vector<geometry_instance> temp;
-			uint32_t customIndex = 0;
-			for (const auto& p : testParticles) {
-				auto pos = glm::vec3{p.mCurrentPositionRadius.x, p.mCurrentPositionRadius.y, p.mCurrentPositionRadius.z};
-				auto scl = glm::vec3{p.mCurrentPositionRadius.w};
-				temp.push_back(
-					context().create_geometry_instance(mSingleBlas)
-					.set_transform_column_major(to_array(glm::translate(glm::mat4{1.0f}, pos) * glm::scale(scl)))
-						.set_custom_index(customIndex++)
-						.set_flags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque)
-				);
-			}
-			
-			auto& tlas = mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(temp.size(), true)); // One top level instance per particle
-			tlas->build(temp);
+			auto& tlas = mTopLevelAS.emplace_back(context().create_top_level_acceleration_structure(mNumParticles, true)); // One top level instance per particle
+			tlas->build(gib);
 #endif
 		}
 		
@@ -253,6 +256,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			binding(1, 0, mParticlesBuffer[0]),
 #if BLAS_CENTRIC
 			binding(1, 1, mAabbsBuffer[0]->as_storage_buffer()),
+#else 
+			binding(1, 1, mGeometryInstanceBuffers[0]->as_storage_buffer()),
 #endif
 			binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
 			binding(2, 1, mTopLevelAS[0])                               // Just take any, this is just to define the layout
@@ -347,12 +352,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// BUILD ACCELERATION STRUCTURES
 
-		//cmdBfr->establish_global_memory_barrier(
-		//	pipeline_stage::compute_shader,                        /* -> */ pipeline_stage::acceleration_structure_build,
-		//	memory_access::shader_buffers_and_images_write_access, /* -> */ memory_access::acceleration_structure_any_access
-		//);
-		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
-		//
+		cmdBfr->establish_global_memory_barrier(
+			pipeline_stage::compute_shader,                        /* -> */ pipeline_stage::acceleration_structure_build,
+			memory_access::shader_buffers_and_images_write_access, /* -> */ memory_access::acceleration_structure_any_access
+		);
+		
+#if BLAS_CENTRIC
 		//mBottomLevelAS[ifi]->update(mAabbsBuffer[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
 		//// TODO: switch to     ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
 
@@ -362,14 +367,18 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		//);
 		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 
-		//mTopLevelAS[ifi]->update({ context().create_geometry_instance(mBottomLevelAS[ifi]) }, {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
-		//// TODO: switch to  ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
+		mTopLevelAS[ifi]->update({ context().create_geometry_instance(mBottomLevelAS[ifi]) }, {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+		// TODO: switch to  ^ update() as soon as the validation layer errors have been fixed: https://github.com/KhronosGroup/Vulkan-ValidationLayers/issues/2066
+#else
+		static_assert(INST_CENTRIC);
+		mTopLevelAS[ifi]->build(mGeometryInstanceBuffers[ifi], {}, sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+#endif
 
-		//cmdBfr->establish_global_memory_barrier(
-		//	pipeline_stage::acceleration_structure_build,       /* -> */ pipeline_stage::ray_tracing_shaders,
-		//	memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_read_access
-		//);
-		//cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
+		cmdBfr->establish_global_memory_barrier(
+			pipeline_stage::acceleration_structure_build,       /* -> */ pipeline_stage::ray_tracing_shaders,
+			memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_read_access
+		);
+		cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 
 		// GRAPHICS
 
@@ -404,6 +413,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				binding(1, 0, mParticlesBuffer[ifi]),
 #if BLAS_CENTRIC
 				binding(1, 1, mAabbsBuffer[ifi]->as_storage_buffer()),
+#else
+				binding(1, 1, mGeometryInstanceBuffers[ifi]->as_storage_buffer()),
 #endif
 				binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
 				binding(2, 1, mTopLevelAS[ifi])                              
