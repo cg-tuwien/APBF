@@ -26,6 +26,7 @@
     <None Include="shaders\dispatch_indirect.comp" />
     <None Include="shaders\prefix_sum_apply_on_block_level.comp" />
     <None Include="shaders\prefix_sum_spread_from_block_level.comp" />
+    <None Include="shaders\radix_sort_apply_on_block_level.comp" />
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
     <None Include="shaders\instanced.vert" />

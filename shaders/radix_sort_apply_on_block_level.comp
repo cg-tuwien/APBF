@@ -1,0 +1,116 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define BLOCKSIZE 512
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set = 0, binding = 2) buffer InSecondBuffer    { uint    inSecondBuffer[]; };
+layout(set = 0, binding = 3) buffer OutSecondBuffer   { uint   outSecondBuffer[]; };
+layout(set = 0, binding = 4) buffer OutHistogramTable { uint outHistogramTable[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 0, binding = 5) buffer BufferLength { uint bufferLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mHistogramTableOffset;
+	uint mSubkeyOffset; // e.g. subkey == 00000000000000001111000000000000 => offset = 12
+	uint mSubkeyLength; // e.g.                                            => length = 4; upper limit is ld(BLOCKSIZE) because prefixSumStorage is re-used for bucket offsets
+};
+// ----------------------------------------------------
+
+shared uvec4             temp[BLOCKSIZE];
+shared uvec2 prefixSumStorage[BLOCKSIZE];
+
+uint prefixSum(in uint localId, in uint value, out uint total) {
+	prefixSumStorage[localId][0] = value;
+	uint prefixSumSrc = 0;
+	barrier();
+
+	for (uint i = 0; i < log2(BLOCKSIZE); i++)
+	{
+		uint sumOffset = uint(pow(2u, i));
+		prefixSumStorage[localId][1u - prefixSumSrc] = prefixSumStorage[localId][prefixSumSrc] + (localId < sumOffset ? 0u : prefixSumStorage[localId - sumOffset][prefixSumSrc]);
+		prefixSumSrc = 1u - prefixSumSrc;
+		barrier();
+	}
+	total = prefixSumStorage[BLOCKSIZE - 1][prefixSumSrc];
+	return prefixSumStorage[localId][prefixSumSrc];
+}
+
+layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+
+	// load block into shared storage
+	temp[gl_LocalInvocationID.x][0] = id < bufferLength ?       inBuffer[id] : 4294967295u;
+	temp[gl_LocalInvocationID.x][1] = id < bufferLength ? inSecondBuffer[id] : 4294967295u;
+	uint tempSrc = 0u;
+	barrier();
+
+	for (uint i = mSubkeyOffset; i < mSubkeyOffset + mSubkeyLength; i++)
+	{
+		uint totalSum;
+		uint b = (temp[gl_LocalInvocationID.x][tempSrc] >> i) & 1u;
+		uint s = prefixSum(gl_LocalInvocationID.x, uint(b), totalSum);
+		uint dest = b == 1u ? s + BLOCKSIZE - totalSum - 1u : gl_LocalInvocationID.x - s;
+		temp[dest][2u - tempSrc] = temp[gl_LocalInvocationID.x][tempSrc     ];
+		temp[dest][3u - tempSrc] = temp[gl_LocalInvocationID.x][tempSrc + 1u];
+		tempSrc = 2u - tempSrc;
+		barrier();
+	}
+
+	uint value = temp[gl_LocalInvocationID.x][tempSrc];
+	outBuffer[id] = value;
+	outSecondBuffer[id] = temp[gl_LocalInvocationID.x][tempSrc + 1u];
+
+	if (bufferLength > BLOCKSIZE)
+	{
+		uint bucketCount = uint(pow(2u, mSubkeyLength));
+		//uint blockCount = (bufferLength + BLOCKSIZE - 1u) / BLOCKSIZE;
+		uint blockCount = gl_NumWorkGroups.x;
+		uint mask = bucketCount - 1u;
+		uint neighbor = (gl_LocalInvocationID.x == BLOCKSIZE - 1u) ? 4294967295u : temp[gl_LocalInvocationID.x + 1u][tempSrc];
+		value    = (value    >> mSubkeyOffset) & mask;
+		neighbor = (neighbor >> mSubkeyOffset) & mask;
+		// re-use prefixSumStorage for bucket offsets
+		if (gl_LocalInvocationID.x < bucketCount)
+		{
+			prefixSumStorage[gl_LocalInvocationID.x] = uvec2(0u, 0u);
+		}
+		barrier();
+		if (id < bufferLength)
+		{
+			if (id == bufferLength - 1u || gl_LocalInvocationID.x == BLOCKSIZE - 1u)
+			{
+				prefixSumStorage[value].y = gl_LocalInvocationID.x + 1u;
+			}
+			else if (value != neighbor)
+			{
+				prefixSumStorage[value   ].y = gl_LocalInvocationID.x + 1u;
+				prefixSumStorage[neighbor].x = gl_LocalInvocationID.x + 1u;
+			}
+		}
+		barrier();
+		if (gl_LocalInvocationID.x < bucketCount)
+		{
+			outHistogramTable[mHistogramTableOffset + gl_LocalInvocationID.x * blockCount + gl_WorkGroupID.x] = prefixSumStorage[gl_LocalInvocationID.x].y - prefixSumStorage[gl_LocalInvocationID.x].x;
+		}
+
+		// write histogram table length for subsequent prefix sum call
+		if (id == 0u)
+		{
+			outHistogramTable[0] = bucketCount * blockCount;
+		}
+	} else
+	// write histogram table length for subsequent prefix sum call
+	if (id == 0u)
+	{
+		outHistogramTable[0] = 0u;
+	}
+}

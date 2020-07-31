@@ -36,9 +36,31 @@ size_t pbd::algorithms::prefix_sum_calculate_needed_helper_list_length(size_t aV
 	} while (elementCount > 1);
 	return result == 0u ? 0u : result + 9u;
 }
-
-void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecondValues, const avk::buffer& aHelperList, size_t aValueCount, const avk::buffer& aResult, const avk::buffer& aSecondResult, uint32_t aValueUpperBound)
+void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecondValues, const avk::buffer& aHelperList, const avk::buffer& aValueCount, const avk::buffer& aResult, const avk::buffer& aSecondResult, uint32_t aValueUpperBound)
 {
+	auto subkeyLength = 4u;
+	auto blocksize = 512u;
+	auto bucketCount = static_cast<uint32_t>(pow(2u, subkeyLength));
+	auto maxValueCount = aValues->meta<avk::storage_buffer_meta>().total_size() / 4;
+	auto maxHistogramTableCount = bucketCount * ((maxValueCount + blocksize - 1u) / blocksize);
+	auto histogramTableOffset = aHelperList->meta<avk::storage_buffer_meta>().total_size() / 4 - maxHistogramTableCount;
+	auto doPrefixSum = maxValueCount > blocksize;
+
+	auto& histogramTable = aHelperList;
+
+	for (auto subkeyOffset = 0u; (subkeyOffset < 32u) && (aValueUpperBound >> subkeyOffset != 0); subkeyOffset += subkeyLength)
+	{
+		auto lastIteration = (subkeyOffset + subkeyLength >= 32u) || (aValueUpperBound >> (subkeyOffset + subkeyLength) == 0u);
+		auto inResult = doPrefixSum != lastIteration;
+		shader_provider::radix_sort_apply_on_block_level(aValues, inResult ? aResult : aValues, aSecondValues, inResult ? aSecondResult : aSecondValues, histogramTable, aValueCount, histogramTableOffset, subkeyOffset, subkeyLength);
+
+		if (doPrefixSum)
+		{
+			// histogram table length was written into aHelperList[0] by radix_sort_apply_on_block_level()
+			prefix_sum(histogramTable, aHelperList, histogramTable, 0u, maxHistogramTableCount);
+			//shader_provider::radix_sort_scattered_write();
+		}
+	}
 }
 
 void pbd::algorithms::prefix_sum(const avk::buffer& aValues, const avk::buffer& aHelperList, const avk::buffer& aValueCount, const avk::buffer* aResult)

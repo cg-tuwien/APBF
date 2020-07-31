@@ -160,7 +160,34 @@ void shader_provider::prefix_sum_spread_from_block_level(const avk::buffer& aInB
 		avk::binding(0, 1, aOutBuffer),
 		avk::binding(0, 2, aInGroupSumBuffer),
 		avk::binding(0, 3, aLengthsAndOffsets)
-		}));
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::radix_sort_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aInSecondBuffer, const avk::buffer& aOutSecondBuffer, const avk::buffer& aOutHistogramTable, const avk::buffer& aBufferLength, uint32_t aHistogramTableOffset, uint32_t aSubkeyOffset, uint32_t aSubkeyLength)
+{
+	struct push_constants { uint32_t mHistogramTableOffset, mSubkeyOffset, mSubkeyLength; } pushConstants{ aHistogramTableOffset, aSubkeyOffset, aSubkeyLength };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/radix_sort_apply_on_block_level.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInSecondBuffer),
+		avk::binding(0, 3, aOutSecondBuffer),
+		avk::binding(0, 4, aOutHistogramTable),
+		avk::binding(0, 5, aBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 512u);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(0, 2, aInSecondBuffer),
+		avk::binding(0, 3, aOutSecondBuffer),
+		avk::binding(0, 4, aOutHistogramTable),
+		avk::binding(0, 5, aBufferLength)
+	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }

@@ -14,10 +14,10 @@ void pbd::test::test_all()
 	if (!prefix_sum())                             failCount++;
 	if (!long_prefix_sum())                        failCount++;
 	if (!very_long_prefix_sum())                   failCount++;
-/*	if (!sort())                                   failCount++;
-	if (!sortManyValues())                         failCount++;
-	if (!sortSmallValues())                        failCount++;
-	if (!sortManySmallValues())                    failCount++;
+	if (!sort())                                   failCount++;
+//	if (!sortManyValues())                         failCount++;
+	if (!sort_small_values())                        failCount++;
+/*	if (!sortManySmallValues())                    failCount++;
 //	if (!sortByPositions())                        failCount++;
 	if (!deleteThese())                            failCount++;
 //	if (!merge())                                  failCount++;
@@ -242,30 +242,30 @@ bool pbd::test::very_long_prefix_sum()
 	return pass;
 }
 
-/*bool pbd::test::sort()
+bool pbd::test::sort()
 {
+	shader_provider::start_recording();
 	auto listData = std::vector<uint32_t>({ 15u, 2u, 1234u, 2u, 0u, 4294967295u, 1u, 4294967294u });
 	auto expectedResult = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 15u, 1234u, 4294967294u, 4294967295u });
 	auto indexData = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
 	auto expectedIndexResult = std::vector<uint32_t>({ 4u, 6u, 1u, 3u, 0u, 2u, 7u, 5u });
-	auto list        = GpuList<GpuListType::Uint>();
-	auto result      = GpuList<GpuListType::Uint>();
-	auto indices     = GpuList<GpuListType::Uint>();
-	auto indexResult = GpuList<GpuListType::Uint>();
-	auto sortHelper  = GpuList<GpuListType::Uint>();
-	list.resize(listData.size());
-	result.resize(listData.size());
-	indices.resize(indexData.size());
-	indexResult.resize(indexData.size());
-	sortHelper.resize(ListManipulation::sort_calculateNeededHelperListLength(list.length()));
-	fillList(list.getWriteBuffer(), listData);
-	fillList(indices.getWriteBuffer(), indexData);
-	ListManipulation::sort(list.getWriteBuffer(), indices.getWriteBuffer(), sortHelper.getWriteBuffer(), list.length(), result.getWriteBuffer(), indexResult.getWriteBuffer());
-	auto pass = validateList(result.getReadBuffer(), expectedResult, "sort");
-	return pass && validateList(indexResult.getReadBuffer(), expectedIndexResult, "sort indices");
+	auto list        = to_gpu_list(listData);
+	auto indices     = to_gpu_list(indexData);
+	auto result      = pbd::gpu_list<4ui64>();
+	auto indexResult = pbd::gpu_list<4ui64>();
+	auto sortHelper  = pbd::gpu_list<4ui64>();
+	result     .request_length(listData.size());
+	indexResult.request_length(indexData.size());
+	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_list(result.buffer(), expectedResult, "sort") && pass;
+	pass = validate_list(indexResult.buffer(), expectedIndexResult, "sort indices") && pass;
+	return pass;
 }
 
-bool pbd::test::sortManyValues()
+/*bool pbd::test::sortManyValues()
 {
 	srand(0);
 	auto blocksize = 512u;
@@ -299,32 +299,32 @@ bool pbd::test::sortManyValues()
 	std::sort(listData.begin(), listData.end());
 	auto pass = validateList(result.getReadBuffer(), listData, "sort (many values)");
 	return pass && validateList(indexResult.getReadBuffer(), indexData, "sort indices (many values)");
-}
+}*/
 
-bool pbd::test::sortSmallValues()
+bool pbd::test::sort_small_values()
 {
+	shader_provider::start_recording();
 	auto listData = std::vector<uint32_t>({ 15u, 2u, 3u, 2u, 0u, 14u, 1u, 14u });
 	auto expectedResult = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 3u, 14u, 14u, 15u });
 	auto indexData = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
 	auto expectedIndexResult = std::vector<uint32_t>({ 4u, 6u, 1u, 3u, 2u, 5u, 7u, 0u });
-	auto list        = GpuList<GpuListType::Uint>();
-	auto result      = GpuList<GpuListType::Uint>();
-	auto indices     = GpuList<GpuListType::Uint>();
-	auto indexResult = GpuList<GpuListType::Uint>();
-	auto sortHelper  = GpuList<GpuListType::Uint>();
-	list.resize(listData.size());
-	result.resize(listData.size());
-	indices.resize(indexData.size());
-	indexResult.resize(indexData.size());
-	sortHelper.resize(ListManipulation::sort_calculateNeededHelperListLength(list.length()));
-	fillList(list.getWriteBuffer(), listData);
-	fillList(indices.getWriteBuffer(), indexData);
-	ListManipulation::sort(list.getWriteBuffer(), indices.getWriteBuffer(), sortHelper.getWriteBuffer(), list.length(), result.getWriteBuffer(), indexResult.getWriteBuffer());
-	auto pass = validateList(result.getReadBuffer(), expectedResult, "sort (small values)");
-	return pass && validateList(indexResult.getReadBuffer(), expectedIndexResult, "sort indices (small values)");
+	auto list        = to_gpu_list(listData);
+	auto indices     = to_gpu_list(indexData);
+	auto result      = pbd::gpu_list<4ui64>();
+	auto indexResult = pbd::gpu_list<4ui64>();
+	auto sortHelper  = pbd::gpu_list<4ui64>();
+	result     .request_length(listData.size());
+	indexResult.request_length(indexData.size());
+	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_list(result.buffer(), expectedResult, "sort (small values)") && pass;
+	pass = validate_list(indexResult.buffer(), expectedIndexResult, "sort indices (small values)") && pass;
+	return pass;
 }
 
-bool pbd::test::sortManySmallValues()
+/*bool pbd::test::sortManySmallValues()
 {
 	srand(0);
 	auto blocksize = 512u;

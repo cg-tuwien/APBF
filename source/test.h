@@ -30,10 +30,10 @@ namespace pbd
 		static bool prefix_sum();
 		static bool long_prefix_sum();
 		static bool very_long_prefix_sum();
-/*		static bool sort();
-		static bool sortManyValues();
-		static bool sortSmallValues();
-		static bool sortManySmallValues();
+		static bool sort();
+//		static bool sortManyValues();
+		static bool sort_small_values();
+/*		static bool sortManySmallValues();
 		static bool sortByPositions();
 		static bool deleteThese();
 		static bool merge();
