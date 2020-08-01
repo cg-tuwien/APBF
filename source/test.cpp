@@ -4,13 +4,13 @@
 void pbd::test::test_all()
 {
 	auto failCount = 0u;
-	if (!gpu_list_concatenation())                 failCount++;
-	if (!gpu_list_concatenation2())                failCount++;
+	if (!gpu_list_concatenation_1())               failCount++;
+	if (!gpu_list_concatenation_2())               failCount++;
 	if (!gpu_list_apply_edit())                    failCount++;
 	if (!indexed_list_write_increasing_sequence()) failCount++;
-//	if (!indexedList_applyHiddenEdit())            failCount++;
-//	if (!indexedList_applyHiddenEdit2())           failCount++;
-//	if (!indexedList_applyHiddenEdit3())           failCount++;
+	if (!indexed_list_apply_hidden_edit_1())       failCount++;
+	if (!indexed_list_apply_hidden_edit_2())       failCount++;
+	if (!indexed_list_apply_hidden_edit_3())       failCount++;
 	if (!prefix_sum())                             failCount++;
 	if (!long_prefix_sum())                        failCount++;
 	if (!very_long_prefix_sum())                   failCount++;
@@ -30,7 +30,7 @@ void pbd::test::test_all()
 	}
 }
 
-bool pbd::test::gpu_list_concatenation()
+bool pbd::test::gpu_list_concatenation_1()
 {
 	shader_provider::start_recording();
 	auto listAData = std::vector<uint32_t>({3u, 64u, 12683u, 4294967295u});
@@ -43,7 +43,7 @@ bool pbd::test::gpu_list_concatenation()
 	return validate_list(listA.buffer(), listAData, "gpu_list concatenation");
 }
 
-bool pbd::test::gpu_list_concatenation2()
+bool pbd::test::gpu_list_concatenation_2()
 {
 	shader_provider::start_recording();
 	auto listAData = std::vector<glm::vec3>({ glm::vec3(0, 2, 61.5), glm::vec3(13.65, 4.65, 234) });
@@ -77,63 +77,82 @@ bool pbd::test::gpu_list_apply_edit()
 
 bool pbd::test::indexed_list_write_increasing_sequence()
 {
-	/*auto expectedResult = std::vector<uint32_t>({ 2u, 1u, 0u });
-	auto list = indexed_list<GpuList<GpuListType::Float>>(5);
-	list.increaseLength(3);
-	return validateList(list.getIndexReadBuffer(), expectedResult, "IndexedList::increaseLength()");*/
-	return true;
+	shader_provider::start_recording();
+	auto expectedResult = std::vector<uint32_t>({ 0u, 1u, 2u });
+	auto list = indexed_list<gpu_list<4ui64>>(5).request_length(3);
+	list.increase_length(3);
+	shader_provider::end_recording();
+	return validate_list(list.index_buffer(), expectedResult, "IndexedList::increaseLength()");
 }
 
-/*bool pbd::test::indexedList_applyHiddenEdit()
+bool pbd::test::indexed_list_apply_hidden_edit_1()
 {
+	shader_provider::start_recording();
 	auto expectedResultA = std::vector<uint32_t>({ 0u, 1u, 2u, 3u });
-	auto expectedResultB = std::vector<uint32_t>({ 1u, 2u });
-	auto listA = IndexedList<GpuList<GpuListType::Float>>(5);
-	auto editList = GpuList<GpuListType::Uint>();
-	editList.resize(4);
-	fillList(editList.getWriteBuffer(), std::vector<uint32_t>({ 1u, 2u, 3u, 4u }));
-	listA.increaseLength(5);
-	auto listB = listA.subset(1, 2); // 3, 2
-	listA.getHiddenList().applyEdit(editList, nullptr);
-	auto pass = validateList(listA.getIndexReadBuffer(), expectedResultA, "IndexedList::applyHiddenEdit()");
-	pass = validateList(listB.getIndexReadBuffer(), expectedResultB, "IndexedList::applyHiddenEdit()") && pass;
+	auto expectedResultB = std::vector<uint32_t>({0u });
+	auto editListData    = std::vector<uint32_t>({ 1u, 2u, 3u, 4u });
+	auto listA    = indexed_list<gpu_list<4ui64>>(5).request_length(5);
+	auto editList = to_gpu_list(editListData);
+	listA.increase_length(2);
+	auto listB = listA; // 3, 2
+	listA.increase_length(3);
+	listA.hidden_list().apply_edit(editList, nullptr);
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), expectedResultA.size(), "IndexedList::applyHiddenEdit() 1 Length A") && pass;
+	pass = validate_length(listB.length(), expectedResultB.size(), "IndexedList::applyHiddenEdit() 1 Length B") && pass;
+	pass = validate_list(listA.index_buffer(), expectedResultA, "IndexedList::applyHiddenEdit() 1 A") && pass;
+	pass = validate_list(listB.index_buffer(), expectedResultB, "IndexedList::applyHiddenEdit() 1 B") && pass;
 	return pass;
 }
 
-bool pbd::test::indexedList_applyHiddenEdit2()
+bool pbd::test::indexed_list_apply_hidden_edit_2()
 {
+	shader_provider::start_recording();
+	auto expectedResultA = std::vector<uint32_t>({ 0u, 1u, 2u, 3u });
 	auto expectedResultB = std::vector<uint32_t>({ 0u, 1u, 2u });
-	auto listA = IndexedList<GpuList<GpuListType::Float>>(5);
-	auto editList = GpuList<GpuListType::Uint>();
-	editList.resize(4);
-	listA.increaseLength(5);
-	auto listB = listA.subset(0, 3);
-	fillList(editList.getWriteBuffer(), std::vector<uint32_t>({ 0u, 1u, 3u, 4u }));
-	fillList(listB.getIndexWriteBuffer(), std::vector<uint32_t>({ 0u, 3u, 1u }));
-	listA.getHiddenList().applyEdit(editList, nullptr);
-	auto pass = listB.length() == 3 &&listA.length() == 4 && listA.getHiddenList().length() == 4;
-	pass = validateList(listB.getIndexReadBuffer(), expectedResultB, "IndexedList::applyHiddenEdit() - second test") && pass;
+	auto editListData    = std::vector<uint32_t>({ 0u, 1u, 3u, 4u });
+	auto listBIdxData    = std::vector<uint32_t>({ 0u, 3u, 1u });
+	auto listA    = indexed_list<gpu_list<12ui64>>(5).request_length(5);
+	auto listB    = indexed_list<gpu_list<12ui64>>().set_length(listBIdxData.size());
+	auto editList = to_gpu_list(editListData);
+	listB.share_hidden_data_from(listA);
+	listA.increase_length(5);
+	algorithms::copy_bytes(listBIdxData.data(), listB.write().index_buffer(), listBIdxData.size() * 4);
+	listA.hidden_list().apply_edit(editList, nullptr);
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.hidden_list().length(), 4, "IndexedList::applyHiddenEdit() 2 Length Hidden List") && pass;
+	pass = validate_length(listA.length(), expectedResultA.size(), "IndexedList::applyHiddenEdit() 2 Length A") && pass;
+	pass = validate_length(listB.length(), expectedResultB.size(), "IndexedList::applyHiddenEdit() 2 Length B") && pass;
+	pass = validate_list(listA.index_buffer(), expectedResultA, "IndexedList::applyHiddenEdit() 2 A") && pass;
+	pass = validate_list(listB.index_buffer(), expectedResultB, "IndexedList::applyHiddenEdit() 2 B") && pass;
 	return pass;
 }
 
-bool pbd::test::indexedList_applyHiddenEdit3()
+bool pbd::test::indexed_list_apply_hidden_edit_3()
 {
+	shader_provider::start_recording();
 	auto expectedResultA = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u });
 	auto expectedResultB = std::vector<uint32_t>({ 0u, 2u, 3u, 3u });
-	auto listA = IndexedList<GpuList<GpuListType::Float>>(5);
-	auto listB = IndexedList<GpuList<GpuListType::Float>>(0);
-	auto editList = GpuList<GpuListType::Uint>();
-	listB.shareHiddenDataFrom(listA);
-	editList.resize(5);
-	listA.increaseLength(5);
-	fillList(editList.getWriteBuffer(), std::vector<uint32_t>({ 2u, 1u, 2u, 4u, 1u }));
-	fillList(listB.getIndexWriteBuffer(3, false), std::vector<uint32_t>({ 4u, 2u, 4u }));
-	listA.getHiddenList().applyEdit(editList, nullptr);
-	auto pass = listA.length() == 5 && listB.length() == 4 && listB.getHiddenList().length() == 5;
-	pass = validateList(listA.getIndexReadBuffer(), expectedResultA, "IndexedList::applyHiddenEdit() - third test") && pass;
-	pass = validateList(listB.getIndexReadBuffer(), expectedResultB, "IndexedList::applyHiddenEdit() - third test") && pass;
+	auto editListData    = std::vector<uint32_t>({ 2u, 1u, 2u, 4u, 1u });
+	auto listBIdxData    = std::vector<uint32_t>({ 4u, 2u, 4u });
+	auto listA    = indexed_list<gpu_list<12ui64>>(5).request_length(5);
+	auto listB    = indexed_list<gpu_list<12ui64>>().set_length(listBIdxData.size());
+	auto editList = to_gpu_list(editListData);
+	listB.share_hidden_data_from(listA);
+	listA.increase_length(5);
+	algorithms::copy_bytes(listBIdxData.data(), listB.write().index_buffer(), listBIdxData.size() * 4);
+	listA.hidden_list().apply_edit(editList, nullptr);
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.hidden_list().length(), 5, "IndexedList::applyHiddenEdit() 3 Length Hidden List") && pass;
+	pass = validate_length(listA.length(), expectedResultA.size(), "IndexedList::applyHiddenEdit() 3 Length A") && pass;
+	pass = validate_length(listB.length(), expectedResultB.size(), "IndexedList::applyHiddenEdit() 3 Length B") && pass;
+	pass = validate_list(listA.index_buffer(), expectedResultA, "IndexedList::applyHiddenEdit() 3 A") && pass;
+	pass = validate_list(listB.index_buffer(), expectedResultB, "IndexedList::applyHiddenEdit() 3 B") && pass;
 	return pass;
-}*/
+}
 
 bool pbd::test::prefix_sum()
 {

@@ -1,0 +1,31 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InRangeEnd { uint inRangeEnd[]; };
+layout(set = 0, binding = 1) buffer OutBuffer  { uint  outBuffer[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InRangeEndLength { uint inRangeEndLength; };
+layout(set = 1, binding = 1) buffer OutBufferLength  { uint outBufferLength; };
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	
+	if (id >= inRangeEndLength) return;
+
+	uint startIdx = id == 0u ? 0u : inRangeEnd[id - 1u];
+	uint   endIdx =                 inRangeEnd[id     ];
+
+	for (uint i = startIdx; i < endIdx; i++) {
+		outBuffer[i] = id;
+	}
+
+	if (id == inRangeEndLength - 1u) {
+		outBufferLength = endIdx;
+	}
+}

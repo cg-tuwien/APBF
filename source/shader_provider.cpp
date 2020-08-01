@@ -97,6 +97,25 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 	dispatch_indirect();
 }
 
+void shader_provider::write_sequence(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, uint32_t aStartValue, uint32_t aSequenceValueStep)
+{
+	struct push_constants { uint32_t mStartValue, mSequenceValueStep; } pushConstants{ aStartValue, aSequenceValueStep };
+	prepare_dispatch_indirect(aInBufferLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/write_sequence.comp",
+		avk::binding(0, 0, aOutBuffer),
+		avk::binding(1, 0, aInBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aOutBuffer),
+		avk::binding(1, 0, aInBufferLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::write_increasing_sequence(const avk::buffer& aTargetList, const avk::buffer& aNewTargetListLength, const changing_length& aSequenceMinValue, uint32_t aValueUpperBound, uint32_t aSequenceLength)
 {
 	struct push_constants { uint32_t mValueUpperBound, mSequenceLength; } pushConstants{ aValueUpperBound, aSequenceLength };
@@ -117,6 +136,92 @@ void shader_provider::write_increasing_sequence(const avk::buffer& aTargetList, 
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch(aSequenceLength);
+}
+
+void shader_provider::find_value_ranges(const avk::buffer& aInBuffer, const avk::buffer& aOutRangeStart, const avk::buffer& aOutRangeEnd, const avk::buffer& aInBufferLength)
+{
+	prepare_dispatch_indirect(aInBufferLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/find_value_ranges.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutRangeStart),
+		avk::binding(0, 2, aOutRangeEnd),
+		avk::binding(1, 0, aInBufferLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutRangeStart),
+		avk::binding(0, 2, aOutRangeEnd),
+		avk::binding(1, 0, aInBufferLength)
+	}));
+	dispatch_indirect();
+}
+
+void shader_provider::indexed_subtract(const avk::buffer& aInIndexList, const avk::buffer& aInMinuend, const avk::buffer& aInSubtrahend, const avk::buffer& aOutDifference, const avk::buffer& aInIndexListLength)
+{
+	prepare_dispatch_indirect(aInIndexListLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/indexed_subtract.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInMinuend),
+		avk::binding(0, 2, aInSubtrahend),
+		avk::binding(0, 3, aOutDifference),
+		avk::binding(1, 0, aInIndexListLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInMinuend),
+		avk::binding(0, 2, aInSubtrahend),
+		avk::binding(0, 3, aOutDifference),
+		avk::binding(1, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
+}
+
+void shader_provider::generate_new_index_list(const avk::buffer& aInRangeEnd, const avk::buffer& aOutBuffer, const avk::buffer& aInRangeEndLength, const avk::buffer& aOutBufferLength)
+{
+	prepare_dispatch_indirect(aInRangeEndLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/generate_new_index_list.comp",
+		avk::binding(0, 0, aInRangeEnd),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(1, 0, aInRangeEndLength),
+		avk::binding(1, 1, aOutBufferLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInRangeEnd),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(1, 0, aInRangeEndLength),
+		avk::binding(1, 1, aOutBufferLength)
+	}));
+	dispatch_indirect();
+}
+
+void shader_provider::generate_new_edit_list(const avk::buffer& aInIndexList, const avk::buffer& aInEditList, const avk::buffer& aInRangeStart, const avk::buffer& aInTargetIndex, const avk::buffer& aOutBuffer, const avk::buffer& aInIndexListLength)
+{
+	prepare_dispatch_indirect(aInIndexListLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/generate_new_edit_list.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInEditList),
+		avk::binding(0, 2, aInRangeStart),
+		avk::binding(0, 3, aInTargetIndex),
+		avk::binding(0, 4, aOutBuffer),
+		avk::binding(1, 0, aInIndexListLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInEditList),
+		avk::binding(0, 2, aInRangeStart),
+		avk::binding(0, 3, aInTargetIndex),
+		avk::binding(0, 4, aOutBuffer),
+		avk::binding(1, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
 }
 
 void shader_provider::prefix_sum_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aOutGroupSumBuffer, const avk::buffer& aLengthsAndOffsets, uint32_t aLengthsAndOffsetsOffset, uint32_t aRecursionDepth)

@@ -76,6 +76,21 @@
     <None Include="shaders\radix_sort_scattered_write.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\find_value_ranges.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\write_sequence.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\indexed_subtract.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\generate_new_index_list.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\generate_new_edit_list.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

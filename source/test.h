@@ -19,13 +19,13 @@ namespace pbd
 		template <class T>
 		static bool approximately_equal(T v1, T v2);
 
-		static bool gpu_list_concatenation();
-		static bool gpu_list_concatenation2();
+		static bool gpu_list_concatenation_1();
+		static bool gpu_list_concatenation_2();
 		static bool gpu_list_apply_edit();
 		static bool indexed_list_write_increasing_sequence();
-//		static bool indexedList_applyHiddenEdit();
-//		static bool indexedList_applyHiddenEdit2();
-//		static bool indexedList_applyHiddenEdit3();
+		static bool indexed_list_apply_hidden_edit_1();
+		static bool indexed_list_apply_hidden_edit_2();
+		static bool indexed_list_apply_hidden_edit_3();
 		static bool prefix_sum();
 		static bool long_prefix_sum();
 		static bool very_long_prefix_sum();

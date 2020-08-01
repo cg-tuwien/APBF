@@ -21,6 +21,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\copy_scattered_read.comp" />
+    <None Include="shaders\find_value_ranges.comp" />
+    <None Include="shaders\generate_new_edit_list.comp" />
+    <None Include="shaders\generate_new_index_list.comp" />
+    <None Include="shaders\indexed_subtract.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
@@ -36,6 +40,7 @@
     <None Include="shaders\rt_stupid_intersection.rint" />
     <None Include="shaders\rt_trace_rays.rgen" />
     <None Include="shaders\write_increasing_sequence.comp" />
+    <None Include="shaders\write_sequence.comp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
