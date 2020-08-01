@@ -18,7 +18,8 @@ void pbd::test::test_all()
 	if (!sort_many_values())                       failCount++;
 	if (!sort_small_values())                      failCount++;
 	if (!sort_many_small_values())                 failCount++;
-	if (!delete_these())                           failCount++;
+	if (!delete_these_1())                         failCount++;
+	if (!delete_these_2())                         failCount++;
 //	if (!sortByPositions())                        failCount++;
 //	if (!merge())                                  failCount++;
 //	if (!mergeGenerator())                         failCount++;
@@ -355,7 +356,7 @@ bool pbd::test::sort_many_small_values()
 	return pass;
 }
 
-bool pbd::test::delete_these()
+bool pbd::test::delete_these_1()
 {
 	shader_provider::start_recording();
 	auto hiddenValues   = std::vector<uint32_t>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
@@ -375,6 +376,22 @@ bool pbd::test::delete_these()
 	pass = validate_length(listC.length(), 2, "delete_these() length C") && pass;
 	pass = validate_length(listA.hidden_list().length(), 2, "delete_these() length Hidden List") && pass;
 	pass = validate_list(listC.hidden_list().buffer(), expectedResult, "delete_these()") && pass;
+	return pass;
+}
+
+bool pbd::test::delete_these_2()
+{
+	shader_provider::start_recording();
+	auto listA = indexed_list<gpu_list<4ui64>>(13).request_length(13);
+	listA.increase_length(8);
+	auto listB = listA;
+	listB.increase_length(5);
+	listB.delete_these();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), 0, "delete_these() 2 length A") && pass;
+	pass = validate_length(listB.length(), 0, "delete_these() 2 length B") && pass;
+	pass = validate_length(listA.hidden_list().length(), 0, "delete_these() 2 length Hidden List") && pass;
 	return pass;
 }
 

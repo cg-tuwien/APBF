@@ -33,7 +33,8 @@ namespace pbd
 		static bool sort_many_values();
 		static bool sort_small_values();
 		static bool sort_many_small_values();
-		static bool delete_these();
+		static bool delete_these_1();
+		static bool delete_these_2();
 /*		static bool sortByPositions();
 		static bool merge();
 		static bool mergeGenerator();

@@ -9,7 +9,6 @@ layout(set = 0, binding = 2) buffer EditList   { uint   editList[]; };
 
 // ------------------- list lengths -------------------
 layout(set = 1, binding = 0) buffer EditListLength      { uint      editListLength; };
-layout(set = 1, binding = 1) buffer NewTargetListLength { uint newTargetListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
@@ -24,7 +23,6 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 
 	if (id >= editListLength * mStride) return;
-	if (id == 0) newTargetListLength = editListLength;
 
 	for (uint b = 0; b < mStride; b++) {
 		targetList[id * mStride + b] = sourceList[editList[id] * mStride + b];

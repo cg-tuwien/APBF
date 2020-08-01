@@ -19,6 +19,7 @@ namespace pbd
 		avk::buffer& length() const;
 		const shader_provider::changing_length changing_length(); // TODO maybe replace with set_length(avk::buffer)?
 		gpu_list& set_length(size_t aLength);
+		gpu_list& set_length(const avk::buffer& aLength);
 		gpu_list& request_length(size_t aLength);
 		size_t requested_length();
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
@@ -90,8 +91,14 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(size_t aLength)
 	if (mRequestedLength < aLength) mRequestedLength = aLength;
 
 	auto l = static_cast<uint32_t>(aLength);
-	write().length()->fill(&l, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
-	shader_provider::sync_after_transfer();
+	algorithms::copy_bytes(&l, write().length(), 4);
+	return *this;
+}
+
+template<size_t Stride>
+inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(const avk::buffer& aLength)
+{
+	algorithms::copy_bytes(aLength, write().length(), 4);
 	return *this;
 }
 
@@ -129,7 +136,8 @@ inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_i
 
 	auto oldData = mData;
 	prepare_for_edit(mRequestedLength);
-	shader_provider::copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.buffer(), aEditList.length(), length(), Stride);
+	shader_provider::copy_scattered_read(oldData->mBuffer, mData->mBuffer, aEditList.buffer(), aEditList.length(), Stride);
+	set_length(aEditList.length());
 }
 
 template<size_t Stride>

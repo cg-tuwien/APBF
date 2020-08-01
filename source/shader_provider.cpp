@@ -72,7 +72,7 @@ void shader_provider::append_list(const avk::buffer& aTargetList, const avk::buf
 	dispatch_indirect();
 }
 
-void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, const avk::buffer& aNewTargetListLength, uint32_t aStride)
+void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, uint32_t aStride)
 {
 	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
@@ -81,7 +81,6 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::binding(0, 1, aTargetList),
 		avk::binding(0, 2, aEditList),
 		avk::binding(1, 0, aEditListLength),
-		avk::binding(1, 1, aNewTargetListLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
 	prepare_dispatch_indirect(aEditListLength);
@@ -91,7 +90,6 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::binding(0, 1, aTargetList),
 		avk::binding(0, 2, aEditList),
 		avk::binding(1, 0, aEditListLength),
-		avk::binding(1, 1, aNewTargetListLength)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();

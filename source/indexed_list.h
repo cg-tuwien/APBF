@@ -267,6 +267,7 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 	//
 	// 1. for every i: for every j in [targetIndexList[i - 1]; targetIndexList[i]): newIndexList[j] = i
 
+	set_length(0); // if aEditList has length 0, the following compute shader is not executed and would not correctly set the new length to 0
 	shader_provider::generate_new_index_list(targetIndexList.buffer(), mIndexList.write().buffer(), aEditList.length(), mIndexList.write().length());
 
 	if (mOwner == nullptr)
@@ -281,7 +282,7 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 	// 1. for every i: newEditList[i] = binStartIdx[editList[newIndexList[i]]] + i - targetIndexList[newIndexList[i] - 1]
 
 	auto& newEditList = binEndIdx; // re-use list
-	newEditList.request_length(mIndexList.requested_length());
+	newEditList.request_length(mIndexList.requested_length()).set_length(length());
 	shader_provider::generate_new_edit_list(mIndexList.buffer(), aEditList.buffer(), binStartIdx.buffer(), targetIndexList.buffer(), newEditList.write().buffer(), mIndexList.length());
 
 	if (!mSorted) {

@@ -17,7 +17,7 @@ public:
 	static avk::command_buffer& cmd_bfr();
 	static void roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, uint32_t aParticleCount);
 	static void append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const changing_length& aTargetListLength, const avk::buffer& aAppendingListLength, uint32_t aStride);
-	static void copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, const avk::buffer& aNewTargetListLength, uint32_t aStride);
+	static void copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, uint32_t aStride);
 	static void scattered_write(const avk::buffer& aInIndexList, const avk::buffer& aOutBuffer, const avk::buffer& aInIndexListLength, uint32_t aValue);
 	static void write_sequence(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, uint32_t aStartValue, uint32_t aSequenceValueStep);
 	static void write_increasing_sequence(const avk::buffer& aTargetList, const avk::buffer& aNewTargetListLength, const changing_length& aSequenceMinValue, uint32_t aValueUpperBound, uint32_t aSequenceLength);
