@@ -97,6 +97,27 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 	dispatch_indirect();
 }
 
+void shader_provider::scattered_write(const avk::buffer& aInIndexList, const avk::buffer& aOutBuffer, const avk::buffer& aInIndexListLength, uint32_t aValue)
+{
+	struct push_constants { uint32_t mValue; } pushConstants{ aValue };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/scattered_write.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(1, 0, aInIndexListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aOutBuffer),
+		avk::binding(1, 0, aInIndexListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::write_sequence(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, uint32_t aStartValue, uint32_t aSequenceValueStep)
 {
 	struct push_constants { uint32_t mStartValue, mSequenceValueStep; } pushConstants{ aStartValue, aSequenceValueStep };
@@ -154,6 +175,26 @@ void shader_provider::find_value_ranges(const avk::buffer& aInBuffer, const avk:
 		avk::binding(0, 1, aOutRangeStart),
 		avk::binding(0, 2, aOutRangeEnd),
 		avk::binding(1, 0, aInBufferLength)
+	}));
+	dispatch_indirect();
+}
+
+void shader_provider::find_value_changes(const avk::buffer& aInBuffer, const avk::buffer& aOutChange, const avk::buffer& aInBufferLength, const avk::buffer& aOutChangeLength)
+{
+	prepare_dispatch_indirect(aInBufferLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/find_value_changes.comp",
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutChange),
+		avk::binding(1, 0, aInBufferLength),
+		avk::binding(1, 1, aOutChangeLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInBuffer),
+		avk::binding(0, 1, aOutChange),
+		avk::binding(1, 0, aInBufferLength),
+		avk::binding(1, 1, aOutChangeLength)
 	}));
 	dispatch_indirect();
 }

@@ -18,8 +18,8 @@ void pbd::test::test_all()
 	if (!sort_many_values())                       failCount++;
 	if (!sort_small_values())                      failCount++;
 	if (!sort_many_small_values())                 failCount++;
+	if (!delete_these())                           failCount++;
 //	if (!sortByPositions())                        failCount++;
-/*	if (!deleteThese())                            failCount++;*/
 //	if (!merge())                                  failCount++;
 //	if (!mergeGenerator())                         failCount++;
 //	if (!mergeGeneratorGrid())                     failCount++;
@@ -355,6 +355,29 @@ bool pbd::test::sort_many_small_values()
 	return pass;
 }
 
+bool pbd::test::delete_these()
+{
+	shader_provider::start_recording();
+	auto hiddenValues   = std::vector<uint32_t>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
+	auto expectedResult = std::vector<uint32_t>({ 12, 13 });
+	auto listA = indexed_list<gpu_list<4ui64>>(13).request_length(13);
+	listA.increase_length(8);
+	auto listB = listA;
+	auto listC = listA;
+	listB.increase_length(3);
+	listC.increase_length(2);
+	algorithms::copy_bytes(hiddenValues.data(), listA.hidden_list().write().buffer(), hiddenValues.size() * 4);
+	listB.delete_these();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), 0, "delete_these() length A") && pass;
+	pass = validate_length(listB.length(), 0, "delete_these() length B") && pass;
+	pass = validate_length(listC.length(), 2, "delete_these() length C") && pass;
+	pass = validate_length(listA.hidden_list().length(), 2, "delete_these() length Hidden List") && pass;
+	pass = validate_list(listC.hidden_list().buffer(), expectedResult, "delete_these()") && pass;
+	return pass;
+}
+
 /*bool pbd::test::sortByPositions() // TODO fix test case
 {
 	auto positions = std::vector<glm::int3>({ glm::int3(32768, 81920, 16384), glm::int3(123456, 0, 57), glm::int3(16383, 16384, 57), glm::int3(-1, 1, -16385) }); // 2:5:1,7:0:0,0:1:0,63:0:62 => 142,73,2,187241
@@ -379,23 +402,6 @@ bool pbd::test::sort_many_small_values()
 	auto pass = validateList(particles.getHiddenList().get<HiddenParticles::id::phase>().getReadBuffer(), sortedPhases, "sortByPositions phases");
 	pass = validateList(neighborhoodInfo->get<NeighborhoodInfo::id::cellStart>().getReadBuffer(), cellStart, "sortByPositions cellStart") && pass;
 	pass = validateList(neighborhoodInfo->get<NeighborhoodInfo::id::cellEnd  >().getReadBuffer(), cellEnd  , "sortByPositions cellEnd"  ) && pass;
-	return pass;
-}
-
-bool pbd::test::deleteThese()
-{
-	auto hiddenValues = std::vector<uint32_t>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
-	auto expectedResult = std::vector<uint32_t>({ 12, 13 });
-	auto listA = IndexedList<GpuList<GpuListType::Uint>>(13);
-	listA.increaseLength(8);
-	auto listB = listA;
-	auto listC = listA;
-	listB.increaseLength(3);
-	listC.increaseLength(2);
-	fillList(listA.getHiddenList().getWriteBuffer(), hiddenValues);
-	listB.deleteThese();
-	auto pass = listA.length() == 0 && listB.length() == 0 && listC.length() == 2 && listA.getHiddenList().length() == 2;
-	pass = validateList(listC.getHiddenList().getReadBuffer(), expectedResult, "IndexedList::deleteThese") && pass;
 	return pass;
 }
 
@@ -522,7 +528,7 @@ bool pbd::test::validate_length(const avk::buffer& aLength, size_t aExpectedLeng
 	auto data = 0u;
 	aLength->read(&data, 0, avk::sync::wait_idle(true));
 	if (data != aExpectedLength) {
-		LOG_WARNING("TEST FAIL: [" + aTestName + "]");
+		LOG_WARNING("TEST FAIL: [" + aTestName + "] - expected length " + std::to_string(aExpectedLength) + " but got " + std::to_string(data));
 		return false;
 	}
 	return true;

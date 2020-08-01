@@ -17,7 +17,7 @@ namespace pbd
 		~indexed_list();
 
 		indexed_list& share_hidden_data_from(const indexed_list& aBenefactor);
-//		void delete_these();
+		void delete_these();
 
 		avk::buffer& length() const;
 		const shader_provider::changing_length changing_length();
@@ -108,22 +108,20 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::share_hidden_da
 	return *this;
 }
 
-/*template<class DataList>
+template<class DataList>
 inline void pbd::indexed_list<DataList>::delete_these()
 {
-	auto helper_list_length = mHiddenData->mData.buffer()->meta_at_index<avk::buffer_meta>().total_size();
-	auto helperList   = gpu_list<4ui64>();
-	auto prefix_helper = gpu_list<4ui64>();
-	helperList.request_length(helper_list_length);
-	prefix_helper.request_length(list_manipulation::prefixSum_calculateNeededHelperListLength(helper_list_length));
-	list_manipulation::fillList_singleValue(helperList.write().buffer(), mHiddenData->mData.length(), 1u);
-	list_manipulation::scatteredWrite_value(mIndexList.getReadBuffer(), 0u, mIndexList.length(), helperList.getWriteBuffer());
-	resize(0);
-	list_manipulation::prefixSum(helperList.getWriteBuffer(), prefix_helper.getWriteBuffer(), helperList.length());
-	auto editList = gpu_list<4ui64>();
-	list_manipulation::scatteredWriteAfterPrefixSum_indices(helperList.getReadBuffer(), helperList.length(), editList.getWriteBuffer(mHiddenData->mData.length()));
+	auto helperListLength = mHiddenData->mData.buffer()->meta_at_index<avk::buffer_meta>().total_size();
+	auto helperList   = gpu_list<4ui64>().request_length(helperListLength);
+	auto prefixHelper = gpu_list<4ui64>().request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(helperListLength));
+	shader_provider::write_sequence(helperList.write().buffer(), mHiddenData->mData.length(), 1u, 0u);
+	shader_provider::scattered_write(mIndexList.buffer(), helperList.write().buffer(), mIndexList.length(), 0u);
+	mIndexList.set_length(0);
+	algorithms::prefix_sum(helperList.write().buffer(), prefixHelper.write().buffer(), mHiddenData->mData.length());
+	auto editList = gpu_list<4ui64>().request_length(mHiddenData->mData.requested_length());
+	shader_provider::find_value_changes(helperList.buffer(), editList.write().buffer(), mHiddenData->mData.length(), editList.write().length());
 	mHiddenData->mData.apply_edit(editList, this);
-}*/
+}
 
 template<class DataList>
 inline avk::buffer& pbd::indexed_list<DataList>::length() const
