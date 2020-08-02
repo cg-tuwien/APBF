@@ -17,7 +17,6 @@ namespace pbd
 		~gpu_list() = default;
 
 		avk::buffer& length() const;
-		const shader_provider::changing_length changing_length(); // TODO maybe replace with set_length(avk::buffer)?
 		gpu_list& set_length(size_t aLength);
 		gpu_list& set_length(const avk::buffer& aLength);
 		gpu_list& request_length(size_t aLength);
@@ -122,14 +121,6 @@ inline avk::buffer& pbd::gpu_list<Stride>::length() const
 }
 
 template<size_t Stride>
-inline const shader_provider::changing_length pbd::gpu_list<Stride>::changing_length()
-{
-	write();
-	mData->mLengthAIsActive = !mData->mLengthAIsActive;
-	return mData->mLengthAIsActive ? shader_provider::changing_length{ mData->mLengthB, mData->mLengthA } : shader_provider::changing_length{ mData->mLengthA, mData->mLengthB };
-}
-
-template<size_t Stride>
 inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource)
 {
 	if (mOwner != aEditSource && mOwner != nullptr) mOwner->apply_edit(aEditList, this);
@@ -185,7 +176,7 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::operator+=(const gpu_list& 
 
 	if (aRhs.mData == nullptr) return *this;
 
-	shader_provider::append_list(write().buffer(), aRhs.mData->mBuffer, changing_length(), aRhs.length(), Stride);
+	set_length(shader_provider::append_list(write().buffer(), aRhs.mData->mBuffer, write().length(), aRhs.length(), Stride));
 	return *this;
 }
 

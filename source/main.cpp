@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
-#include "list_definitions.h"
+#include "pool.h"
 
 #ifdef _DEBUG
 #include "Test.h"
@@ -45,6 +45,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
+		mPool = std::make_unique<pool>();
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -332,6 +333,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		shader_provider::start_recording();
 
+		mPool->update(gvk::time().delta_time());
+
 		// COMPUTE
 
 #if BLAS_CENTRIC
@@ -339,8 +342,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #else
 		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mNumParticles);
 #endif
-		mParticlesBuffer[ifi]->meta<storage_buffer_meta>().num_elements();
-
 		shader_provider::end_recording();
 		
 		// Get a command pool to allocate command buffers from:
@@ -473,6 +474,8 @@ private: // v== Member variables ==v
 
 	gvk::quake_camera mQuakeCam;
 	std::vector<avk::buffer> mCameraDataBuffer;
+
+	std::unique_ptr<pool> mPool;
 
 	uint32_t mNumParticles;
 	std::vector<avk::buffer> mParticlesBuffer;

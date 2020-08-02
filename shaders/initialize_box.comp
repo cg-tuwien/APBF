@@ -1,0 +1,48 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define POS_RESOLUTION 262144.0f
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
+layout(set = 0, binding = 1) buffer OutPosition    { uvec3    outPosition[]; };
+layout(set = 0, binding = 2) buffer OutVelocity    { vec3     outVelocity[]; };
+layout(set = 0, binding = 3) buffer OutInverseMass { float outInverseMass[]; };
+layout(set = 0, binding = 4) buffer OutRadius      { float      outRadius[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	vec3 mMinPos;
+	float mRadius;
+	vec3 mVelocity;
+	float mInverseMass;
+	uvec3 mParticleCount;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+
+	if (id >= inIndexListLength) return;
+
+	uint idx = inIndexList[id];
+	
+	uvec3 gridPos;
+	gridPos.x = id / (mParticleCount.z * mParticleCount.y);     id -= gridPos.x * mParticleCount.z * mParticleCount.y;
+	gridPos.y = id / (mParticleCount.z                   );     id -= gridPos.y * mParticleCount.z;
+	gridPos.z = id;
+
+	vec3 pos = mMinPos + 2 * mRadius * gridPos;
+
+	outPosition[idx] = uvec3(pos * POS_RESOLUTION);
+	outVelocity[idx] = mVelocity;
+	outInverseMass[idx] = mInverseMass;
+	outRadius[idx] = mRadius;
+}

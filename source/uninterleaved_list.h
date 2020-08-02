@@ -17,12 +17,16 @@ namespace pbd
 
 		avk::buffer& length() const;
 		uninterleaved_list& set_length(size_t aLength);
+		uninterleaved_list& set_length(const avk::buffer& aLength);
 		uninterleaved_list& request_length(size_t aLength);
+		size_t requested_length();
 		void apply_edit(gpu_list<4ui64> & aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
 		uninterleaved_list& operator=(const uninterleaved_list& aRhs);
 		uninterleaved_list& operator+=(const uninterleaved_list& aRhs);
 		uninterleaved_list operator+(const uninterleaved_list& aRhs) const;
+
+		uninterleaved_list& write();
 
 		uninterleaved_list& set_owner(list_interface<gpu_list<4ui64>>* aOwner);
 		template<NameEnum E>
@@ -48,6 +52,11 @@ namespace pbd
 			//int arr[] = { (std::get<Is>(mLists).set_length(aLength), 0)... };
 		}
 		template<size_t... Is>
+		void set_length(const avk::buffer& aLength, std::index_sequence<Is...>) {
+			(std::get<Is>(mLists).set_length(aLength), ...);
+			//int arr[] = { (std::get<Is>(mLists).set_length(aLength), 0)... };
+		}
+		template<size_t... Is>
 		void request_length(size_t aLength, std::index_sequence<Is...>) {
 			(std::get<Is>(mLists).request_length(aLength), ...);
 			//int arr[] = { (std::get<Is>(mLists).request_length(aLength), 0)... };
@@ -61,6 +70,11 @@ namespace pbd
 		void add(const uninterleaved_list& aRhs, std::index_sequence<Is...>) {
 			(std::get<Is>(mLists).operator+=(std::get<Is>(aRhs.mLists)), ...);
 			//int arr[] = { (std::get<Is>(mLists).operator+=(std::get<Is>(aRhs.mLists)), 0)... };
+		}
+		template<size_t... Is>
+		void write(std::index_sequence<Is...>) {
+			(std::get<Is>(mLists).write(), ...);
+			//int arr[] = { (std::get<Is>(mLists).write(), 0)... };
 		}
 
 		std::tuple<Lists...> mLists;
@@ -94,11 +108,25 @@ inline pbd::uninterleaved_list<NameEnum, Lists...>& pbd::uninterleaved_list<Name
 	return *this;
 }
 
+template<class NameEnum, class ...Lists>
+inline pbd::uninterleaved_list<NameEnum, Lists...>& pbd::uninterleaved_list<NameEnum, Lists...>::set_length(const avk::buffer& aLength)
+{
+	set_length(aLength, std::make_index_sequence<sizeof...(Lists)>());
+	return *this;
+}
+
 template<class NameEnum, class... Lists>
 inline pbd::uninterleaved_list<NameEnum, Lists...>& pbd::uninterleaved_list<NameEnum, Lists...>::request_length(size_t aLength)
 {
 	request_length(aLength, std::make_index_sequence<sizeof...(Lists)>());
 	return *this;
+}
+
+template<class NameEnum, class ...Lists>
+inline size_t pbd::uninterleaved_list<NameEnum, Lists...>::requested_length()
+{
+	// TODO maybe return minimum of all requested lengths
+	return std::get<0>(mLists).requested_length();
 }
 
 template<class NameEnum, class... Lists>
@@ -129,6 +157,13 @@ inline pbd::uninterleaved_list<NameEnum, Lists...> pbd::uninterleaved_list<NameE
 	auto result = *this;
 	result += aRhs;
 	return result;
+}
+
+template<class NameEnum, class ...Lists>
+inline pbd::uninterleaved_list<NameEnum, Lists...>& pbd::uninterleaved_list<NameEnum, Lists...>::write()
+{
+	write(std::make_index_sequence<sizeof...(Lists)>());
+	return *this;
 }
 
 template<class NameEnum, class... Lists>

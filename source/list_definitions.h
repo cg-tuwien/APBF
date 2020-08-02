@@ -6,8 +6,8 @@
 
 namespace pbd
 {
-	enum class hidden_particles_enum { position, velocity, mass, phase, radius, pos_backup };
-	using hidden_particles = uninterleaved_list<hidden_particles_enum, gpu_list<12>, gpu_list<12>, gpu_list<4>, gpu_list<4>, gpu_list<4>, gpu_list<12>>;
+	enum class hidden_particles_enum { position, velocity, inverse_mass, radius, pos_backup };
+	using hidden_particles = uninterleaved_list<hidden_particles_enum, gpu_list<12>, gpu_list<12>, gpu_list<4>, gpu_list<4>, gpu_list<12>>;
 	using particles = indexed_list<hidden_particles>;
 
 //	enum class NeighborhoodInfoEnum { cellStart, cellEnd };

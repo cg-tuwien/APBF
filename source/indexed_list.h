@@ -20,9 +20,9 @@ namespace pbd
 		void delete_these();
 
 		avk::buffer& length() const;
-		const shader_provider::changing_length changing_length();
 		indexed_list& set_length(size_t aLength);
 		indexed_list& request_length(size_t aLength);
+		size_t requested_length();
 		indexed_list increase_length(size_t aAddedLength);
 		void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override;
 
@@ -130,12 +130,6 @@ inline avk::buffer& pbd::indexed_list<DataList>::length() const
 }
 
 template<class DataList>
-inline const shader_provider::changing_length pbd::indexed_list<DataList>::changing_length()
-{
-	return mIndexList.changing_length();
-}
-
-template<class DataList>
 inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::set_length(size_t aLength)
 {
 	mIndexList.set_length(aLength);
@@ -150,10 +144,16 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::request_length(
 }
 
 template<class DataList>
+inline size_t pbd::indexed_list<DataList>::requested_length()
+{
+	return mIndexList.requested_length();
+}
+
+template<class DataList>
 inline pbd::indexed_list<DataList> pbd::indexed_list<DataList>::increase_length(size_t aAddedLength)
 {
 	auto result = indexed_list().share_hidden_data_from(*this).request_length(mIndexList.requested_length());
-	shader_provider::write_increasing_sequence(result.write().index_buffer(), result.write().length(), mHiddenData->mData.changing_length(), mHiddenData->mData.requested_length(), aAddedLength);
+	mHiddenData->mData.write().set_length(shader_provider::write_increasing_sequence(result.write().index_buffer(), result.write().length(), mHiddenData->mData.write().length(), mHiddenData->mData.requested_length(), aAddedLength));
 	result.mSorted = true;
 	*this += result;
 	return result;
@@ -234,7 +234,6 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 		auto increasing = gpu_list<4ui64>().request_length(mIndexList.requested_length());
 		sortMapping.request_length(mIndexList.requested_length());
 		shader_provider::write_sequence(increasing.write().buffer(), mIndexList.length(), 0u, 1u);
-		//shader_provider::write_increasing_sequence(increasing.write().buffer(), increasing.write().length(), increasing.changing_length(), increasing.requested_length(), increasing.requested_length()); // TODO more elegant?
 		algorithms::sort(oldIndexList.write().buffer(), increasing.write().buffer(), sortHelper.write().buffer(), mIndexList.write().length(), mIndexList.write().buffer(), sortMapping.write().buffer(), indexListContentUpperBound);
 	}
 

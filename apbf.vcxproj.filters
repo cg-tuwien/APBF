@@ -23,6 +23,15 @@
     <Filter Include="shaders\ray_tracing">
       <UniqueIdentifier>{52dc4c51-ac11-4aa2-b17a-c24d5f3821e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\pbd\particle manipulation">
+      <UniqueIdentifier>{8f7903e4-29e4-445a-aa3d-86d35e50b6e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\particle manipulation">
+      <UniqueIdentifier>{1883c467-6242-4d4b-91b9-a755debf29e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\scenes">
+      <UniqueIdentifier>{cd48ffe5-1275-46bd-99b5-ca9c603f420f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
@@ -97,6 +106,18 @@
     <None Include="shaders\find_value_changes.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\apply_acceleration.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\apply_velocity.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\infer_velocity.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\initialize_box.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -113,6 +134,15 @@
     </ClCompile>
     <ClCompile Include="source\algorithms.cpp">
       <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\velocity_handling.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pool.cpp">
+      <Filter>source\scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\initialize.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,6 +178,15 @@
     </ClInclude>
     <ClInclude Include="source\algorithms.h">
       <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\velocity_handling.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pool.h">
+      <Filter>source\scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\initialize.h">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
