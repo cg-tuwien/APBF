@@ -12,6 +12,7 @@ layout(set = 0, binding = 0) uniform application_data
 	mat4 mViewMatrix;
 	mat4 mProjMatrix;
 	vec4 mTime;
+	uvec4 mUserInput;
 } appData;
 
 void main() {

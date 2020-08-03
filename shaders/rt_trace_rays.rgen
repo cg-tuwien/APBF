@@ -6,6 +6,7 @@ layout(set = 0, binding = 0) uniform application_data
 	mat4 mViewMatrix;
 	mat4 mProjMatrix;
 	vec4 mTime;
+	uvec4 mUserInput;
 } appData;
 
 layout(set = 2, binding = 0, rgba8) uniform image2D image;
@@ -32,7 +33,7 @@ void main()
 	direction = vec3(normalize(vp2 - vp1));
 	
     uint rayFlags = gl_RayFlagsOpaqueEXT;
-    uint cullMask = 0xff;
+    uint cullMask = appData.mUserInput[0] & 0xFF;
     float tmin = 0.1;
     float tmax = 10000.0;
     traceRayEXT(topLevelAS, rayFlags, cullMask, 0 /*sbtRecordOffset*/, 0 /*sbtRecordStride*/, 0 /*missIndex*/, origin, tmin, direction, tmax, 0 /*payload*/);
