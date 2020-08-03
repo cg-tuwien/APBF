@@ -7,6 +7,7 @@ class pool
 public:
 	pool();
 	void update(float aDeltaTime);
+	pbd::particles& particles();
 
 private:
 	pbd::particles mFluid;

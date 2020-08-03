@@ -30,6 +30,7 @@
     <None Include="shaders\indexed_subtract.comp" />
     <None Include="shaders\infer_velocity.comp" />
     <None Include="shaders\initialize_box.comp" />
+    <None Include="shaders\instanced2.vert" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />

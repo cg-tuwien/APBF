@@ -5,9 +5,9 @@
 
 // ---------------------- lists -----------------------
 layout(set = 0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
-layout(set = 0, binding = 1) buffer InOldPosition { uvec3 inOldPosition[]; };
-layout(set = 0, binding = 2) buffer InPosition    { uvec3    inPosition[]; };
-layout(set = 0, binding = 3) buffer OutVelocity   { vec3    outVelocity[]; };
+layout(set = 0, binding = 1) buffer InOldPosition { ivec4 inOldPosition[]; };
+layout(set = 0, binding = 2) buffer InPosition    { ivec4    inPosition[]; };
+layout(set = 0, binding = 3) buffer OutVelocity   { vec4    outVelocity[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -16,7 +16,7 @@ layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; 
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	vec3 mDeltaTime;
+	float mDeltaTime;
 };
 // ----------------------------------------------------
 
@@ -28,5 +28,5 @@ void main()
 	if (id >= inIndexListLength) return;
 
 	uint idx = inIndexList[id];
-	outVelocity[idx] = (inPosition[idx] - inOldPosition[idx]) / (mDeltaTime * POS_RESOLUTION);
+	outVelocity[idx].xyz = vec3(inPosition[idx].xyz - inOldPosition[idx].xyz) / (mDeltaTime * POS_RESOLUTION);
 }

@@ -15,3 +15,8 @@ void pool::update(float aDeltaTime)
 {
 	mVelocityHandling.apply(aDeltaTime);
 }
+
+pbd::particles& pool::particles()
+{
+	return mFluid;
+}

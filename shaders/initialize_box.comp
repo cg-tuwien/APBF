@@ -5,8 +5,8 @@
 
 // ---------------------- lists -----------------------
 layout(set = 0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
-layout(set = 0, binding = 1) buffer OutPosition    { uvec3    outPosition[]; };
-layout(set = 0, binding = 2) buffer OutVelocity    { vec3     outVelocity[]; };
+layout(set = 0, binding = 1) buffer OutPosition    { ivec4    outPosition[]; };
+layout(set = 0, binding = 2) buffer OutVelocity    { vec4     outVelocity[]; };
 layout(set = 0, binding = 3) buffer OutInverseMass { float outInverseMass[]; };
 layout(set = 0, binding = 4) buffer OutRadius      { float      outRadius[]; };
 // ----------------------------------------------------
@@ -41,8 +41,8 @@ void main()
 
 	vec3 pos = mMinPos + 2 * mRadius * gridPos;
 
-	outPosition[idx] = uvec3(pos * POS_RESOLUTION);
-	outVelocity[idx] = mVelocity;
+	outPosition[idx].xyz = ivec3(pos * POS_RESOLUTION);
+	outVelocity[idx].xyz = mVelocity;
 	outInverseMass[idx] = mInverseMass;
 	outRadius[idx] = mRadius;
 }

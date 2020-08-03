@@ -18,9 +18,10 @@ void pbd::velocity_handling::apply(float aDeltaTime)
 			return;
 		}
 
-		shader_provider::infer_velocity(pair.first.index_buffer(), posBackupList.buffer(), positionList.buffer(), velocityList.write().buffer(), pair.first.length(), aDeltaTime);
+		shader_provider::infer_velocity(pair.first.index_buffer(), posBackupList.buffer(), positionList.buffer(), velocityList.write().buffer(), pair.first.length(), mLastDeltaTime);
 		posBackupList = positionList;
 		shader_provider::apply_acceleration(pair.first.index_buffer(), velocityList.write().buffer(), pair.first.length(), pair.second * aDeltaTime);
 		shader_provider::apply_velocity(pair.first.index_buffer(), velocityList.buffer(), positionList.write().buffer(), pair.first.length(), aDeltaTime);
+		mLastDeltaTime = aDeltaTime;
 	}
 }

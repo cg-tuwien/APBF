@@ -194,6 +194,42 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			binding(0, 0, mCameraDataBuffer[0])
 		);
+		
+		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
+		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
+			// Shaders to be used with this pipeline:
+			vertex_shader("shaders/instanced2.vert"), 
+			fragment_shader("shaders/red.frag"),
+			// Declare the vertex input to the shaders:
+			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
+			                                                                 // and that we are going to access it in shaders via layout (location = 0)
+			instance_input_location(1, glm::ivec4{}).from_buffer_at_binding(1), // Stream instance data from the buffer at binding 1
+			instance_input_location(2, 0.0f).from_buffer_at_binding(2),         // Stream instance data from the buffer at binding 1
+			context().create_renderpass({
+					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
+					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
+				},
+				[](renderpass_sync& aRpSync){
+					// Synchronize with everything that comes BEFORE:
+					if (aRpSync.is_external_pre_sync()) {
+						aRpSync.mSourceStage                    = pipeline_stage::compute_shader;
+						aRpSync.mSourceMemoryDependency         = memory_access::shader_buffers_and_images_write_access;
+						aRpSync.mDestinationStage               = pipeline_stage::vertex_input;
+						aRpSync.mDestinationMemoryDependency    = memory_access::any_vertex_input_read_access;
+					}
+					// Synchronize with everything that comes AFTER:
+					if (aRpSync.is_external_post_sync()) {
+						aRpSync.mSourceStage                    = pipeline_stage::color_attachment_output;
+						aRpSync.mDestinationStage               = pipeline_stage::color_attachment_output;
+						aRpSync.mSourceMemoryDependency         = memory_access::color_attachment_write_access;
+						aRpSync.mDestinationMemoryDependency    = memory_access::color_attachment_write_access;
+					}
+				}
+			),
+			// Further config for the pipeline:
+			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
+			binding(0, 0, mCameraDataBuffer[0])
+		);
 
 		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
 		//mTest = context().create_buffer(memory_usage::device, {}, vertex_buffer_meta::create_from_data(four));
@@ -283,7 +319,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
-				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing"};
+				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing", "Fluid"};
 				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
 
 				ImGui::Separator();
@@ -384,6 +420,17 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// GRAPHICS
 
 		switch(mRenderingMethod) {
+		case 3: // "Fluid"
+
+			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
+			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
+			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+				binding(0, 0, mCameraDataBuffer[ifi])
+			}));
+			cmdBfr->draw_indexed(*mSphereIndexBuffer, 10u, 0u, 0u, 0u, *mSphereVertexBuffer, *mPool->particles().hidden_list().get<pbd::hidden_particles::id::pos_backup>().buffer(), *mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>().buffer());
+			cmdBfr->end_render_pass();
+
+			break;
 		case 0: // "Instanced Spheres"
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
@@ -464,6 +511,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	{
 		pbd::gpu_list<4>::cleanup();
 		pbd::gpu_list<12>::cleanup();
+		pbd::gpu_list<16>::cleanup();
 	}
 
 
@@ -496,6 +544,7 @@ private: // v== Member variables ==v
 
 	//avk::compute_pipeline mComputePipeline;
 	avk::graphics_pipeline mGraphicsPipelineInstanced;
+	avk::graphics_pipeline mGraphicsPipelineInstanced2;
 	avk::graphics_pipeline mGraphicsPipelinePoint;
 	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
@@ -504,7 +553,7 @@ private: // v== Member variables ==v
 	//avk::buffer mTest;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 2;
+	int mRenderingMethod = 3;
 	
 }; // class apbf
 

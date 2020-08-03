@@ -3,7 +3,7 @@
 
 // ---------------------- lists -----------------------
 layout(set = 0, binding = 0) buffer InIndexList   { uint   inIndexList[]; };
-layout(set = 0, binding = 1) buffer InOutVelocity { vec3 inOutVelocity[]; };
+layout(set = 0, binding = 1) buffer InOutVelocity { vec4 inOutVelocity[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -24,5 +24,5 @@ void main()
 	if (id >= inIndexListLength) return;
 
 	uint idx = inIndexList[id];
-	inOutVelocity[idx] += mAcceleration;
+	inOutVelocity[idx].xyz += mAcceleration;
 }

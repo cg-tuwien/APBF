@@ -118,6 +118,9 @@
     <None Include="shaders\initialize_box.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\instanced2.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

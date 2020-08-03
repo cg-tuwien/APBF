@@ -12,5 +12,6 @@ namespace pbd
 
 	private:
 		std::list<std::pair<particles, glm::vec3>> mParticles;
+		float mLastDeltaTime = 1.0f;
 	};
 }
