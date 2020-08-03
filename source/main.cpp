@@ -30,6 +30,15 @@ class apbf : public gvk::invokee
 		glm::vec2 _align;
 	};
 
+	struct draw_indexed_indirect_command
+	{
+		uint32_t mIndexCount;
+		uint32_t mInstanceCount;
+		uint32_t mFirstIndex;
+		int32_t  mVertexOffset;
+		uint32_t mFirstInstance;
+	};
+
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	apbf(avk::queue& aQueue)
 		: mQueue{ &aQueue }
@@ -159,6 +168,19 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// Load a sphere model for drawing a single particle:
 		auto sphere = model_t::load_from_file("assets/sphere.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
+
+		// Create the buffer containing parameters for the indirect fluid draw call:
+		auto drawIndexedIndirectCommand = draw_indexed_indirect_command{};
+		drawIndexedIndirectCommand.mIndexCount = mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements();
+		//drawIndexedIndirectCommand.mInstanceCount = ?;
+		drawIndexedIndirectCommand.mFirstIndex = 0;
+		drawIndexedIndirectCommand.mVertexOffset = 0;
+		drawIndexedIndirectCommand.mFirstInstance = 0;
+			mDrawIndexedIndirectCommand = context().create_buffer(
+				memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
+				storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
+			);
+		mDrawIndexedIndirectCommand->fill(&drawIndexedIndirectCommand, 0, sync::wait_idle(true));
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
 		mGraphicsPipelineInstanced = context().create_graphics_pipeline_for(
@@ -371,6 +393,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		mPool->update(gvk::time().delta_time());
 
+		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
+		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
+
 		// COMPUTE
 
 #if BLAS_CENTRIC
@@ -422,12 +448,20 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		switch(mRenderingMethod) {
 		case 3: // "Fluid"
 
+			cmdBfr->establish_global_memory_barrier(
+				avk::pipeline_stage::transfer,             /* -> */ avk::pipeline_stage::draw_indirect,
+				avk::memory_access::transfer_write_access, /* -> */ avk::memory_access::indirect_command_data_read_access
+			);
+
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi])
 			}));
-			cmdBfr->draw_indexed(*mSphereIndexBuffer, 10u, 0u, 0u, 0u, *mSphereVertexBuffer, *mPool->particles().hidden_list().get<pbd::hidden_particles::id::pos_backup>().buffer(), *mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>().buffer());
+			
+			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
+			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);	
 			cmdBfr->end_render_pass();
 
 			break;
@@ -532,6 +566,7 @@ private: // v== Member variables ==v
 #endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
+	avk::buffer mDrawIndexedIndirectCommand;
 
 #if BLAS_CENTRIC
 	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
