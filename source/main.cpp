@@ -18,9 +18,14 @@ class apbf : public gvk::invokee
 	};
 
 	struct application_data {
+		/** Camera's view matrix */
 		glm::mat4 mViewMatrix;
+		/** Camera's projection matrix */
 		glm::mat4 mProjMatrix;
+		/** [0]: time since start, [1]: delta time, [2]: unused, [3]: unused  */
 		glm::vec4 mTime;
+		/** [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: unused, [3]: unused  */
+		glm::uvec4 mUserInput;
 	};
 
 	struct aligned_aabb
@@ -100,11 +105,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		uint32_t customIndex = 0;
 		for (const auto& p : testParticles) {
 			auto pos = glm::vec3{p.mCurrentPositionRadius.x, p.mCurrentPositionRadius.y, p.mCurrentPositionRadius.z};
-			auto scl = glm::vec3{p.mCurrentPositionRadius.w};
+			auto scl = glm::vec3{p.mCurrentPositionRadius.w * float{RTX_NEIGHBORHOOD_RADIUS_FACTOR}};
 			geomInstInitData.push_back(
 				context().create_geometry_instance(mSingleBlas)
 				.set_transform_column_major(to_array(glm::translate(glm::mat4{1.0f}, pos) * glm::scale(scl)))
 					.set_custom_index(customIndex++)
+					.set_mask(NOT_NEIGHBOR_MASK)
 					.set_flags(vk::GeometryInstanceFlagBitsKHR::eForceOpaque)
 			);
 		}
@@ -343,6 +349,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
 				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing", "Fluid"};
 				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
+				static const char* const sNeighborRenderOptions[] = {"All", "Only Neighbors", "All But Neighbors"};
+				ImGui::Combo("Particles to Render", &mRenderNeighbors, sNeighborRenderOptions, IM_ARRAYSIZE(sNeighborRenderOptions));
+				ImGui::DragInt("Neighborhood-Origin Particle-ID", &mNeighborhoodOriginParticleId, 1, 0, static_cast<int>(mNumParticles));
 
 				ImGui::Separator();
 
@@ -386,7 +395,24 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto* mainWnd = context().main_window();
 		const auto ifi = mainWnd->current_in_flight_index();
 
-		application_data cd{ mQuakeCam.view_matrix(), mQuakeCam.projection_matrix(), glm::vec4{ time().time_since_start(), time().delta_time(), 0.f, 0.f } };
+		application_data cd{
+			// Camera's view matrix
+			mQuakeCam.view_matrix(),
+			// Camera's projection matrix
+			mQuakeCam.projection_matrix(),
+			// [0]: time since start, [1]: delta time, [2]: unused, [3]: unused 
+			glm::vec4 {
+				time().time_since_start(),
+				time().delta_time(),
+				0.f, 0.f
+			},
+			// [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: unused, [3]: unused 
+			glm::uvec4{
+				0 == mRenderNeighbors /* all */ ? uint32_t{0xFF} : 1 == mRenderNeighbors /* neighbors */ ? uint32_t{NEIGHBOR_MASK} : /* not neighbors */ uint32_t{NOT_NEIGHBOR_MASK},
+				static_cast<uint32_t>(mNeighborhoodOriginParticleId),
+				0u, 0u
+			}
+		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
 
 		shader_provider::start_recording();
@@ -590,7 +616,9 @@ private: // v== Member variables ==v
 	//avk::buffer mTest;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 3;
+	int mRenderingMethod = 2;
+	int mRenderNeighbors = 0;
+	int mNeighborhoodOriginParticleId = 0;
 	
 }; // class apbf
 

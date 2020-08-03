@@ -126,7 +126,7 @@ void main()
   mat3x4 tM = geometryInstances.mInstances[gl_InstanceCustomIndexEXT].transform;
   Sphere s;
   s.center = vec3(tM[0][3], tM[1][3], tM[2][3]);
-  s.radius = tM[0][0];
+  s.radius = tM[0][0] / float(RTX_NEIGHBORHOOD_RADIUS_FACTOR);
 
   tHit = hitSphere(s, ray);
   if (tHit > 0) {

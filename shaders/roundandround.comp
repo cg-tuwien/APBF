@@ -2,6 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_ARB_gpu_shader_int64 : require
+//#extension GL_EXT_ray_tracing : require
 #include "cpu_gpu_shared_config.h"
 
 // ---------------- application data ------------------
@@ -10,6 +11,7 @@ layout(set = 0, binding = 0) uniform application_data
 	mat4 mViewMatrix;
 	mat4 mProjMatrix;
 	vec4 mTime;
+	uvec4 mUserInput;
 } appData;
 // ----------------------------------------------------
 
@@ -53,6 +55,8 @@ layout(set = 1, binding = 1) buffer Instances
 	VkAccelerationStructureInstanceKHR mInstances[];
 } geometryInstances;
 // ----------------------------------------------------
+
+//layout(set = 2, binding = 0) uniform accelerationStructureEXT topLevelAS;
 #endif
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -80,6 +84,13 @@ void main()
 		geometryInstances.mInstances[id].transform[0][3] = newPosition.x;
 		geometryInstances.mInstances[id].transform[1][3] = newPosition.y;
 		geometryInstances.mInstances[id].transform[2][3] = newPosition.z;
+
+		int neighborhoodOriginParticleId = int(appData.mUserInput[1]);
+		int tmp = geometryInstances.mInstances[id].instanceCustomIndex_and_mask;
+		int instanceCustomIndex = tmp & 0xFFFFFF;
+		int mask = (tmp >> 24) & 0xFF;
+		mask = abs(neighborhoodOriginParticleId - instanceCustomIndex) < 50 ? NEIGHBOR_MASK : NOT_NEIGHBOR_MASK;
+		geometryInstances.mInstances[id].instanceCustomIndex_and_mask = (tmp & 0xFFFFFF) | ((mask << 24) & 0xFF000000);
 	}
 #endif
 }
