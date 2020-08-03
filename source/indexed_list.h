@@ -19,6 +19,7 @@ namespace pbd
 		indexed_list& share_hidden_data_from(const indexed_list& aBenefactor);
 		void delete_these();
 
+		bool empty() const;
 		avk::buffer& length() const;
 		indexed_list& set_length(size_t aLength);
 		indexed_list& request_length(size_t aLength);
@@ -124,6 +125,12 @@ inline void pbd::indexed_list<DataList>::delete_these()
 }
 
 template<class DataList>
+inline bool pbd::indexed_list<DataList>::empty() const
+{
+	return mIndexList.empty();
+}
+
+template<class DataList>
 inline avk::buffer& pbd::indexed_list<DataList>::length() const
 {
 	return mIndexList.length();
@@ -182,6 +189,9 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::operator=(const
 template<class DataList>
 inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::operator+=(const indexed_list& aRhs)
 {
+	if (mHiddenData->mData.empty()) {
+		share_hidden_data_from(aRhs);
+	}
 	mIndexList += aRhs.mIndexList;
 	mSorted = false;
 	return *this;

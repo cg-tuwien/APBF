@@ -20,8 +20,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\add_box.comp" />
     <None Include="shaders\apply_acceleration.comp" />
     <None Include="shaders\apply_velocity.comp" />
+    <None Include="shaders\box_collision.comp" />
     <None Include="shaders\copy_scattered_read.comp" />
     <None Include="shaders\find_value_changes.comp" />
     <None Include="shaders\find_value_ranges.comp" />
@@ -51,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
+    <ClCompile Include="source\box_collision.cpp" />
     <ClCompile Include="source\initialize.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
@@ -66,6 +69,7 @@
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
     <ClInclude Include="source\algorithms.h" />
+    <ClInclude Include="source\box_collision.h" />
     <ClInclude Include="source\initialize.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\velocity_handling.h" />

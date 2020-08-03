@@ -15,6 +15,7 @@ namespace pbd
 		uninterleaved_list(const uninterleaved_list& aUninterleavedList);
 		~uninterleaved_list() = default;
 
+		bool empty() const;
 		avk::buffer& length() const;
 		uninterleaved_list& set_length(size_t aLength);
 		uninterleaved_list& set_length(const avk::buffer& aLength);
@@ -93,6 +94,12 @@ inline pbd::uninterleaved_list<NameEnum, Lists...>::uninterleaved_list(const uni
 	mLists(aUninterleavedList.mLists)
 {
 	set_owner(std::make_index_sequence<sizeof...(Lists)>());
+}
+
+template<class NameEnum, class ...Lists>
+inline bool pbd::uninterleaved_list<NameEnum, Lists...>::empty() const
+{
+	return std::get<0>(mLists).empty();
 }
 
 template<class NameEnum, class... Lists>

@@ -16,6 +16,9 @@ namespace pbd
 		gpu_list(const gpu_list& aGpuList);
 		~gpu_list() = default;
 
+		// empty() does not mean "no elements" (the CPU-side wouldn't know that), but "no GPU buffer yet assigned"
+		// It only returns true if the list was not copied from a non-empty list and write() was never called for it
+		bool empty() const;
 		avk::buffer& length() const;
 		gpu_list& set_length(size_t aLength);
 		gpu_list& set_length(const avk::buffer& aLength);
@@ -112,6 +115,12 @@ template<size_t Stride>
 inline size_t pbd::gpu_list<Stride>::requested_length()
 {
 	return mRequestedLength;
+}
+
+template<size_t Stride>
+inline bool pbd::gpu_list<Stride>::empty() const
+{
+	return mData == nullptr;
 }
 
 template<size_t Stride>

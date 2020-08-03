@@ -393,6 +393,48 @@ void shader_provider::initialize_box(const avk::buffer& aInIndexList, const avk:
 	dispatch(aParticleCount.x * aParticleCount.y * aParticleCount.z);
 }
 
+void shader_provider::add_box(const avk::buffer& aInIndexList, const avk::buffer& aOutBoxes, const glm::vec4& aMin, const glm::vec4& aMax)
+{
+	struct push_constants { glm::vec4 mMin, mMax; } pushConstants{ aMin, aMax };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/add_box.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aOutBoxes),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aOutBoxes)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch(1u, 1u, 1u, 1u);
+}
+
+void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoxes, const avk::buffer& aInIndexListLength, const avk::buffer& aInBoxesLength)
+{
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/box_collision.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInOutPosition),
+		avk::binding(0, 2, aInRadius),
+		avk::binding(0, 3, aInBoxes),
+		avk::binding(1, 0, aInIndexListLength),
+		avk::binding(1, 1, aInBoxesLength)
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInOutPosition),
+		avk::binding(0, 2, aInRadius),
+		avk::binding(0, 3, aInBoxes),
+		avk::binding(1, 0, aInIndexListLength),
+		avk::binding(1, 1, aInBoxesLength)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::apply_acceleration(const avk::buffer& aInIndexList, const avk::buffer& aInOutVelocity, const avk::buffer& aInIndexListLength, const glm::vec3& aAcceleration)
 {
 	struct push_constants { glm::vec3 mAcceleration; } pushConstants{ aAcceleration };

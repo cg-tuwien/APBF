@@ -54,7 +54,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>();
+		mPool = std::make_unique<pool>(glm::vec3(-10, -10, -60), glm::vec3(10, 30, -40));
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -391,7 +391,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		shader_provider::start_recording();
 
-		mPool->update(gvk::time().delta_time());
+		mPool->update(std::min(gvk::time().delta_time(), 0.1f));
 
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
@@ -543,9 +543,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 	void finalize() override
 	{
+		// TODO let all templated classes use the same buffer cache
 		pbd::gpu_list<4>::cleanup();
 		pbd::gpu_list<12>::cleanup();
 		pbd::gpu_list<16>::cleanup();
+		pbd::gpu_list<32>::cleanup();
 	}
 
 

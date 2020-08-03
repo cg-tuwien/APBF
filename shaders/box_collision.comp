@@ -1,0 +1,71 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define POS_RESOLUTION 262144.0f
+
+struct box
+{
+	vec4 mMin;
+	vec4 mMax;
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
+layout(set = 0, binding = 1) buffer InOutPosition { ivec4 inOutPosition[]; };
+layout(set = 0, binding = 2) buffer InRadius      { float      inRadius[]; };
+layout(set = 0, binding = 3) buffer InBoxes       { box         inBoxes[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set = 1, binding = 1) buffer InBoxesLength     { uint inBoxesLength; };
+// ----------------------------------------------------
+
+float random(float s)
+{
+	return mod(s * 15367.29, 1); // TODO
+}
+
+vec3 random3(float s)
+{
+	vec3 result;
+	result.x = random(s);
+	result.y = random(result.x);
+	result.z = random(result.y);
+	return result;
+}
+
+bvec3 smallestComponent(vec3 v)
+{
+	bool b1 = v.x <= v.y;
+	bool b2 = v.x <= v.z;
+	bool b3 = v.y <= v.z;
+	return bvec3(b1 && b2, !b1 && b3, !b2 && !b3);
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint idx = inIndexList[id];
+	vec3 pos = vec3(inOutPosition[idx].xyz) / POS_RESOLUTION;
+	float radius = inRadius[idx];
+	
+	for (uint i = 0; i < inBoxesLength; i++) {
+		vec3 bMin = inBoxes[i].mMin.xyz - radius - random3(id * pos.x) * 0.1;
+		vec3 bMax = inBoxes[i].mMax.xyz + radius + random3(id * pos.y) * 0.1;
+
+		vec3 toMin = bMin - pos;
+		vec3 toMax = bMax - pos;
+		toMin *= vec3(smallestComponent(-toMin));
+		toMax *= vec3(smallestComponent( toMax));
+		float distToMin = -dot(toMin, vec3(1, 1, 1));
+		float distToMax =  dot(toMax, vec3(1, 1, 1));
+		if (distToMin <= 0 || distToMax <= 0) continue;
+		pos += distToMin < distToMax ? toMin : toMax;
+	}
+
+	inOutPosition[idx].xyz = ivec3(pos * POS_RESOLUTION);
+}
