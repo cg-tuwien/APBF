@@ -22,9 +22,9 @@ class apbf : public gvk::invokee
 		glm::mat4 mViewMatrix;
 		/** Camera's projection matrix */
 		glm::mat4 mProjMatrix;
-		/** [0]: time since start, [1]: delta time, [2]: unused, [3]: unused  */
-		glm::vec4 mTime;
-		/** [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: unused, [3]: unused  */
+		/** [0]: time since start, [1]: delta time, [2]: reset particle positions, [3]: set uniform particle radius  */
+		glm::vec4 mTimeAndUserInput;
+		/** [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: perform sphere intersection, [3]: unused  */
 		glm::uvec4 mUserInput;
 	};
 
@@ -162,7 +162,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			auto& gib = mGeometryInstanceBuffers.emplace_back(context().create_buffer(
 				memory_usage::device, {},
 				storage_buffer_meta::create_from_data(geomInstInitDataForGpu),
-				geometry_instance_buffer_meta::create_from_data(geomInstInitDataForGpu)
+				geometry_instance_buffer_meta::create_from_data(geomInstInitDataForGpu),
+				instance_buffer_meta::create_from_data(geomInstInitDataForGpu).describe_member(sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, 0, content_description::user_defined_01)
 			));
 			gib->fill(geomInstInitDataForGpu.data(), 1, sync::wait_idle());
 			
@@ -192,11 +193,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mGraphicsPipelineInstanced = context().create_graphics_pipeline_for(
 			// Shaders to be used with this pipeline:
 			vertex_shader("shaders/instanced.vert"), 
-			fragment_shader("shaders/red.frag"),
+			fragment_shader("shaders/color.frag"),
 			// Declare the vertex input to the shaders:
 			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
 			                                                                 // and that we are going to access it in shaders via layout (location = 0)
 			instance_input_location(1, &particle::mCurrentPositionRadius).from_buffer_at_binding(1), // Stream instance data from the buffer at binding 1
+			instance_input_location(2, sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, sizeof(VkAccelerationStructureInstanceKHR)).from_buffer_at_binding(2), // Stream the mask from GeometryInstance data
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -232,7 +234,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
 			                                                                 // and that we are going to access it in shaders via layout (location = 0)
 			instance_input_location(1, glm::ivec4{}).from_buffer_at_binding(1), // Stream instance data from the buffer at binding 1
-			instance_input_location(2, 0.0f).from_buffer_at_binding(2),         // Stream instance data from the buffer at binding 1
+			instance_input_location(2, 0.0f).from_buffer_at_binding(2),         // Stream instance data from the buffer at binding 2
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -267,11 +269,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mGraphicsPipelinePoint = context().create_graphics_pipeline_for(
 			// Shaders to be used with this pipeline:
 			vertex_shader("shaders/point.vert"), 
-			fragment_shader("shaders/red.frag"),
+			fragment_shader("shaders/color.frag"),
 			cfg::polygon_drawing::config_for_points(), cfg::rasterizer_geometry_mode::rasterize_geometry, cfg::culling_mode::disabled,
 			// Declare the vertex input to the shaders:
 			//vertex_input_location(0, 0, vk::Format::eR16G16B16A16Sfloat, 0).from_buffer_at_binding(0), // Stream particle positions from buffer at index 0
 			vertex_input_location(0, &particle::mCurrentPositionRadius).from_buffer_at_binding(0),
+			vertex_input_location(1, sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, sizeof(VkAccelerationStructureInstanceKHR)).from_buffer_at_binding(1), // Stream the mask from GeometryInstance data
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -325,7 +328,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			binding(1, 1, mGeometryInstanceBuffers[0]->as_storage_buffer()),
 #endif
 			binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
-			binding(2, 1, mTopLevelAS[0])                               // Just take any, this is just to define the layout
+			binding(3, 0, mTopLevelAS[0])                               // Just take any, this is just to define the layout
 		);
 		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
@@ -352,6 +355,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				static const char* const sNeighborRenderOptions[] = {"All", "Only Neighbors", "All But Neighbors"};
 				ImGui::Combo("Particles to Render", &mRenderNeighbors, sNeighborRenderOptions, IM_ARRAYSIZE(sNeighborRenderOptions));
 				ImGui::DragInt("Neighborhood-Origin Particle-ID", &mNeighborhoodOriginParticleId, 1, 0, static_cast<int>(mNumParticles));
+				ImGui::Checkbox("Freeze Particle Animation", &mFreezeParticleAnimation);
+				ImGui::Checkbox("Reset Particle Positions", &mResetParticlePositions);
+				ImGui::Checkbox("Set Uniform Particle Radius", &mSetUniformParticleRadius);
+				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
+				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
 
 				ImGui::Separator();
 
@@ -395,22 +403,28 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto* mainWnd = context().main_window();
 		const auto ifi = mainWnd->current_in_flight_index();
 
+		static float sTimeSinceStartForAnimation = 0.0f;
+		if (!mFreezeParticleAnimation) {
+			sTimeSinceStartForAnimation = time().time_since_start();
+		}
 		application_data cd{
 			// Camera's view matrix
 			mQuakeCam.view_matrix(),
 			// Camera's projection matrix
 			mQuakeCam.projection_matrix(),
-			// [0]: time since start, [1]: delta time, [2]: unused, [3]: unused 
+			// [0]: time since start, [1]: delta time, [2]: reset particle positions, [3]: set uniform particle radius 
 			glm::vec4 {
-				time().time_since_start(),
+				sTimeSinceStartForAnimation,
 				time().delta_time(),
-				0.f, 0.f
+				mResetParticlePositions ? 1.0f : 0.0f,
+				mSetUniformParticleRadius ? 1.0f : 0.0f
 			},
-			// [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: unused, [3]: unused 
+			// [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: perform sphere intersection, [3]: unused
 			glm::uvec4{
-				0 == mRenderNeighbors /* all */ ? uint32_t{0xFF} : 1 == mRenderNeighbors /* neighbors */ ? uint32_t{NEIGHBOR_MASK} : /* not neighbors */ uint32_t{NOT_NEIGHBOR_MASK},
+				0 == mRenderNeighbors ? /* all: */ uint32_t{0xFF} : 1 == mRenderNeighbors ? /* neighbors: */ uint32_t{NEIGHBOR_MASK} : /* not neighbors: */ uint32_t{NOT_NEIGHBOR_MASK},
 				static_cast<uint32_t>(mNeighborhoodOriginParticleId),
-				0u, 0u
+				mIntersectionType,
+				0u
 			}
 		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
@@ -426,9 +440,14 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// COMPUTE
 
 #if BLAS_CENTRIC
-		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mAabbsBuffer[ifi], mNumParticles);
+		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mAabbsBuffer[ifi], mTopLevelAS[ifi], mNumParticles);
 #else
-		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mNumParticles);
+		shader_provider::roundandround(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mTopLevelAS[ifi], mNumParticles);
+		shader_provider::cmd_bfr()->establish_global_memory_barrier(
+			pipeline_stage::compute_shader,                        /* -> */ pipeline_stage::compute_shader,
+			memory_access::shader_buffers_and_images_write_access, /* -> */ memory_access::shader_buffers_and_images_any_access
+		);
+		shader_provider::mask_neighborhood(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mTopLevelAS[ifi], mNumParticles);
 #endif
 		shader_provider::end_recording();
 		
@@ -498,7 +517,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi])
 			}));
-			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi]);
+			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
 			cmdBfr->end_render_pass();
 
 			break;
@@ -509,7 +528,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				binding(0, 0, mCameraDataBuffer[ifi])
 			}));
-			cmdBfr->draw_vertices(*mParticlesBuffer[ifi]);
+			cmdBfr->draw_vertices(*mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
 			cmdBfr->end_render_pass();
 
 			break;
@@ -525,7 +544,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				binding(1, 1, mGeometryInstanceBuffers[ifi]->as_storage_buffer()),
 #endif
 				binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
-				binding(2, 1, mTopLevelAS[ifi])                              
+				binding(3, 0, mTopLevelAS[ifi])                              
 			}));
 
 			// Do it:
@@ -616,9 +635,13 @@ private: // v== Member variables ==v
 	//avk::buffer mTest;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 2;
-	int mRenderNeighbors = 0;
+	int mRenderingMethod = 0;
+	int mRenderNeighbors = 1;
 	int mNeighborhoodOriginParticleId = 0;
+	bool mFreezeParticleAnimation = false;
+	bool mResetParticlePositions = false;
+	bool mSetUniformParticleRadius = false;
+	int mIntersectionType = 0;
 	
 }; // class apbf
 
@@ -654,7 +677,10 @@ int main() // <== Starting point ==
 				.add_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME)
 				.add_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME),
 			[](vk::PhysicalDeviceFeatures& deviceFeatures) {
-				deviceFeatures.shaderInt64 = VK_TRUE;
+				deviceFeatures.setShaderInt64(VK_TRUE);
+			},
+			[](vk::PhysicalDeviceRayTracingFeaturesKHR& rayTracingFeatures){
+				rayTracingFeatures.setRayQuery(VK_TRUE);
 			},
 			mainWnd,
 			app,

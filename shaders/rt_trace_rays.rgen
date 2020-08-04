@@ -3,14 +3,18 @@
 
 layout(set = 0, binding = 0) uniform application_data
 {
+	/** Camera's view matrix */
 	mat4 mViewMatrix;
+	/** Camera's projection matrix */
 	mat4 mProjMatrix;
-	vec4 mTime;
+	/** [0]: time since start, [1]: delta time, [2]: reset particle positions, [3]: set uniform particle radius  */
+	vec4 mTimeAndUserInput;
+	/** [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: perform sphere intersection, [3]: unused  */
 	uvec4 mUserInput;
 } appData;
 
 layout(set = 2, binding = 0, rgba8) uniform image2D image;
-layout(set = 2, binding = 1) uniform accelerationStructureEXT topLevelAS;
+layout(set = 3, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(location = 0) rayPayloadEXT vec3 hitValue;
 
@@ -32,7 +36,7 @@ void main()
 	origin = vec3(vp1);
 	direction = vec3(normalize(vp2 - vp1));
 	
-    uint rayFlags = gl_RayFlagsOpaqueEXT;
+    uint rayFlags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT; // terminate on first hit is only okay because particles are shaded uniformly green
     uint cullMask = appData.mUserInput[0] & 0xFF;
     float tmin = 0.1;
     float tmax = 10000.0;

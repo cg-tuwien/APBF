@@ -24,6 +24,7 @@
     <None Include="shaders\apply_acceleration.comp" />
     <None Include="shaders\apply_velocity.comp" />
     <None Include="shaders\box_collision.comp" />
+    <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
     <None Include="shaders\find_value_changes.comp" />
     <None Include="shaders\find_value_ranges.comp" />
@@ -33,6 +34,7 @@
     <None Include="shaders\infer_velocity.comp" />
     <None Include="shaders\initialize_box.comp" />
     <None Include="shaders\instanced2.vert" />
+    <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />

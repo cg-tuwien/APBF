@@ -30,19 +30,40 @@ avk::command_buffer& shader_provider::cmd_bfr()
 	return mCmdBfr;
 }
 
-void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, uint32_t aParticleCount)
+void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/roundandround.comp",
 		avk::binding(0, 0, aAppData),
 		avk::binding(1, 0, aParticles),
-		avk::binding(1, 1, aAabbs->as_storage_buffer())
+		avk::binding(1, 1, aAabbs->as_storage_buffer()),
+		avk::binding(2, 0, aTlas)
 	);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::binding(0, 0, aAppData),
 		avk::binding(1, 0, aParticles),
-		avk::binding(1, 1, aAabbs->as_storage_buffer())
+		avk::binding(1, 1, aAabbs->as_storage_buffer()),
+		avk::binding(2, 0, aTlas)
+	}));
+	dispatch(aParticleCount);
+}
+
+void shader_provider::mask_neighborhood(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount)
+{
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/mask_neighborhood.comp",
+		avk::binding(0, 0, aAppData),
+		avk::binding(1, 0, aParticles),
+		avk::binding(1, 1, aAabbs->as_storage_buffer()),
+		avk::binding(2, 0, aTlas)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aAppData),
+		avk::binding(1, 0, aParticles),
+		avk::binding(1, 1, aAabbs->as_storage_buffer()),
+		avk::binding(2, 0, aTlas)
 	}));
 	dispatch(aParticleCount);
 }

@@ -127,6 +127,12 @@
     <None Include="shaders\box_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\mask_neighborhood.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\color.frag">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
