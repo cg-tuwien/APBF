@@ -150,6 +150,8 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_owner(list_interface<gp
 template<size_t Stride>
 inline avk::buffer& pbd::gpu_list<Stride>::buffer() const
 {
+	// if this assert fails, you have either forgotten to call write() or have not requested a length
+	assert(mData != nullptr);
 	return mData->mBuffer;
 }
 

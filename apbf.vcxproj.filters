@@ -127,6 +127,12 @@
     <None Include="shaders\box_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\neighborhood_brute_force.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\inter_particle_collision.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
     <None Include="shaders\mask_neighborhood.comp">
       <Filter>shaders</Filter>
     </None>
@@ -160,6 +166,12 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
     <ClCompile Include="source\box_collision.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\neighborhood_brute_force.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\inter_particle_collision.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -207,6 +219,12 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
     <ClInclude Include="source\box_collision.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\neighborhood_brute_force.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\inter_particle_collision.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>

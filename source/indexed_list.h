@@ -22,6 +22,7 @@ namespace pbd
 		bool empty() const;
 		avk::buffer& length() const;
 		indexed_list& set_length(size_t aLength);
+		indexed_list& set_length(const avk::buffer& aLength);
 		indexed_list& request_length(size_t aLength);
 		size_t requested_length();
 		indexed_list increase_length(size_t aAddedLength);
@@ -138,6 +139,13 @@ inline avk::buffer& pbd::indexed_list<DataList>::length() const
 
 template<class DataList>
 inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::set_length(size_t aLength)
+{
+	mIndexList.set_length(aLength);
+	return *this;
+}
+
+template<class DataList>
+inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::set_length(const avk::buffer& aLength)
 {
 	mIndexList.set_length(aLength);
 	return *this;
