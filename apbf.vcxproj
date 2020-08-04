@@ -33,6 +33,8 @@
     <None Include="shaders\infer_velocity.comp" />
     <None Include="shaders\initialize_box.comp" />
     <None Include="shaders\instanced2.vert" />
+    <None Include="shaders\inter_particle_collision.comp" />
+    <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
@@ -55,6 +57,8 @@
     <ClCompile Include="source\algorithms.cpp" />
     <ClCompile Include="source\box_collision.cpp" />
     <ClCompile Include="source\initialize.cpp" />
+    <ClCompile Include="source\inter_particle_collision.cpp" />
+    <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
     <ClCompile Include="source\shader_provider.cpp" />
@@ -71,6 +75,8 @@
     <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\box_collision.h" />
     <ClInclude Include="source\initialize.h" />
+    <ClInclude Include="source\inter_particle_collision.h" />
+    <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\velocity_handling.h" />
     <ClInclude Include="source\gpu_list.h" />

@@ -1,5 +1,6 @@
 #include "test.h"
 #include "algorithms.h"
+#include "neighborhood_brute_force.h"
 
 void pbd::test::test_all()
 {
@@ -20,6 +21,7 @@ void pbd::test::test_all()
 	if (!sort_many_small_values())                 failCount++;
 	if (!delete_these_1())                         failCount++;
 	if (!delete_these_2())                         failCount++;
+	if (!neighborhood_brute_force())               failCount++;
 //	if (!sortByPositions())                        failCount++;
 //	if (!merge())                                  failCount++;
 //	if (!mergeGenerator())                         failCount++;
@@ -392,6 +394,30 @@ bool pbd::test::delete_these_2()
 	pass = validate_length(listA.length(), 0, "delete_these() 2 length A") && pass;
 	pass = validate_length(listB.length(), 0, "delete_these() 2 length B") && pass;
 	pass = validate_length(listA.hidden_list().length(), 0, "delete_these() 2 length Hidden List") && pass;
+	return pass;
+}
+
+bool pbd::test::neighborhood_brute_force()
+{
+	shader_provider::start_recording();
+	auto positionsData = std::vector<glm::ivec4>({ glm::ivec4(0, 0, 0, 1), glm::ivec4(262144, 0, 0, 1), glm::ivec4(0, 262144, 0, 1) });
+	auto rangeData     = std::vector<float>({ 1.0f, 1.0f, 2.0f });
+	auto expectedNeighbors1 = std::vector<uint32_t>({ 3, 0, 1, 2 });
+	auto expectedNeighbors2 = std::vector<uint32_t>({ 2, 0, 1 });
+	auto expectedNeighbors3 = std::vector<uint32_t>({ 3, 0, 1, 2 });
+	auto range = to_gpu_list(rangeData);
+	auto particles = pbd::particles(positionsData.size());
+	auto neighbors = pbd::gpu_list<sizeof(uint32_t) * 64>().request_length(positionsData.size() * 64);
+	auto neighborhoodBruteForce = pbd::neighborhood_brute_force();
+	particles.request_length(positionsData.size());
+	particles.increase_length(positionsData.size());
+	particles.hidden_list().get<hidden_particles::id::position>() = to_gpu_list(positionsData);
+	neighborhoodBruteForce.set_data(&particles, &range, &neighbors).set_range_scale(1).apply();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors1, "neighborhood_brute_force", 0) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors2, "neighborhood_brute_force", 64) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_brute_force", 128) && pass;
 	return pass;
 }
 

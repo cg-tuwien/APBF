@@ -21,18 +21,12 @@ layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; 
 layout(set = 1, binding = 1) buffer InBoxesLength     { uint inBoxesLength; };
 // ----------------------------------------------------
 
-float random(float s)
+// From https://www.shadertoy.com/view/4djSRW (MIT License, see LICENSE in root directory)
+vec3 hash31(float p)
 {
-	return mod(s * 15367.29, 1); // TODO
-}
-
-vec3 random3(float s)
-{
-	vec3 result;
-	result.x = random(s);
-	result.y = random(result.x);
-	result.z = random(result.y);
-	return result;
+   vec3 p3 = fract(vec3(p) * vec3(.1031, .1030, .0973));
+   p3 += dot(p3, p3.yzx+33.33);
+   return fract((p3.xxy+p3.yzz)*p3.zyx); 
 }
 
 bvec3 smallestComponent(vec3 v)
@@ -54,8 +48,8 @@ void main()
 	float radius = inRadius[idx];
 	
 	for (uint i = 0; i < inBoxesLength; i++) {
-		vec3 bMin = inBoxes[i].mMin.xyz - radius - random3(id * pos.x) * 0.1;
-		vec3 bMax = inBoxes[i].mMax.xyz + radius + random3(id * pos.y) * 0.1;
+		vec3 bMin = inBoxes[i].mMin.xyz - radius - hash31(id * pos.x - pos.y - pos.z) * 0.1;
+		vec3 bMax = inBoxes[i].mMax.xyz + radius + hash31(id * pos.y + pos.x + pos.z) * 0.1;
 
 		vec3 toMin = bMin - pos;
 		vec3 toMax = bMax - pos;

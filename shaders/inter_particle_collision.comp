@@ -1,0 +1,60 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define POS_RESOLUTION 262144.0f
+
+struct neighbors
+{
+	uint mNeighbor[64];
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList   { uint      inIndexList[]; };
+layout(set = 0, binding = 1) buffer InOutPosition { ivec4   inOutPosition[]; };
+layout(set = 0, binding = 2) buffer InRadius      { float        inRadius[]; };
+layout(set = 0, binding = 3) buffer InInverseMass { float   inInverseMass[]; };
+layout(set = 0, binding = 4) buffer InNeighbors   { neighbors inNeighbors[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+void addToPos(uint particleId, ivec3 posShift)
+{
+	atomicAdd(inOutPosition[particleId].x, posShift.x);
+	atomicAdd(inOutPosition[particleId].y, posShift.y);
+	atomicAdd(inOutPosition[particleId].z, posShift.z);
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint idx = inIndexList[id];
+	ivec3 pos = inOutPosition[idx].xyz;
+	float radius = inRadius[idx];
+	float invMass = inInverseMass[idx];
+	uint neighborCount = inNeighbors[id].mNeighbor[0];
+	
+	for (uint i = 1; i <= neighborCount; i++) {
+		uint idxN = inNeighbors[id].mNeighbor[i];
+		float radN = inRadius[idxN];
+		// make sure constraint is only solved once per pair
+		if (radN > radius || (radN == radius && idxN >= idx)) continue;
+		
+		ivec3 posN = inOutPosition[idxN].xyz;
+		float invMassN = inInverseMass[idxN];
+		vec3 diff = vec3(posN - pos);
+		float dist = length(diff);
+		float constrEval = dist - (radius + radN) * POS_RESOLUTION;
+		if (constrEval >= 0) continue;
+		
+		float scalar = constrEval / (invMass + invMassN);
+
+		addToPos(idx , ivec3(( invMass  * scalar / dist) * diff));
+		addToPos(idxN, ivec3((-invMassN * scalar / dist) * diff));
+	}
+}

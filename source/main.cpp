@@ -574,6 +574,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		pbd::gpu_list<12>::cleanup();
 		pbd::gpu_list<16>::cleanup();
 		pbd::gpu_list<32>::cleanup();
+		pbd::gpu_list<sizeof(uint32_t) * 64>::cleanup();
 	}
 
 
