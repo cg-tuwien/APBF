@@ -60,6 +60,7 @@
     <ClCompile Include="source\box_collision.cpp" />
     <ClCompile Include="source\initialize.cpp" />
     <ClCompile Include="source\inter_particle_collision.cpp" />
+    <ClCompile Include="source\measurements.cpp" />
     <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
@@ -78,6 +79,7 @@
     <ClInclude Include="source\box_collision.h" />
     <ClInclude Include="source\initialize.h" />
     <ClInclude Include="source\inter_particle_collision.h" />
+    <ClInclude Include="source\measurements.h" />
     <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\velocity_handling.h" />

@@ -3,6 +3,7 @@
 #include <random>
 #include "shader_provider.h"
 #include "pool.h"
+#include "measurements.h"
 
 #ifdef _DEBUG
 #include "Test.h"
@@ -59,7 +60,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>(glm::vec3(-10, -10, -60), glm::vec3(10, 30, -40));
+		mPool = std::make_unique<pool>(glm::vec3(-10, -10, -60), glm::vec3(10, 30, -40), 1.0f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -338,6 +339,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		        ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
+				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("PBD"));
+				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
 				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
 				static std::vector<float> values;
@@ -430,12 +433,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
 
 		shader_provider::start_recording();
+		measurements::record_timing_interval_start("PBD");
 
 		mPool->update(std::min(gvk::time().delta_time(), 0.1f));
 
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
 		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
+
+		measurements::record_timing_interval_end("PBD");
 
 		// COMPUTE
 
@@ -594,6 +600,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		pbd::gpu_list<16>::cleanup();
 		pbd::gpu_list<32>::cleanup();
 		pbd::gpu_list<sizeof(uint32_t) * 64>::cleanup();
+		measurements::clean_up_timing_resources();
 	}
 
 

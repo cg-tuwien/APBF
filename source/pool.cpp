@@ -1,14 +1,15 @@
 #include "pool.h"
 #include "initialize.h"
+#include "measurements.h"
 
-pool::pool(const glm::vec3& aMin, const glm::vec3& aMax) :
-	mParticles(1024)
+pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
+	mParticles(100000)
 {
 	shader_provider::start_recording();
-	mParticles.request_length(1024);
-	mFluid.request_length(1024);
-	mNeighbors.request_length(1024);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 20, 2), aMax - glm::vec3(2, 2, 2));
+	mParticles.request_length(100000);
+	mFluid.request_length(100000);
+	mNeighbors.request_length(100000);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 20, 2), aMax - glm::vec3(2, 2, 2), aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	mVelocityHandling.add_particles(mParticles, glm::vec3(0, -10, 0));
 	mBoxCollision.add_particles(mParticles);
@@ -24,7 +25,9 @@ void pool::update(float aDeltaTime)
 {
 	mVelocityHandling.apply(aDeltaTime);
 	mBoxCollision.apply();
+	measurements::record_timing_interval_start("Neighborhood");
 	mNeighborhoodCollision.apply();
+	measurements::record_timing_interval_end("Neighborhood");
 	mInterParticleCollision.apply();
 }
 

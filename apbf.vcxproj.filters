@@ -174,6 +174,9 @@
     <ClCompile Include="source\inter_particle_collision.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
+    <ClCompile Include="source\measurements.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -226,6 +229,9 @@
     </ClInclude>
     <ClInclude Include="source\inter_particle_collision.h">
       <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\measurements.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
