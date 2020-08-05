@@ -14,7 +14,12 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	mVelocityHandling.add_particles(mParticles, glm::vec3(0, -10, 0));
 	mBoxCollision.add_particles(mParticles);
+	mBoxCollision.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
 	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
+	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
+	mBoxCollision.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
+	mBoxCollision.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
+	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
 	mInterParticleCollision.set_data(&mParticles, &mNeighbors);
 	mIncompressibility.set_data(&mParticles, &mNeighborsFluid);
 	mNeighborhoodCollision.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighbors);
