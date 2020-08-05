@@ -20,7 +20,7 @@ layout(set = 0, binding = 4) buffer InNeighbors   { neighbors inNeighbors[]; };
 layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
-void addToPos(uint particleId, ivec3 posShift)
+void add_to_pos(uint particleId, ivec3 posShift)
 {
 	atomicAdd(inOutPosition[particleId].x, posShift.x);
 	atomicAdd(inOutPosition[particleId].y, posShift.y);
@@ -33,11 +33,11 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= inIndexListLength) return;
 
-	uint idx = inIndexList[id];
-	ivec3 pos = inOutPosition[idx].xyz;
-	float radius = inRadius[idx];
-	float invMass = inInverseMass[idx];
-	uint neighborCount = inNeighbors[id].mNeighbor[0];
+	uint  idx           = inIndexList[id];
+	ivec3 pos           = inOutPosition[idx].xyz;
+	float radius        = inRadius[idx];
+	float invMass       = inInverseMass[idx];
+	uint  neighborCount = inNeighbors[id].mNeighbor[0];
 	
 	for (uint i = 1; i <= neighborCount; i++) {
 		uint idxN = inNeighbors[id].mNeighbor[i];
@@ -54,7 +54,7 @@ void main()
 		
 		float scalar = constrEval / (invMass + invMassN);
 
-		addToPos(idx , ivec3(( invMass  * scalar / dist) * diff));
-		addToPos(idxN, ivec3((-invMassN * scalar / dist) * diff));
+		add_to_pos(idx , ivec3(( invMass  * scalar / dist) * diff));
+		add_to_pos(idxN, ivec3((-invMassN * scalar / dist) * diff));
 	}
 }

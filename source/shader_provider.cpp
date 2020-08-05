@@ -505,6 +505,34 @@ void shader_provider::inter_particle_collision(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
+void shader_provider::incompressibility(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aInNeighbors, const avk::buffer& aOutPosition, const avk::buffer& aInIndexListLength)
+{
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/incompressibility.comp",
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInPosition),
+		avk::binding(0, 2, aInRadius),
+		avk::binding(0, 3, aInInverseMass),
+		avk::binding(0, 4, aInKernelWidth),
+		avk::binding(0, 5, aInNeighbors),
+		avk::binding(0, 6, aOutPosition),
+		avk::binding(1, 0, aInIndexListLength)
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::binding(0, 0, aInIndexList),
+		avk::binding(0, 1, aInPosition),
+		avk::binding(0, 2, aInRadius),
+		avk::binding(0, 3, aInInverseMass),
+		avk::binding(0, 4, aInKernelWidth),
+		avk::binding(0, 5, aInNeighbors),
+		avk::binding(0, 6, aOutPosition),
+		avk::binding(1, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::apply_acceleration(const avk::buffer& aInIndexList, const avk::buffer& aInOutVelocity, const avk::buffer& aInIndexListLength, const glm::vec3& aAcceleration)
 {
 	struct push_constants { glm::vec3 mAcceleration; } pushConstants{ aAcceleration };

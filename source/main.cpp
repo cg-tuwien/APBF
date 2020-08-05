@@ -643,7 +643,7 @@ private: // v== Member variables ==v
 	//avk::buffer mTest;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 0;
+	int mRenderingMethod = 3;
 	int mRenderNeighbors = 1;
 	int mNeighborhoodOriginParticleId = 0;
 	bool mFreezeParticleAnimation = false;

@@ -139,6 +139,9 @@
     <None Include="shaders\color.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\incompressibility.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -176,6 +179,9 @@
     </ClCompile>
     <ClCompile Include="source\measurements.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\incompressibility.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -232,6 +238,9 @@
     </ClInclude>
     <ClInclude Include="source\measurements.h">
       <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\incompressibility.h">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

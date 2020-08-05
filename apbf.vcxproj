@@ -37,6 +37,7 @@
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\mask_neighborhood.comp" />
+    <None Include="shaders\incompressibility.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
@@ -58,6 +59,7 @@
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
     <ClCompile Include="source\box_collision.cpp" />
+    <ClCompile Include="source\incompressibility.cpp" />
     <ClCompile Include="source\initialize.cpp" />
     <ClCompile Include="source\inter_particle_collision.cpp" />
     <ClCompile Include="source\measurements.cpp" />
@@ -77,6 +79,7 @@
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
     <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\box_collision.h" />
+    <ClInclude Include="source\incompressibility.h" />
     <ClInclude Include="source\initialize.h" />
     <ClInclude Include="source\inter_particle_collision.h" />
     <ClInclude Include="source\measurements.h" />

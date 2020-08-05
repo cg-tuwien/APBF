@@ -4,6 +4,7 @@
 #include "box_collision.h"
 #include "neighborhood_brute_force.h"
 #include "inter_particle_collision.h"
+#include "incompressibility.h"
 
 class pool
 {
@@ -19,11 +20,12 @@ private:
 	// automatic index updates for this structure, so don't even bother linking it to mParticles.
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
 	pbd::gpu_list<sizeof(uint32_t) * 64> mNeighbors;
-	//pbd::gpu_list<sizeof(uint32_t) * 64> mNeighborsFluid;
+	pbd::gpu_list<sizeof(uint32_t) * 64> mNeighborsFluid;
 
 	pbd::velocity_handling mVelocityHandling;
 	pbd::box_collision mBoxCollision;
 	pbd::neighborhood_brute_force mNeighborhoodCollision;
-	//pbd::neighborhood_brute_force mNeighborhoodFluid;
+	pbd::neighborhood_brute_force mNeighborhoodFluid;
 	pbd::inter_particle_collision mInterParticleCollision;
+	pbd::incompressibility mIncompressibility;
 };

@@ -1,0 +1,197 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+#define POS_RESOLUTION 262144.0f
+#define NEIGHBOR_LIST_MAX_LENGTH 64
+#define EPSILON 0.01
+#define KERNEL_ID 0
+#define PI 3.14159265f
+
+struct neighbors
+{
+	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList   { uint      inIndexList[]; };
+layout(set = 0, binding = 1) buffer InPosition    { ivec4      inPosition[]; };
+layout(set = 0, binding = 2) buffer InRadius      { float        inRadius[]; };
+layout(set = 0, binding = 3) buffer InInverseMass { float   inInverseMass[]; };
+layout(set = 0, binding = 4) buffer InKernelWidth { float   inKernelWidth[]; };
+layout(set = 0, binding = 5) buffer InNeighbors   { neighbors inNeighbors[]; };
+layout(set = 0, binding = 6) buffer OutPosition   { ivec4     outPosition[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+void add_to_pos(uint particleId, ivec3 posShift)
+{
+	atomicAdd(outPosition[particleId].x, posShift.x);
+	atomicAdd(outPosition[particleId].y, posShift.y);
+	atomicAdd(outPosition[particleId].z, posShift.z);
+}
+
+float poly6_kernel_height(vec3 r, float h)
+{
+	float rSquared = dot(r, r);
+	float hSquared = h * h;
+	if (rSquared > hSquared) return 0.0f;
+	return 315.0f * pow(hSquared - rSquared, 3.0f) / (64.0f * PI * pow(h, 9.0f));
+}
+
+vec3 spiky_kernel_gradient(vec3 r, float h)
+{
+	float dist = length(r);
+	if (dist > h || dist < 0.0001f) return vec3(0, 0, 0);
+	return -45.0f * pow(h - dist, 2.0f) / (PI * pow(h, 6.0f)) * (r / dist);
+}
+
+float cubic_kernel_height(vec3 r, float h)
+{
+	float dist = length(r);
+	if (dist > h) return 0.0f;
+	float q = dist / h;
+	float k = 8.0f / (PI * h * h * h);
+	if (q <= 0.5f)
+	{
+		float q2 = q * q;
+		float q3 = q * q2;
+		return k * (6.0f * q3 - 6.0f * q2 + 1.0f);
+	}
+	return k * (2.0f * pow(1.0f - q, 3.0f));
+}
+
+vec3 cubic_kernel_gradient(vec3 r, float h)
+{
+	float dist = length(r);
+	if (dist > h || dist < 0.0001f) return vec3(0, 0, 0);
+	float q = dist / h;
+	vec3 gradq = r * (1.0f / (dist * h));
+	float l = 48.0f / (PI * h * h * h);
+	if (q <= 0.5f)
+	{
+		return l * q * (3.0f * q - 2.0f) * gradq;
+	}
+	float factor = 1.0f - q;
+	return l * (-factor * factor) * gradq;
+}
+
+float cone_kernel_height(vec3 r, float h)
+{
+	float height = 3.0f / (PI * h * h * h);
+	return max(0.0f, (1.0f - length(r) / h) * height);
+}
+
+vec3 cone_kernel_gradient(vec3 r, float h)
+{
+	float dist = length(r);
+	if (dist > h || dist < 0.0001f) return vec3(0, 0, 0);
+	return -r / dist;
+}
+
+float gauss_kernel_height(vec3 r, float height)
+{
+	float invDoubleVarianceWithoutPi = pow(height, 2.0f / 3.0f);
+	float invDoubleVariance = invDoubleVarianceWithoutPi * PI;
+	return exp(-dot(r, r) * invDoubleVariance) * pow(invDoubleVarianceWithoutPi, 1.5f);
+}
+
+vec3 gauss_kernel_gradient(vec3 r, float height)
+{
+	float dist = length(r);
+	if (dist < 0.0001f) return vec3(0, 0, 0);
+	float invDoubleVarianceWithoutPi = pow(height, 2.0f / 3.0f);
+	float invDoubleVariance = invDoubleVarianceWithoutPi * PI;
+//	return exp(-dot(r, r) * invDoubleVariance) * pow(invDoubleVarianceWithoutPi, 1.5f);
+//	return -gauss_kernel_height(r, height) * sqrt(dot(r, r) / invDoubleVariance) * normalize(r);
+	return -gauss_kernel_height(r, height) * 2.0f * dist * invDoubleVariance * normalize(r);
+}
+
+float kernel_height(vec3 r, float aKernelWidth)
+{
+	switch (KERNEL_ID)
+	{
+		case 0: return cubic_kernel_height(r, aKernelWidth);
+		case 1: return gauss_kernel_height(r, 0.6f / pow(aKernelWidth / 2.0f, 3.0f));
+		case 2: return poly6_kernel_height(r, aKernelWidth);
+		default: return 0.0f;
+	}
+}
+
+vec3 kernel_gradient(vec3 r, float aKernelWidth)
+{
+	switch (KERNEL_ID)
+	{
+		case 0: return cubic_kernel_gradient(r, aKernelWidth);
+		case 1: return gauss_kernel_gradient(r, 0.6f / pow(aKernelWidth / 2.0f, 3.0f));
+		case 2: return spiky_kernel_gradient(r, aKernelWidth);
+		default: return vec3(0.0f, 0.0f, 0.0f);
+	}
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint  idx            = inIndexList[id];
+	ivec3 pos            = inPosition[idx].xyz;
+	float radius         = inRadius[idx];
+	float invMass        = inInverseMass[idx];
+//	float kernelWidth    = inKernelWidth[idx];
+	float kernelWidth    = radius * 4; // TODO
+	float invRestDensity = 4 * radius * radius * invMass;
+	uint  neighborCount  = inNeighbors[id].mNeighbor[0];
+
+	float sqrtInvMass[NEIGHBOR_LIST_MAX_LENGTH];
+	vec3  weightedGradients[NEIGHBOR_LIST_MAX_LENGTH];
+	vec3  weightedGradientsSum = vec3(0, 0, 0);
+	uint  neighborSelfIdx;
+	float density = 0;
+	float squaredGradSum = 0;
+	
+	// compute weighted gradients, density and the sum of the squared gradients
+	for (uint i = 1; i <= neighborCount; i++) {
+		uint  idxN       = inNeighbors[id].mNeighbor[i];
+		ivec3 posN       = inPosition[idxN].xyz;
+		float radiusN    = inRadius[idxN];
+		float invMassN   = inInverseMass[idxN];
+		vec3  diff       = vec3(posN - pos) / POS_RESOLUTION;
+
+		density += kernel_height(diff, kernelWidth) / invMassN;
+
+		sqrtInvMass[i] = sqrt(invMassN);
+
+		// weighted gradient of the current particle itself depends on sum of all other gradients,
+		// so wait with its computation until after the for loop.
+		if (idx == idxN) {
+			neighborSelfIdx = i;
+		} else {
+			weightedGradients[i] = kernel_gradient(diff, kernelWidth) * invRestDensity / invMassN;
+			weightedGradientsSum += weightedGradients[i];
+
+			// scale gradients by inverse mass so that moving lighter particles gets preferred
+			weightedGradients[i] *= sqrtInvMass[i];
+
+			squaredGradSum += dot(weightedGradients[i], weightedGradients[i]);
+		}
+	}
+	// now compute the missing weighted gradient - the one for the current particle itself:
+	weightedGradients[neighborSelfIdx] = weightedGradientsSum * sqrt(invMass);
+	squaredGradSum += dot(weightedGradients[neighborSelfIdx], weightedGradients[neighborSelfIdx]);
+
+	float lambda = -(density * invRestDensity - 1) / (squaredGradSum + EPSILON);
+
+	// if the density is already lower than the rest density, do nothing
+	if (lambda >= 0) return;
+
+	// now we can shift the neighbors so that the density is decreased towards the rest density at the current particle's position:
+	for (uint i = 1; i <= neighborCount; i++) {
+		uint idxN  = inNeighbors[id].mNeighbor[i];
+		vec3 shift = weightedGradients[i] * lambda * sqrtInvMass[i];
+		add_to_pos(idxN, ivec3(shift * POS_RESOLUTION));
+	}
+}
