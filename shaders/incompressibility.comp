@@ -1,10 +1,10 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
 
-#define POS_RESOLUTION 262144.0f
-#define NEIGHBOR_LIST_MAX_LENGTH 64
 #define EPSILON 0.01
-#define KERNEL_ID 0
+#define KERNEL_ID 1
 #define PI 3.14159265f
 
 struct neighbors
@@ -93,19 +93,16 @@ vec3 cone_kernel_gradient(vec3 r, float h)
 
 float gauss_kernel_height(vec3 r, float height)
 {
-	float invDoubleVarianceWithoutPi = pow(height, 2.0f / 3.0f);
+	float invDoubleVarianceWithoutPi = pow(height, 2.0f / DIMENSIONS);
 	float invDoubleVariance = invDoubleVarianceWithoutPi * PI;
-	return exp(-dot(r, r) * invDoubleVariance) * pow(invDoubleVarianceWithoutPi, 1.5f);
+	return exp(-dot(r, r) * invDoubleVariance) * pow(invDoubleVarianceWithoutPi, DIMENSIONS / 2.0f);
 }
 
 vec3 gauss_kernel_gradient(vec3 r, float height)
 {
 	float dist = length(r);
 	if (dist < 0.0001f) return vec3(0, 0, 0);
-	float invDoubleVarianceWithoutPi = pow(height, 2.0f / 3.0f);
-	float invDoubleVariance = invDoubleVarianceWithoutPi * PI;
-//	return exp(-dot(r, r) * invDoubleVariance) * pow(invDoubleVarianceWithoutPi, 1.5f);
-//	return -gauss_kernel_height(r, height) * sqrt(dot(r, r) / invDoubleVariance) * normalize(r);
+	float invDoubleVariance = pow(height, 2.0f / DIMENSIONS) * PI;
 	return -gauss_kernel_height(r, height) * 2.0f * dist * invDoubleVariance * normalize(r);
 }
 
@@ -114,7 +111,7 @@ float kernel_height(vec3 r, float aKernelWidth)
 	switch (KERNEL_ID)
 	{
 		case 0: return cubic_kernel_height(r, aKernelWidth);
-		case 1: return gauss_kernel_height(r, 0.6f / pow(aKernelWidth / 2.0f, 3.0f));
+		case 1: return gauss_kernel_height(r, 0.6f / pow(aKernelWidth / 2.0f, DIMENSIONS));
 		case 2: return poly6_kernel_height(r, aKernelWidth);
 		default: return 0.0f;
 	}
@@ -125,7 +122,7 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	switch (KERNEL_ID)
 	{
 		case 0: return cubic_kernel_gradient(r, aKernelWidth);
-		case 1: return gauss_kernel_gradient(r, 0.6f / pow(aKernelWidth / 2.0f, 3.0f));
+		case 1: return gauss_kernel_gradient(r, 0.6f / pow(aKernelWidth / 2.0f, DIMENSIONS));
 		case 2: return spiky_kernel_gradient(r, aKernelWidth);
 		default: return vec3(0.0f, 0.0f, 0.0f);
 	}
@@ -143,7 +140,7 @@ void main()
 	float invMass        = inInverseMass[idx];
 //	float kernelWidth    = inKernelWidth[idx];
 	float kernelWidth    = radius * 4; // TODO
-	float invRestDensity = 4 * radius * radius * invMass;
+	float invRestDensity = pow(2 * radius, DIMENSIONS) * invMass;
 	uint  neighborCount  = inNeighbors[id].mNeighbor[0];
 
 	float sqrtInvMass[NEIGHBOR_LIST_MAX_LENGTH];
@@ -180,7 +177,7 @@ void main()
 		}
 	}
 	// now compute the missing weighted gradient - the one for the current particle itself:
-	weightedGradients[neighborSelfIdx] = weightedGradientsSum * sqrt(invMass);
+	weightedGradients[neighborSelfIdx] = -weightedGradientsSum * sqrt(invMass);
 	squaredGradSum += dot(weightedGradients[neighborSelfIdx], weightedGradients[neighborSelfIdx]);
 
 	float lambda = -(density * invRestDensity - 1) / (squaredGradSum + EPSILON);

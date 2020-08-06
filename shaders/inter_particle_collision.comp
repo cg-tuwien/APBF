@@ -1,11 +1,11 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
-
-#define POS_RESOLUTION 262144.0f
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
 
 struct neighbors
 {
-	uint mNeighbor[64];
+	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
 };
 
 // ---------------------- lists -----------------------

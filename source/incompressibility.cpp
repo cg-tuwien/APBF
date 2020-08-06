@@ -13,6 +13,7 @@ void pbd::incompressibility::apply()
 	auto& inverseMassList = mParticles->hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
 	auto& radiusList = mParticles->hidden_list().get<pbd::hidden_particles::id::radius>();
 	auto& kernelWidthList = radiusList; // TODO
+	auto oldPositionList = positionList;
 
-	shader_provider::incompressibility(mParticles->index_buffer(), positionList.write().buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), positionList.write().buffer(), mParticles->length());
+	shader_provider::incompressibility(mParticles->index_buffer(), oldPositionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), positionList.write().buffer(), mParticles->length());
 }
