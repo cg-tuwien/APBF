@@ -223,7 +223,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			),
 			// Further config for the pipeline:
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			binding(0, 0, mCameraDataBuffer[0])
+			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
@@ -258,7 +258,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			),
 			// Further config for the pipeline:
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			binding(0, 0, mCameraDataBuffer[0])
+			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
 
 		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
@@ -297,7 +297,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			),
 			// Further config for the pipeline:
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			binding(0, 0, mCameraDataBuffer[0])
+			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
 
 		// Create offscreen image views to ray-trace into, one for each frame in flight:
@@ -319,15 +319,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			),
 			context().get_max_ray_tracing_recursion_depth(),
 			// Define push constants and descriptor bindings:
-			binding(0, 0, mCameraDataBuffer[0]),
-			binding(1, 0, mParticlesBuffer[0]),
+			descriptor_binding(0, 0, mCameraDataBuffer[0]),
+			descriptor_binding(1, 0, mParticlesBuffer[0]),
 #if BLAS_CENTRIC
-			binding(1, 1, mAabbsBuffer[0]->as_storage_buffer()),
+			descriptor_binding(1, 1, mAabbsBuffer[0]->as_storage_buffer()),
 #else 
-			binding(1, 1, mGeometryInstanceBuffers[0]->as_storage_buffer()),
+			descriptor_binding(1, 1, mGeometryInstanceBuffers[0]->as_storage_buffer()),
 #endif
-			binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
-			binding(3, 0, mTopLevelAS[0])                               // Just take any, this is just to define the layout
+			descriptor_binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
+			descriptor_binding(3, 0, mTopLevelAS[0])                               // Just take any, this is just to define the layout
 		);
 		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
@@ -505,7 +505,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-				binding(0, 0, mCameraDataBuffer[ifi])
+				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			
 			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
@@ -519,7 +519,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced);
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-				binding(0, 0, mCameraDataBuffer[ifi])
+				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
 			cmdBfr->end_render_pass();
@@ -530,7 +530,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelinePoint->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelinePoint);
 			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-				binding(0, 0, mCameraDataBuffer[ifi])
+				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_vertices(*mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
 			cmdBfr->end_render_pass();
@@ -540,15 +540,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 			cmdBfr->bind_pipeline(mRayTracingPipeline);
 			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-				binding(0, 0, mCameraDataBuffer[ifi]),
-				binding(1, 0, mParticlesBuffer[ifi]),
+				descriptor_binding(0, 0, mCameraDataBuffer[ifi]),
+				descriptor_binding(1, 0, mParticlesBuffer[ifi]),
 #if BLAS_CENTRIC
-				binding(1, 1, mAabbsBuffer[ifi]->as_storage_buffer()),
+				descriptor_binding(1, 1, mAabbsBuffer[ifi]->as_storage_buffer()),
 #else
-				binding(1, 1, mGeometryInstanceBuffers[ifi]->as_storage_buffer()),
+				descriptor_binding(1, 1, mGeometryInstanceBuffers[ifi]->as_storage_buffer()),
 #endif
-				binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
-				binding(3, 0, mTopLevelAS[ifi])                              
+				descriptor_binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
+				descriptor_binding(3, 0, mTopLevelAS[ifi])                              
 			}));
 
 			// Do it:
