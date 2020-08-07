@@ -164,7 +164,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				memory_usage::device, {},
 				storage_buffer_meta::create_from_data(geomInstInitDataForGpu),
 				geometry_instance_buffer_meta::create_from_data(geomInstInitDataForGpu),
-				instance_buffer_meta::create_from_data(geomInstInitDataForGpu).describe_member(sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, 0, content_description::user_defined_01)
+				vertex_buffer_meta::create_from_data(geomInstInitDataForGpu)  .describe_member(sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, content_description::user_defined_01),
+				instance_buffer_meta::create_from_data(geomInstInitDataForGpu).describe_member(sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, content_description::user_defined_01)
 			));
 			gib->fill(geomInstInitDataForGpu.data(), 1, sync::wait_idle());
 			
@@ -196,10 +197,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			vertex_shader("shaders/instanced.vert"), 
 			fragment_shader("shaders/color.frag"),
 			// Declare the vertex input to the shaders:
-			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
-			                                                                 // and that we are going to access it in shaders via layout (location = 0)
-			instance_input_location(1, &particle::mCurrentPositionRadius).from_buffer_at_binding(1), // Stream instance data from the buffer at binding 1
-			instance_input_location(2, sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, sizeof(VkAccelerationStructureInstanceKHR)).from_buffer_at_binding(2), // Stream the mask from GeometryInstance data
+			from_buffer_binding(0) -> stream_per_vertex(glm::vec3{})                                                         -> to_location(0), // Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
+			from_buffer_binding(1) -> stream_per_instance(&particle::mCurrentPositionRadius)                                 -> to_location(1), // Stream instance data from the buffer at binding 1
+			from_buffer_binding(2) -> stream_per_instance(mGeometryInstanceBuffers[0], content_description::user_defined_01) -> to_location(2), // Stream the mask from GeometryInstance data
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -232,10 +232,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			vertex_shader("shaders/instanced2.vert"), 
 			fragment_shader("shaders/red.frag"),
 			// Declare the vertex input to the shaders:
-			vertex_input_location(0, glm::vec3{}).from_buffer_at_binding(0), // Declare that positions shall be read from the attached vertex buffer at binding 0,
-			                                                                 // and that we are going to access it in shaders via layout (location = 0)
-			instance_input_location(1, glm::ivec4{}).from_buffer_at_binding(1), // Stream instance data from the buffer at binding 1
-			instance_input_location(2, 0.0f).from_buffer_at_binding(2),         // Stream instance data from the buffer at binding 2
+			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()    -> to_location(0),	// Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
+			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
+			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -273,9 +272,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			fragment_shader("shaders/color.frag"),
 			cfg::polygon_drawing::config_for_points(), cfg::rasterizer_geometry_mode::rasterize_geometry, cfg::culling_mode::disabled,
 			// Declare the vertex input to the shaders:
-			//vertex_input_location(0, 0, vk::Format::eR16G16B16A16Sfloat, 0).from_buffer_at_binding(0), // Stream particle positions from buffer at index 0
-			vertex_input_location(0, &particle::mCurrentPositionRadius).from_buffer_at_binding(0),
-			vertex_input_location(1, sizeof(VkTransformMatrixKHR), vk::Format::eR32Sint, sizeof(VkAccelerationStructureInstanceKHR)).from_buffer_at_binding(1), // Stream the mask from GeometryInstance data
+			from_buffer_binding(0) -> stream_per_vertex(&particle::mCurrentPositionRadius)                                 -> to_location(0),
+			from_buffer_binding(1) -> stream_per_vertex(mGeometryInstanceBuffers[0], content_description::user_defined_01) -> to_location(1), // Stream the mask from GeometryInstance data
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
