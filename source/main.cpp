@@ -197,7 +197,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			vertex_shader("shaders/instanced.vert"), 
 			fragment_shader("shaders/color.frag"),
 			// Declare the vertex input to the shaders:
-			from_buffer_binding(0) -> stream_per_vertex(glm::vec3{})                                                         -> to_location(0), // Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
+			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()                                                         -> to_location(0), // Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
 			from_buffer_binding(1) -> stream_per_instance(&particle::mCurrentPositionRadius)                                 -> to_location(1), // Stream instance data from the buffer at binding 1
 			from_buffer_binding(2) -> stream_per_instance(mGeometryInstanceBuffers[0], content_description::user_defined_01) -> to_location(2), // Stream the mask from GeometryInstance data
 			context().create_renderpass({
