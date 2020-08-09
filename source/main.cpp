@@ -60,7 +60,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>(glm::vec3(-10, -10, -60), glm::vec3(10, 30, -40), 1.0f);
+		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -60), glm::vec3(40, 30, -40), 1.0f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -230,11 +230,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
 			// Shaders to be used with this pipeline:
 			vertex_shader("shaders/instanced2.vert"), 
-			fragment_shader("shaders/red.frag"),
+			fragment_shader("shaders/color.frag"),
 			// Declare the vertex input to the shaders:
 			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()    -> to_location(0),	// Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
 			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
 			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
+			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 2
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -437,6 +438,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+		auto boundaryDistance = mPool->fluid().get<pbd::fluid::id::boundary_distance>(); // only corresponds to position and radius lists because the scene creates only fluid particles
 		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
 
 		measurements::record_timing_interval_end("PBD");
@@ -508,7 +510,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			
-			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), boundaryDistance.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
 			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
 			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);	
 			cmdBfr->end_render_pass();

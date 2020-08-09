@@ -4,9 +4,8 @@
 #include "cpu_gpu_shared_config.h"
 
 #define EPSILON 0.01
-#define KERNEL_ID 1
 #define PI 3.14159265
-#define INV_SELF_GRAD_LENGTH_FACTOR 0.3
+#define INV_SELF_GRAD_LENGTH_FACTOR 1.0
 #define UNDERPRESSURE_FACTOR 2.0
 
 struct neighbors
@@ -211,6 +210,7 @@ void main()
 #endif
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);
+//	float lambda = max(-0.1, underpressure) / (squaredGradSum + EPSILON);
 
 	// if the density is already lower than the rest density, do nothing
 	if (lambda >= 0) return;

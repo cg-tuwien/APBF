@@ -10,7 +10,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mFluid.request_length(100000);
 	mNeighbors.request_length(100000);
 	mNeighborsFluid.request_length(100000);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 20, 2), aMax - glm::vec3(2, 2, 2), aRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), 4, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), 0, 0);
@@ -48,4 +48,9 @@ void pool::update(float aDeltaTime)
 pbd::particles& pool::particles()
 {
 	return mParticles;
+}
+
+pbd::fluid& pool::fluid()
+{
+	return mFluid;
 }

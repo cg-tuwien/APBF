@@ -6,6 +6,9 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in ivec4 inParticlePosition;
 layout(location = 2) in float inParticleRadius;
+layout(location = 3) in float inBoundaryDistance;
+
+layout(location = 0) out vec3 outColor;
 
 layout(set = 0, binding = 0) uniform application_data
 {
@@ -24,5 +27,6 @@ void main() {
 	float scale = inParticleRadius;
 
 	vec3 posWS = inPosition * scale + translation;
-    gl_Position = appData.mProjMatrix * appData.mViewMatrix * vec4(posWS, 1.0);
+	gl_Position = appData.mProjMatrix * appData.mViewMatrix * vec4(posWS, 1.0);
+	outColor = vec3(inBoundaryDistance / 10, 0.2, 0);
 }
