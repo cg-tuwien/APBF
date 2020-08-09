@@ -1,0 +1,66 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+struct neighbors
+{
+	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList      { uint         inIndexList[]; };
+layout(set = 0, binding = 1) buffer InPosition       { ivec4         inPosition[]; };
+layout(set = 0, binding = 2) buffer InRadius         { float           inRadius[]; };
+layout(set = 0, binding = 3) buffer InTargetRadius   { float     inTargetRadius[]; };
+layout(set = 0, binding = 4) buffer InOldKernelWidth { float   inOldKernelWidth[]; };
+layout(set = 0, binding = 5) buffer InOutKernelWidth { uint    inOutKernelWidth[]; }; // has to be initialized with 0
+layout(set = 0, binding = 6) buffer InOutNeighbors   { neighbors inOutNeighbors[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint  idx            = inIndexList[id];
+	ivec3 pos            = inPosition[idx].xyz;
+	float radius         = inRadius[idx];
+	float targetRadius   = inTargetRadius[id];
+	float oldKernelWidth = inOldKernelWidth[id];
+	uint  neighborCount  = inOutNeighbors[id].mNeighbor[0];
+
+#if ADAPTIVE_SAMPLING
+	float originalKernelWidth = max(radius, targetRadius) * KERNEL_SCALE;
+#else
+	float originalKernelWidth = radius * KERNEL_SCALE;
+#endif
+	float neighborhoodCutoff  = max(originalKernelWidth, oldKernelWidth);
+	uint newNeighborCount     = 0u;
+	
+	for (uint i = 1; i <= neighborCount; i++) {
+		uint  idN           = inOutNeighbors[id].mNeighbor[i];
+		uint  idxN          = inIndexList[idN];
+		ivec3 posN          = inPosition[idxN].xyz;
+		vec3  diff          = vec3(posN - pos) / POS_RESOLUTION;
+		float dist          = length(diff);
+
+		// spread original kernel width to neighbors
+		float distanceFromKernel = dist - originalKernelWidth;
+		float influence = max(0, 1 - max(0, distanceFromKernel / (originalKernelWidth * KERNEL_SPREADING_FACTOR)));
+		atomicMax(inOutKernelWidth[idN], uint(originalKernelWidth * influence * KERNEL_WIDTH_RESOLUTION));
+
+		// reduce neighborhood to only lie within the old/original kernel width
+		// => neighborhood is based on old kernel width, but incompressibility computations
+		// will be based on new kernel width; hopefully, this mismatch won't matter much
+		if (dist <= neighborhoodCutoff) {
+			inOutNeighbors[id].mNeighbor[++newNeighborCount] = idN;
+		}
+	}
+	inOutNeighbors[id].mNeighbor[0] = newNeighborCount;
+}

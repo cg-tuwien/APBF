@@ -41,7 +41,7 @@ void main()
 		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
 		if (distance(pos, posN) > range) continue;
 
-		outNeighbors[id].mNeighbor[++neighborCount] = idxN;
+		outNeighbors[id].mNeighbor[++neighborCount] = i;
 		if (neighborCount >= NEIGHBOR_LIST_MAX_LENGTH - 1u) break;
 	}
 	outNeighbors[id].mNeighbor[0] = neighborCount;

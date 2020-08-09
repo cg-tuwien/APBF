@@ -5,7 +5,9 @@
 
 #define EPSILON 0.01
 #define KERNEL_ID 1
-#define PI 3.14159265f
+#define PI 3.14159265
+#define INV_SELF_GRAD_LENGTH_FACTOR 0.3
+#define UNDERPRESSURE_FACTOR 2.0
 
 struct neighbors
 {
@@ -13,13 +15,17 @@ struct neighbors
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList   { uint      inIndexList[]; };
-layout(set = 0, binding = 1) buffer InPosition    { ivec4      inPosition[]; };
-layout(set = 0, binding = 2) buffer InRadius      { float        inRadius[]; };
-layout(set = 0, binding = 3) buffer InInverseMass { float   inInverseMass[]; };
-layout(set = 0, binding = 4) buffer InKernelWidth { float   inKernelWidth[]; };
-layout(set = 0, binding = 5) buffer InNeighbors   { neighbors inNeighbors[]; };
-layout(set = 0, binding = 6) buffer OutPosition   { ivec4     outPosition[]; };
+layout(set = 0, binding = 0)  buffer InIndexList     { uint      inIndexList[]; };
+layout(set = 0, binding = 1)  buffer InPosition      { ivec4      inPosition[]; };
+layout(set = 0, binding = 2)  buffer InRadius        { float        inRadius[]; };
+layout(set = 0, binding = 3)  buffer InInverseMass   { float   inInverseMass[]; };
+layout(set = 0, binding = 4)  buffer InKernelWidth   { uint    inKernelWidth[]; };
+layout(set = 0, binding = 5)  buffer OutKernelWidth  { float  outKernelWidth[]; };
+layout(set = 0, binding = 6)  buffer InBoundaryDist  { float  inBoundaryDist[]; };
+layout(set = 0, binding = 7)  buffer OutBoundaryDist { float outBoundaryDist[]; };
+layout(set = 0, binding = 8)  buffer OutTargetRadius { float outTargetRadius[]; };
+layout(set = 0, binding = 9)  buffer InNeighbors     { neighbors inNeighbors[]; };
+layout(set = 0, binding = 10) buffer OutPosition     { ivec4     outPosition[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -128,6 +134,16 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	}
 }
 
+void update_target_radius(uint id, float boundaryDistance, float radius, float invMass, float selfGradLength, float underpressure)
+{
+	outTargetRadius[id] = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
+	
+	selfGradLength /= (invMass * INV_SELF_GRAD_LENGTH_FACTOR);
+	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
+	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+	outBoundaryDist[id] = (boundaryDistance + radius) * (1 - boundariness);
+}
+
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
@@ -138,10 +154,12 @@ void main()
 	ivec3 pos            = inPosition[idx].xyz;
 	float radius         = inRadius[idx];
 	float invMass        = inInverseMass[idx];
-//	float kernelWidth    = inKernelWidth[idx];
-	float kernelWidth    = radius * 4; // TODO
+	float kernelWidth    = float(inKernelWidth[id]) / KERNEL_WIDTH_RESOLUTION;
+//	float kernelWidth    = radius * KERNEL_SCALE;
 	float invRestDensity = pow(2 * radius, DIMENSIONS) * invMass;
 	uint  neighborCount  = inNeighbors[id].mNeighbor[0];
+
+	outKernelWidth[id] = kernelWidth;
 
 	float sqrtInvMass[NEIGHBOR_LIST_MAX_LENGTH];
 	vec3  weightedGradients[NEIGHBOR_LIST_MAX_LENGTH];
@@ -149,16 +167,22 @@ void main()
 	uint  neighborSelfIdx;
 	float density = 0;
 	float squaredGradSum = 0;
+	float boundaryDistance = 1.0 / 0.0; // infinity
 	
 	// compute weighted gradients, density and the sum of the squared gradients
 	for (uint i = 1; i <= neighborCount; i++) {
-		uint  idxN       = inNeighbors[id].mNeighbor[i];
-		ivec3 posN       = inPosition[idxN].xyz;
-		float radiusN    = inRadius[idxN];
-		float invMassN   = inInverseMass[idxN];
-		vec3  diff       = vec3(posN - pos) / POS_RESOLUTION;
+		uint  idN           = inNeighbors[id].mNeighbor[i];
+		uint  idxN          = inIndexList[idN];
+		ivec3 posN          = inPosition[idxN].xyz;
+		float radiusN       = inRadius[idxN];
+		float invMassN      = inInverseMass[idxN];
+		float boundaryDistN = inBoundaryDist[idN];
+		vec3  diff          = vec3(posN - pos) / POS_RESOLUTION;
 
 		density += kernel_height(diff, kernelWidth) / invMassN;
+#if ADAPTIVE_SAMPLING
+		boundaryDistance = min(boundaryDistance, boundaryDistN + length(diff));
+#endif
 
 		sqrtInvMass[i] = sqrt(invMassN);
 
@@ -178,16 +202,23 @@ void main()
 	}
 	// now compute the missing weighted gradient - the one for the current particle itself:
 	weightedGradients[neighborSelfIdx] = -weightedGradientsSum * sqrt(invMass);
-	squaredGradSum += dot(weightedGradients[neighborSelfIdx], weightedGradients[neighborSelfIdx]);
+	float selfGradLengthSquared = dot(weightedGradients[neighborSelfIdx], weightedGradients[neighborSelfIdx]);
+	squaredGradSum += selfGradLengthSquared;
 
-	float lambda = -(density * invRestDensity - 1) / (squaredGradSum + EPSILON);
+	float underpressure = 1 - density * invRestDensity;
+#if ADAPTIVE_SAMPLING
+	update_target_radius(id, boundaryDistance, radius, invMass, sqrt(selfGradLengthSquared), underpressure);
+#endif
+
+	float lambda = underpressure / (squaredGradSum + EPSILON);
 
 	// if the density is already lower than the rest density, do nothing
 	if (lambda >= 0) return;
 
 	// now we can shift the neighbors so that the density is decreased towards the rest density at the current particle's position:
 	for (uint i = 1; i <= neighborCount; i++) {
-		uint idxN  = inNeighbors[id].mNeighbor[i];
+		uint idN   = inNeighbors[id].mNeighbor[i];
+		uint idxN  = inIndexList[idN];
 		vec3 shift = weightedGradients[i] * lambda * sqrtInvMass[i];
 		add_to_pos(idxN, ivec3(shift * POS_RESOLUTION));
 	}

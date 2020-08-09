@@ -35,6 +35,7 @@
     <None Include="shaders\initialize_box.comp" />
     <None Include="shaders\instanced2.vert" />
     <None Include="shaders\inter_particle_collision.comp" />
+    <None Include="shaders\kernel_width.comp" />
     <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\incompressibility.comp" />
@@ -55,6 +56,7 @@
     <None Include="shaders\scattered_write.comp" />
     <None Include="shaders\write_increasing_sequence.comp" />
     <None Include="shaders\write_sequence.comp" />
+    <None Include="shaders\write_sequence_float.comp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />

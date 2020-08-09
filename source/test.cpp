@@ -1,6 +1,7 @@
 #include "test.h"
 #include "algorithms.h"
 #include "neighborhood_brute_force.h"
+#include "../shaders/cpu_gpu_shared_config.h"
 
 void pbd::test::test_all()
 {
@@ -415,9 +416,9 @@ bool pbd::test::neighborhood_brute_force()
 	neighborhoodBruteForce.set_data(&particles, &range, &neighbors).set_range_scale(1).apply();
 	shader_provider::end_recording();
 	auto pass = true;
-	pass = validate_list(neighbors.buffer(), expectedNeighbors1, "neighborhood_brute_force", 0) && pass;
-	pass = validate_list(neighbors.buffer(), expectedNeighbors2, "neighborhood_brute_force", 64) && pass;
-	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_brute_force", 128) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors1, "neighborhood_brute_force", 0 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors2, "neighborhood_brute_force", 1 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_brute_force", 2 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
 	return pass;
 }
 
