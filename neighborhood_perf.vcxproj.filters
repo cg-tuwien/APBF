@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="assets">
+      <UniqueIdentifier>{24240a51-8fdb-478f-8c1c-27cbca7adc3f}</UniqueIdentifier>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{1d345cf5-0451-42e0-83a8-6a3f5a7203ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="precompiled_headers">
+      <UniqueIdentifier>{01a7b8ad-6f1e-486f-b173-7f12ab65fa3d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{1864a082-1e1c-4d66-82ea-437cc786ede4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\pbd">
+      <UniqueIdentifier>{d2e114be-3178-475a-a8b1-3079bf59f7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\pbd\gpu_lists">
+      <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\ray_tracing">
+      <UniqueIdentifier>{52dc4c51-ac11-4aa2-b17a-c24d5f3821e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\pbd\particle manipulation">
+      <UniqueIdentifier>{8f7903e4-29e4-445a-aa3d-86d35e50b6e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\particle manipulation">
+      <UniqueIdentifier>{1883c467-6242-4d4b-91b9-a755debf29e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\scenes">
+      <UniqueIdentifier>{cd48ffe5-1275-46bd-99b5-ca9c603f420f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\red.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\instanced.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\roundandround.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\append_list.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\point.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\dispatch_indirect.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="gears_vk\assets\1st_party\models\sphere.obj">
+      <Filter>assets</Filter>
+    </None>
+    <None Include="shaders\copy_scattered_read.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\rt_hit_green.rchit">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_hit_miss.rmiss">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_stupid_intersection.rint">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\rt_trace_rays.rgen">
+      <Filter>shaders\ray_tracing</Filter>
+    </None>
+    <None Include="shaders\write_increasing_sequence.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_apply_on_block_level.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_spread_from_block_level.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\radix_sort_apply_on_block_level.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\radix_sort_scattered_write.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\find_value_ranges.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\write_sequence.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\indexed_subtract.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\generate_new_index_list.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\generate_new_edit_list.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\scattered_write.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\find_value_changes.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\apply_acceleration.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\apply_velocity.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\infer_velocity.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\initialize_box.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\instanced2.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\add_box.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\box_collision.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\neighborhood_brute_force.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\inter_particle_collision.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\mask_neighborhood.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\color.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\incompressibility.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\kernel_width.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\write_sequence_float.comp">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\stdafx.cpp">
+      <Filter>precompiled_headers</Filter>
+    </ClCompile>
+    <ClCompile Include="source\shader_provider.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\test.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\algorithms.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\velocity_handling.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pool.cpp">
+      <Filter>source\scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\initialize.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\box_collision.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\neighborhood_brute_force.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\inter_particle_collision.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\measurements.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\incompressibility.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\main_neighborhood_perf.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\stdafx.hpp">
+      <Filter>precompiled_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\targetver.hpp">
+      <Filter>precompiled_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="source\shader_provider.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\gpu_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\list_definitions.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\list_interface.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\test.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\cpu_gpu_shared_config.h">
+      <Filter>shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="source\uninterleaved_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\indexed_list.h">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\algorithms.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\velocity_handling.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\pool.h">
+      <Filter>source\scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\initialize.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\box_collision.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\neighborhood_brute_force.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\inter_particle_collision.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\measurements.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\incompressibility.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="gears_vk\assets\1st_party\models\icosahedron.obj">
+      <Filter>assets</Filter>
+    </Object>
+  </ItemGroup>
+</Project>

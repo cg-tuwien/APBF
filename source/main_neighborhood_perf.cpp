@@ -2,12 +2,7 @@
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
-#include "pool.h"
 #include "measurements.h"
-
-#ifdef _DEBUG
-#include "Test.h"
-#endif
 
 #include "../shaders/cpu_gpu_shared_config.h"
 
@@ -36,15 +31,6 @@ class neighborhood_perf : public gvk::invokee
 		glm::vec2 _align;
 	};
 
-	struct draw_indexed_indirect_command
-	{
-		uint32_t mIndexCount;
-		uint32_t mInstanceCount;
-		uint32_t mFirstIndex;
-		int32_t  mVertexOffset;
-		uint32_t mFirstInstance;
-	};
-
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	neighborhood_perf(avk::queue& aQueue)
 		: mQueue{ &aQueue }
@@ -57,10 +43,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		using namespace avk;
 		using namespace gvk;
 
-#ifdef _DEBUG
-		pbd::test::test_all();
-#endif
-		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -60), glm::vec3(40, 30, -40), 1.0f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -85,13 +67,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		std::uniform_real_distribution<float> randomFrequency(0.5f, 3.0f);
 		std::uniform_real_distribution<float> randomRadius(0.01f, 0.1f);
 		const float dist = 2.0f;
-		for (int x = 0; x < 64; ++x) {
-			for (int y = 0; y < 48; ++y) {
-				for (int z = 0; z < 32; ++z) {
-					const auto pos = glm::vec3{ x, y, -z - 3.0f };
+		for (int x = 0; x < 128; ++x) {
+			for (int y = 0; y < 64; ++y) {
+				for (int z = 0; z < 64; ++z) {
+					const auto moveCloserTogetherFactor = 0.1f;
+					const auto pos = glm::vec3{ x, y, -z - 3.0f } * moveCloserTogetherFactor;
 					testParticles.emplace_back(particle{
 						glm::vec4{ pos, randomFrequency(generator) },
-						glm::vec4{ pos, randomRadius(generator)    },
+						//glm::vec4{ pos, randomRadius(generator)    },
+						glm::vec4{ pos, 0.1f    }, // const radius
 					});
 				}
 			}
@@ -175,21 +159,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 		
 		// Load a sphere model for drawing a single particle:
-		auto sphere = model_t::load_from_file("assets/sphere.obj");
+		auto sphere = model_t::load_from_file("assets/icosahedron.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
 
-		// Create the buffer containing parameters for the indirect fluid draw call:
-		auto drawIndexedIndirectCommand = draw_indexed_indirect_command{};
-		drawIndexedIndirectCommand.mIndexCount = mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements();
-		//drawIndexedIndirectCommand.mInstanceCount = ?;
-		drawIndexedIndirectCommand.mFirstIndex = 0;
-		drawIndexedIndirectCommand.mVertexOffset = 0;
-		drawIndexedIndirectCommand.mFirstInstance = 0;
-			mDrawIndexedIndirectCommand = context().create_buffer(
-				memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
-				storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
-			);
-		mDrawIndexedIndirectCommand->fill(&drawIndexedIndirectCommand, 0, sync::wait_idle(true));
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
 		mGraphicsPipelineInstanced = context().create_graphics_pipeline_for(
@@ -225,46 +197,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
-		
-		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
-		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
-			// Shaders to be used with this pipeline:
-			vertex_shader("shaders/instanced2.vert"), 
-			fragment_shader("shaders/color.frag"),
-			// Declare the vertex input to the shaders:
-			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()    -> to_location(0),	// Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
-			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
-			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
-			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 2
-			context().create_renderpass({
-					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
-					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
-				},
-				[](renderpass_sync& aRpSync){
-					// Synchronize with everything that comes BEFORE:
-					if (aRpSync.is_external_pre_sync()) {
-						aRpSync.mSourceStage                    = pipeline_stage::compute_shader;
-						aRpSync.mSourceMemoryDependency         = memory_access::shader_buffers_and_images_write_access;
-						aRpSync.mDestinationStage               = pipeline_stage::vertex_input;
-						aRpSync.mDestinationMemoryDependency    = memory_access::any_vertex_input_read_access;
-					}
-					// Synchronize with everything that comes AFTER:
-					if (aRpSync.is_external_post_sync()) {
-						aRpSync.mSourceStage                    = pipeline_stage::color_attachment_output;
-						aRpSync.mDestinationStage               = pipeline_stage::color_attachment_output;
-						aRpSync.mSourceMemoryDependency         = memory_access::color_attachment_write_access;
-						aRpSync.mDestinationMemoryDependency    = memory_access::color_attachment_write_access;
-					}
-				}
-			),
-			// Further config for the pipeline:
-			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			descriptor_binding(0, 0, mCameraDataBuffer[0])
-		);
-
-		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
-		//mTest = context().create_buffer(memory_usage::device, {}, vertex_buffer_meta::create_from_data(four));
-		//mTest->fill(four.data(), 0, sync::wait_idle());
 		
 		// Create a graphics pipeline for drawing the particles that uses point primitives:
 		mGraphicsPipelinePoint = context().create_graphics_pipeline_for(
@@ -338,7 +270,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		        ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("PBD"));
 				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
 				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
@@ -352,7 +283,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
-				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing", "Fluid"};
+				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing"};
 				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
 				static const char* const sNeighborRenderOptions[] = {"All", "Only Neighbors", "All But Neighbors"};
 				ImGui::Combo("Particles to Render", &mRenderNeighbors, sNeighborRenderOptions, IM_ARRAYSIZE(sNeighborRenderOptions));
@@ -431,18 +362,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
 
-		shader_provider::start_recording();
-		measurements::record_timing_interval_start("PBD");
-
-		mPool->update(std::min(gvk::time().delta_time(), 0.1f));
-
-		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
-		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		auto boundaryDistance = mPool->fluid().get<pbd::fluid::id::boundary_distance>(); // only corresponds to position and radius lists because the scene creates only fluid particles
-		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
-
-		measurements::record_timing_interval_end("PBD");
-
+		// Get a command pool to allocate command buffers from:
+		auto& commandPool = context().get_command_pool_for_single_use_command_buffers(*mQueue);
+		shader_provider::mCmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+		auto& cmdBfr = shader_provider::mCmdBfr;
+		cmdBfr->begin_recording();
+		
 		// COMPUTE
 
 #if BLAS_CENTRIC
@@ -455,15 +380,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		);
 		shader_provider::mask_neighborhood(mCameraDataBuffer[ifi], mParticlesBuffer[ifi], mGeometryInstanceBuffers[ifi], mTopLevelAS[ifi], mNumParticles);
 #endif
-		shader_provider::end_recording();
 		
-		// Get a command pool to allocate command buffers from:
-		auto& commandPool = context().get_command_pool_for_single_use_command_buffers(*mQueue);
-
-		// Create a command buffer and render into the *current* swap chain image:
-		auto cmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-		cmdBfr->begin_recording();
-
 		// BUILD ACCELERATION STRUCTURES
 
 		cmdBfr->establish_global_memory_barrier(
@@ -492,30 +409,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			pipeline_stage::acceleration_structure_build,       /* -> */ pipeline_stage::ray_tracing_shaders,
 			memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_read_access
 		);
-		cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
 
 		// GRAPHICS
 
 		switch(mRenderingMethod) {
-		case 3: // "Fluid"
-
-			cmdBfr->establish_global_memory_barrier(
-				avk::pipeline_stage::transfer,             /* -> */ avk::pipeline_stage::draw_indirect,
-				avk::memory_access::transfer_write_access, /* -> */ avk::memory_access::indirect_command_data_read_access
-			);
-
-			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
-			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
-			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
-				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
-			}));
-			
-			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), boundaryDistance.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
-			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
-			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);	
-			cmdBfr->end_render_pass();
-
-			break;
 		case 0: // "Instanced Spheres"
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
@@ -592,17 +489,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mainWnd->handle_lifetime(std::move(cmdBfr));
 	}
 
-	void finalize() override
-	{
-		// TODO let all templated classes use the same buffer cache
-		pbd::gpu_list<4>::cleanup();
-		pbd::gpu_list<12>::cleanup();
-		pbd::gpu_list<16>::cleanup();
-		pbd::gpu_list<32>::cleanup();
-		pbd::gpu_list<sizeof(uint32_t) * 64>::cleanup();
-		measurements::clean_up_timing_resources();
-	}
-
 
 private: // v== Member variables ==v
 
@@ -612,8 +498,6 @@ private: // v== Member variables ==v
 	gvk::quake_camera mQuakeCam;
 	std::vector<avk::buffer> mCameraDataBuffer;
 
-	std::unique_ptr<pool> mPool;
-
 	uint32_t mNumParticles;
 	std::vector<avk::buffer> mParticlesBuffer;
 #if BLAS_CENTRIC
@@ -621,7 +505,6 @@ private: // v== Member variables ==v
 #endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
-	avk::buffer mDrawIndexedIndirectCommand;
 
 #if BLAS_CENTRIC
 	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
@@ -634,16 +517,13 @@ private: // v== Member variables ==v
 
 	//avk::compute_pipeline mComputePipeline;
 	avk::graphics_pipeline mGraphicsPipelineInstanced;
-	avk::graphics_pipeline mGraphicsPipelineInstanced2;
 	avk::graphics_pipeline mGraphicsPipelinePoint;
 	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
 	std::vector<avk::image_view> mOffscreenImageViews;
 
-	//avk::buffer mTest;
-	
 	// Settings from the UI:
-	int mRenderingMethod = 3;
+	int mRenderingMethod = 0;
 	int mRenderNeighbors = 1;
 	int mNeighborhoodOriginParticleId = 0;
 	bool mFreezeParticleAnimation = false;
@@ -651,7 +531,7 @@ private: // v== Member variables ==v
 	bool mSetUniformParticleRadius = false;
 	int mIntersectionType = 0;
 	
-}; // class apbf
+}; // class neighborhood_perf
 
 int main() // <== Starting point ==
 {
@@ -676,7 +556,7 @@ int main() // <== Starting point ==
 		auto ui = imgui_manager(singleQueue);
 
 		start(
-			application_name("APBF"),
+			application_name("RTX Neighborhood Performance Comparison"),
 			required_device_extensions()
 				.add_extension(VK_KHR_RAY_TRACING_EXTENSION_NAME)
 				.add_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME)

@@ -43,7 +43,7 @@ public:
 
 	static void sync_after_compute();
 	static void sync_after_transfer();
-private:
+public:
 	static avk::descriptor_cache& descriptor_cache();
 	static const avk::buffer& workgroup_count_buffer();
 	static const avk::buffer& length_result_buffer();
