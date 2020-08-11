@@ -148,6 +148,12 @@
     <None Include="shaders\write_sequence_float.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\calculate_position_hash.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\neighborhood_green.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -187,6 +193,9 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\incompressibility.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\neighborhood_green.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -246,6 +255,9 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\incompressibility.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\neighborhood_green.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>

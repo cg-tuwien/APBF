@@ -1,6 +1,7 @@
 #include "test.h"
 #include "algorithms.h"
 #include "neighborhood_brute_force.h"
+#include "neighborhood_green.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
 void pbd::test::test_all()
@@ -23,6 +24,7 @@ void pbd::test::test_all()
 	if (!delete_these_1())                         failCount++;
 	if (!delete_these_2())                         failCount++;
 	if (!neighborhood_brute_force())               failCount++;
+	if (!neighborhood_green())                     failCount++;
 //	if (!sortByPositions())                        failCount++;
 //	if (!merge())                                  failCount++;
 //	if (!mergeGenerator())                         failCount++;
@@ -401,14 +403,14 @@ bool pbd::test::delete_these_2()
 bool pbd::test::neighborhood_brute_force()
 {
 	shader_provider::start_recording();
-	auto positionsData = std::vector<glm::ivec4>({ glm::ivec4(0, 0, 0, 1), glm::ivec4(262144, 0, 0, 1), glm::ivec4(0, 262144, 0, 1) });
+	auto positionsData = std::vector<glm::ivec4>({ glm::ivec4(0, 0, 0, 1), glm::ivec4(POS_RESOLUTION, 0, 0, 1), glm::ivec4(0, POS_RESOLUTION, 0, 1) });
 	auto rangeData     = std::vector<float>({ 1.0f, 1.0f, 2.0f });
 	auto expectedNeighbors1 = std::vector<uint32_t>({ 3, 0, 1, 2 });
 	auto expectedNeighbors2 = std::vector<uint32_t>({ 2, 0, 1 });
 	auto expectedNeighbors3 = std::vector<uint32_t>({ 3, 0, 1, 2 });
 	auto range = to_gpu_list(rangeData);
 	auto particles = pbd::particles(positionsData.size());
-	auto neighbors = pbd::gpu_list<sizeof(uint32_t) * 64>().request_length(positionsData.size() * 64);
+	auto neighbors = pbd::gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>().request_length(positionsData.size() * NEIGHBOR_LIST_MAX_LENGTH);
 	auto neighborhoodBruteForce = pbd::neighborhood_brute_force();
 	particles.request_length(positionsData.size());
 	particles.increase_length(positionsData.size());
@@ -419,6 +421,32 @@ bool pbd::test::neighborhood_brute_force()
 	pass = validate_list(neighbors.buffer(), expectedNeighbors1, "neighborhood_brute_force", 0 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
 	pass = validate_list(neighbors.buffer(), expectedNeighbors2, "neighborhood_brute_force", 1 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
 	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_brute_force", 2 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	return pass;
+}
+
+bool pbd::test::neighborhood_green()
+{
+	shader_provider::start_recording();
+	auto positionsData = std::vector<glm::ivec4>({ glm::ivec4(0, 0, 0, 1), glm::ivec4(POS_RESOLUTION, 0, 0, 1), glm::ivec4(0, POS_RESOLUTION, 0, 1) });
+	auto rangeData = std::vector<float>({ 1.0f, 1.0f, 2.0f });
+	auto expectedNeighbors1 = std::vector<uint32_t>({ 3, 0, 2, 1 });
+	auto expectedNeighbors2 = std::vector<uint32_t>({ 2, 0, 1 });
+	auto expectedNeighbors3 = std::vector<uint32_t>({ 3, 0, 2, 1 });
+	auto range = to_gpu_list(rangeData);
+	auto particles = pbd::particles(positionsData.size());
+	auto neighbors = pbd::gpu_list<sizeof(uint32_t)* NEIGHBOR_LIST_MAX_LENGTH>().request_length(positionsData.size() * NEIGHBOR_LIST_MAX_LENGTH);
+	auto neighborhoodGreen = pbd::neighborhood_green();
+	particles.request_length(positionsData.size());
+	particles.increase_length(positionsData.size());
+	particles.hidden_list().get<hidden_particles::id::position>() = to_gpu_list(positionsData);
+	neighborhoodGreen.set_data(&particles, &range, &neighbors).set_range_scale(1).set_position_range(glm::vec3(-10, -10, -10), glm::vec3(10, 10, 10), 6u).apply();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors1, "neighborhood_green", 0 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors2, "neighborhood_green", 1 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_green", 2 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
+	pass = validate_list(particles.hidden_list().get<hidden_particles::id::position>().buffer(), positionsData, "neighborhood_green") && pass;
+	pass = validate_length(particles.hidden_list().get<hidden_particles::id::position>().length(), positionsData.size(), "neighborhood_green length") && pass;
 	return pass;
 }
 

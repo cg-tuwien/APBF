@@ -26,9 +26,12 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mInterParticleCollision.set_data(&mParticles, &mNeighbors);
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
 	mNeighborhoodCollision.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighbors);
+	mNeighborhoodCollision.set_range_scale(2.0f);
 //	mNeighborhoodFluid.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighborsFluid);
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
-	mNeighborhoodCollision.set_range_scale(2.0f);
+#if NEIGHBORHOOD_TYPE == 1
+	mNeighborhoodFluid.set_position_range(aMin, aMax, 6u);
+#endif
 	mNeighborhoodFluid.set_range_scale(1.5f);
 	shader_provider::end_recording();
 }

@@ -1,6 +1,6 @@
 #include "inter_particle_collision.h"
 
-pbd::inter_particle_collision& pbd::inter_particle_collision::set_data(particles* aParticles, gpu_list<sizeof(uint32_t) * 64>* aNeighbors)
+pbd::inter_particle_collision& pbd::inter_particle_collision::set_data(particles* aParticles, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
 {
 	mParticles = aParticles;
 	mNeighbors = aNeighbors;

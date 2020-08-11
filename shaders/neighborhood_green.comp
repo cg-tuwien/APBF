@@ -1,0 +1,74 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+struct neighbors
+{
+	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
+layout(set = 0, binding = 1) buffer InPosition   { ivec4       inPosition[]; };
+layout(set = 0, binding = 2) buffer InRange      { float          inRange[]; };
+layout(set = 0, binding = 3) buffer InCellStart  { uint       inCellStart[]; };
+layout(set = 0, binding = 4) buffer InCellEnd    { uint         inCellEnd[]; };
+layout(set = 0, binding = 5) buffer OutNeighbors { neighbors outNeighbors[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	vec3 mMinPos;
+	uint mResolutionLog2;
+	vec3 mMaxPos;
+	float mRangeScale;
+};
+// ----------------------------------------------------
+
+uvec3 map_pos_to_grid(vec3 pos) {
+	return uvec3((pos - mMinPos) / (mMaxPos - mMinPos) * (1u << mResolutionLog2)) * uvec3(1u, DIMENSIONS > 1, DIMENSIONS > 2);
+}
+
+// z-curve
+uint hash(uvec3 pos) {
+	uint result = 0u;
+	for (uint i = 0u; i < mResolutionLog2; i++) for (uint d = 0u; d < DIMENSIONS; d++)
+	{
+		result += ((pos[d] >> i) & 1u) << (i * DIMENSIONS + d);
+	}
+	return result;
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	float range = inRange[id] * mRangeScale;
+	uint idx = inIndexList[id];
+	vec3 pos = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
+	uvec3 gridMin = map_pos_to_grid(pos - range);
+	uvec3 gridMax = map_pos_to_grid(pos + range);
+	uvec3 cell;
+
+	uint neighborCount = 0;
+	for (cell.x = gridMin.x; cell.x <= gridMax.x; cell.x++) for (cell.y = gridMin.y; cell.y <= gridMax.y; cell.y++) for (cell.z = gridMin.z; cell.z <= gridMax.z; cell.z++) {
+		uint h         = hash(cell);
+		uint cellStart = inCellStart[h];
+		uint cellEnd   = inCellEnd[h];
+//		cellEnd = cellStart + min(NEIGHBOR_LIST_MAX_LENGTH - neighborCount - 1u, cellEnd - cellStart);
+		for (uint i = cellStart; i < cellEnd; i++) {
+			vec3 posN = vec3(inPosition[i].xyz) / POS_RESOLUTION;
+			if (distance(pos, posN) > range) continue;
+			outNeighbors[id].mNeighbor[++neighborCount] = i;
+		}
+		if (neighborCount >= NEIGHBOR_LIST_MAX_LENGTH - 1u) break;
+	}
+	outNeighbors[id].mNeighbor[0] = neighborCount;
+}
