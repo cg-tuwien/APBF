@@ -1,5 +1,10 @@
 #include "box_collision.h"
 
+pbd::box_collision::box_collision()
+{
+	mParticles.request_length(10000);
+}
+
 pbd::box_collision& pbd::box_collision::add_particles(const particles& aParticles)
 {
 	mParticles += aParticles;

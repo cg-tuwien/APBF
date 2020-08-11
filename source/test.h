@@ -36,6 +36,7 @@ namespace pbd
 		static bool delete_these_1();
 		static bool delete_these_2();
 		static bool neighborhood_brute_force();
+		static bool neighborhood_green();
 /*		static bool sortByPositions();
 		static bool merge();
 		static bool mergeGenerator();

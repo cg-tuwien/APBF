@@ -157,6 +157,25 @@ void shader_provider::write_sequence(const avk::buffer& aOutBuffer, const avk::b
 	dispatch_indirect();
 }
 
+void shader_provider::write_sequence_float(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, float aStartValue, float aSequenceValueStep)
+{
+	struct push_constants { float mStartValue, mSequenceValueStep; } pushConstants{ aStartValue, aSequenceValueStep };
+	prepare_dispatch_indirect(aInBufferLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/write_sequence_float.comp",
+		avk::descriptor_binding(0, 0, aOutBuffer),
+		avk::descriptor_binding(1, 0, aInBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aOutBuffer),
+		avk::descriptor_binding(1, 0, aInBufferLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 const avk::buffer& shader_provider::write_increasing_sequence(const avk::buffer& aTargetList, const avk::buffer& aNewTargetListLength, const avk::buffer& aSequenceMinValue, uint32_t aValueUpperBound, uint32_t aSequenceLength)
 {
 	struct push_constants { uint32_t mValueUpperBound, mSequenceLength; } pushConstants{ aValueUpperBound, aSequenceLength };
@@ -481,6 +500,84 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
+void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aInCellStart, const avk::buffer& aInCellEnd, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, float aRangeScale, const glm::vec3& aMinPos, const glm::vec3& aMaxPos, uint32_t aResolutionLog2)
+{
+	struct push_constants { glm::vec3 mMinPos; uint32_t mResolutionLog2; glm::vec3 mMaxPos; float mRangeScale; } pushConstants{ aMinPos, aResolutionLog2, aMaxPos, aRangeScale };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/neighborhood_green.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInPosition),
+		avk::descriptor_binding(0, 2, aInRange),
+		avk::descriptor_binding(0, 3, aInCellStart),
+		avk::descriptor_binding(0, 4, aInCellEnd),
+		avk::descriptor_binding(0, 5, aOutNeighbors),
+		avk::descriptor_binding(1, 0, aInIndexListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInPosition),
+		avk::descriptor_binding(0, 2, aInRange),
+		avk::descriptor_binding(0, 3, aInCellStart),
+		avk::descriptor_binding(0, 4, aInCellEnd),
+		avk::descriptor_binding(0, 5, aOutNeighbors),
+		avk::descriptor_binding(1, 0, aInIndexListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::calculate_position_hash(const avk::buffer& aInPosition, const avk::buffer& aOutHash, const avk::buffer& aInPositionLength, const glm::vec3& aMinPos, const glm::vec3& aMaxPos, uint32_t aResolutionLog2)
+{
+	struct push_constants { glm::vec3 mMinPos; uint32_t mResolutionLog2; glm::vec3 mMaxPos; } pushConstants{ aMinPos, aResolutionLog2, aMaxPos };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/calculate_position_hash.comp",
+		avk::descriptor_binding(0, 0, aInPosition),
+		avk::descriptor_binding(0, 1, aOutHash),
+		avk::descriptor_binding(1, 0, aInPositionLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInPositionLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInPosition),
+		avk::descriptor_binding(0, 1, aOutHash),
+		avk::descriptor_binding(1, 0, aInPositionLength),
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::kernel_width(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInTargetRadius, const avk::buffer& aInOldKernelWidth, const avk::buffer& aInOutKernelWidth, const avk::buffer& aInOutNeighbors, const avk::buffer& aInIndexListLength)
+{
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/kernel_width.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInPosition),
+		avk::descriptor_binding(0, 2, aInRadius),
+		avk::descriptor_binding(0, 3, aInTargetRadius),
+		avk::descriptor_binding(0, 4, aInOldKernelWidth),
+		avk::descriptor_binding(0, 5, aInOutKernelWidth),
+		avk::descriptor_binding(0, 6, aInOutNeighbors),
+		avk::descriptor_binding(1, 0, aInIndexListLength)
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInPosition),
+		avk::descriptor_binding(0, 2, aInRadius),
+		avk::descriptor_binding(0, 3, aInTargetRadius),
+		avk::descriptor_binding(0, 4, aInOldKernelWidth),
+		avk::descriptor_binding(0, 5, aInOutKernelWidth),
+		avk::descriptor_binding(0, 6, aInOutNeighbors),
+		avk::descriptor_binding(1, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::inter_particle_collision(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInNeighbors, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
@@ -505,7 +602,7 @@ void shader_provider::inter_particle_collision(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aInNeighbors, const avk::buffer& aOutPosition, const avk::buffer& aInIndexListLength)
+void shader_provider::incompressibility(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aOutKernelWidth, const avk::buffer& aInBoundaryDist, const avk::buffer& aOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNeighbors, const avk::buffer& aOutPosition, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility.comp",
@@ -514,8 +611,12 @@ void shader_provider::incompressibility(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(0, 2, aInRadius),
 		avk::descriptor_binding(0, 3, aInInverseMass),
 		avk::descriptor_binding(0, 4, aInKernelWidth),
-		avk::descriptor_binding(0, 5, aInNeighbors),
-		avk::descriptor_binding(0, 6, aOutPosition),
+		avk::descriptor_binding(0, 5, aOutKernelWidth),
+		avk::descriptor_binding(0, 6, aInBoundaryDist),
+		avk::descriptor_binding(0, 7, aOutBoundaryDist),
+		avk::descriptor_binding(0, 8, aOutTargetRadius),
+		avk::descriptor_binding(0, 9, aInNeighbors),
+		avk::descriptor_binding(0, 10, aOutPosition),
 		avk::descriptor_binding(1, 0, aInIndexListLength)
 	);
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -526,8 +627,12 @@ void shader_provider::incompressibility(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(0, 2, aInRadius),
 		avk::descriptor_binding(0, 3, aInInverseMass),
 		avk::descriptor_binding(0, 4, aInKernelWidth),
-		avk::descriptor_binding(0, 5, aInNeighbors),
-		avk::descriptor_binding(0, 6, aOutPosition),
+		avk::descriptor_binding(0, 5, aOutKernelWidth),
+		avk::descriptor_binding(0, 6, aInBoundaryDist),
+		avk::descriptor_binding(0, 7, aOutBoundaryDist),
+		avk::descriptor_binding(0, 8, aOutTargetRadius),
+		avk::descriptor_binding(0, 9, aInNeighbors),
+		avk::descriptor_binding(0, 10, aOutPosition),
 		avk::descriptor_binding(1, 0, aInIndexListLength)
 	}));
 	dispatch_indirect();

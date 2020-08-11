@@ -1,6 +1,6 @@
 #include "neighborhood_brute_force.h"
 
-pbd::neighborhood_brute_force& pbd::neighborhood_brute_force::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<sizeof(uint32_t) * 64>* aNeighbors)
+pbd::neighborhood_brute_force& pbd::neighborhood_brute_force::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
 {
 	mParticles = aParticles;
 	mRange = aRange;
