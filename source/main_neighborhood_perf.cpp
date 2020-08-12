@@ -68,9 +68,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		std::uniform_real_distribution<float> randomRadius(0.01f, 0.1f);
 		const float dist = 2.0f;
 		for (int x = 0; x < 128; ++x) {
-			for (int y = 0; y < 64; ++y) {
-				for (int z = 0; z < 64; ++z) {
-					const auto moveCloserTogetherFactor = 0.1f;
+			for (int y = 0; y < 128; ++y) {
+				for (int z = 0; z < 128; ++z) {
+					const auto moveCloserTogetherFactor = 0.3f;
 					const auto pos = glm::vec3{ x, y, -z - 3.0f } * moveCloserTogetherFactor;
 					testParticles.emplace_back(particle{
 						glm::vec4{ pos, randomFrequency(generator) },

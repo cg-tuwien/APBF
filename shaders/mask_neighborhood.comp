@@ -92,7 +92,8 @@ void main()
 		// Mark the origin-particle:
 		geometryInstances.mInstances[neighborhoodOriginParticleId].instanceCustomIndex_and_mask = applyMask(geometryInstances.mInstances[neighborhoodOriginParticleId].instanceCustomIndex_and_mask, ORIGIN_MASK);
 
-		// Create a Ray Query and search for all the neighbors
+#if RTX_NEIGHBORHOOD_RADIUS_FACTOR > 1
+		// Create a Ray Query and search for all the neighbors with a "point-sized" ray
 		rayQueryEXT rayQuery;
 		vec3 rayOrigin = particlePosition;
 		vec3 rayDirection = vec3(0, 0, 1);
@@ -117,5 +118,46 @@ void main()
 				}
 			}
 		}
+#else 
+		// Different strategy: RTX_NEIGHBORHOOD_RADIUS_FACTOR does not artificially increase a point's size => search for neighbors with 9 rays
+		vec3 rayOrigins[9] = {
+			vec3(-0.3, -0.3, -0.3),
+			vec3(-0.3,  0.0, -0.3),
+			vec3(-0.3,  0.3, -0.3),
+			vec3( 0.0, -0.3, -0.3),
+			vec3( 0.0,  0.0, -0.3),
+			vec3( 0.0,  0.3, -0.3),
+			vec3( 0.3, -0.3, -0.3),
+			vec3( 0.3,  0.0, -0.3),
+			vec3( 0.3,  0.3, -0.3)
+		};
+		const vec3 rayDirection = vec3(0, 0, 1);
+		const float tMin = 0.0;
+		const float tMax = 0.6;
+		for (int i=0; i < 9; ++i) {
+			rayQueryEXT rayQuery;
+			vec3 rayOrigin = particlePosition + rayOrigins[i];
+			rayQueryInitializeEXT(rayQuery, topLevelAS, gl_RayFlagsNoneEXT, 0xFF, rayOrigin, tMin, rayDirection, tMax);
+			while(rayQueryProceedEXT(rayQuery)) {
+				if (thisIsTheDroidWeAreLookingFor) {
+					int neighborCustomIndex = rayQueryGetIntersectionInstanceCustomIndexEXT(rayQuery, false);
+
+					if (appData.mUserInput[2] == 1) { // => Sphere Intersection
+						mat3x4 tM = geometryInstances.mInstances[neighborCustomIndex].transform;
+						vec3 center = vec3(tM[0][3], tM[1][3], tM[2][3]);
+						float radius = tM[0][0];
+						if (distance(center, rayOrigin) <= radius) {
+							geometryInstances.mInstances[neighborCustomIndex].instanceCustomIndex_and_mask = applyMask(geometryInstances.mInstances[neighborCustomIndex].instanceCustomIndex_and_mask, NEIGHBOR_MASK);
+						}
+					}
+
+					else { // => AABB Intersection
+						geometryInstances.mInstances[neighborCustomIndex].instanceCustomIndex_and_mask = applyMask(geometryInstances.mInstances[neighborCustomIndex].instanceCustomIndex_and_mask, NEIGHBOR_MASK);
+					}
+				}
+			}
+		}
+#endif
+
 	}
 }
