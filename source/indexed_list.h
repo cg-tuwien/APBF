@@ -113,7 +113,7 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::share_hidden_da
 template<class DataList>
 inline void pbd::indexed_list<DataList>::delete_these()
 {
-	auto helperListLength = mHiddenData->mData.buffer()->meta_at_index<avk::buffer_meta>().total_size();
+	auto helperListLength = mHiddenData->mData.requested_length();
 	auto helperList   = gpu_list<4ui64>().request_length(helperListLength);
 	auto prefixHelper = gpu_list<4ui64>().request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(helperListLength));
 	shader_provider::write_sequence(helperList.write().buffer(), mHiddenData->mData.length(), 1u, 0u);
@@ -242,6 +242,8 @@ inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::write()
 template<class DataList>
 inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEditList)
 {
+	if (empty()) return;
+
 	auto sortMapping = gpu_list<4ui64>();
 	auto indexListContentUpperBound = mHiddenData->mData.requested_length();
 

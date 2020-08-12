@@ -1,0 +1,77 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0)  buffer InIndexList           { uint            inIndexList[]; };
+layout(set = 0, binding = 1)  buffer InOutPosition         { ivec4         inOutPosition[]; };
+layout(set = 0, binding = 2)  buffer InOutRadius           { float           inOutRadius[]; };
+layout(set = 0, binding = 3)  buffer InOutInverseMass      { float      inOutInverseMass[]; };
+layout(set = 0, binding = 4)  buffer InOutVelocity         { vec4          inOutVelocity[]; };
+layout(set = 0, binding = 5)  buffer InOutTransferSource   { uint       inTransferSource[]; };
+layout(set = 0, binding = 6)  buffer InOutTransferTarget   { uint       inTransferTarget[]; };
+layout(set = 0, binding = 7)  buffer InOutTransferTimeLeft { float inOutTransferTimeLeft[]; };
+layout(set = 0, binding = 8)  buffer InOutTransferring     { uint     inOutTransferrring[]; };
+layout(set = 0, binding = 9)  buffer OutDeleteParticleList { uint  outDeleteParticleList[]; };  // index of the particle to delete
+layout(set = 0, binding = 10) buffer OutDeleteTransferList { uint  outDeleteTransferList[]; };  // index of the transfer to delete
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InTransferTargetLength        { uint inTransferLength; };
+layout(set = 1, binding = 1) buffer InOutDeleteParticleListLength { uint inOutDeleteParticleListLength; };
+layout(set = 1, binding = 2) buffer InOutDeleteTransferListLength { uint inOutDeleteTransferListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	float mDeltaTime;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inTransferLength) return;
+
+	float ttl            = inOutTransferTimeLeft[id];
+	uint  idS            = inTransferSource[id];
+	uint  idT            = inTransferTarget[id];
+	uint  idxS           = inIndexList[idS];
+	uint  idxT           = inIndexList[idT];
+	ivec3 posS           = inOutPosition[idxS].xyz;
+	ivec3 posT           = inOutPosition[idxT].xyz;
+	float radiusS        = inOutRadius[idxS];
+	float radiusT        = inOutRadius[idxT];
+	float invMassS       = inOutInverseMass[idxS];
+	float invMassT       = inOutInverseMass[idxT];
+	vec3  velocityS      = inOutVelocity[idxS].xyz;
+	vec3  velocityT      = inOutVelocity[idxT].xyz;
+	float volS           = pow(radiusS, DIMENSIONS);
+	float volT           = pow(radiusT, DIMENSIONS);
+//	float factorS        = mDeltaTime * (volT - volS) / (2 * ttl * volS);      // goal: both particles same size
+	float factorS        = min(1, mDeltaTime / ttl);                           // goal: source particle vanishes
+	float transfMass     = factorS / invMassS;
+	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
+
+	inOutInverseMass[idxS]    = invMassS / (1 - invMassS * transfMass);
+	inOutInverseMass[idxT]    = invMassT / (1 + invMassT * transfMass);
+//	inOutRadius[idxS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
+	inOutRadius[idxS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
+	inOutRadius[idxT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
+//	inOutPosition[idxT]       = 
+	// TODO
+	inOutTransferTimeLeft[id] = ttl - mDeltaTime;
+
+//	if (ttl < mDeltaTime) {
+//		uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
+//		outDeleteTransferList[dtlIdx] = id;
+//	}
+	if (ttl < mDeltaTime) {
+		uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
+		outDeleteParticleList[dplIdx] = idxS;
+		inOutTransferrring[idS] = 0u;
+		inOutTransferrring[idT] = 0u;
+	}
+}

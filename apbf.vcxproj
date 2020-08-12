@@ -41,6 +41,7 @@
     <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\incompressibility.comp" />
     <None Include="shaders\neighborhood_green.comp" />
+    <None Include="shaders\particle_transfer.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
@@ -69,6 +70,7 @@
     <ClCompile Include="source\measurements.cpp" />
     <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\neighborhood_green.cpp" />
+    <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
     <ClCompile Include="source\shader_provider.cpp" />
@@ -90,6 +92,7 @@
     <ClInclude Include="source\measurements.h" />
     <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\neighborhood_green.h" />
+    <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\velocity_handling.h" />
     <ClInclude Include="source\gpu_list.h" />

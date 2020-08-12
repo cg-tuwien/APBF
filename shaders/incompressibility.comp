@@ -14,21 +14,26 @@ struct neighbors
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0)  buffer InIndexList     { uint      inIndexList[]; };
-layout(set = 0, binding = 1)  buffer InPosition      { ivec4      inPosition[]; };
-layout(set = 0, binding = 2)  buffer InRadius        { float        inRadius[]; };
-layout(set = 0, binding = 3)  buffer InInverseMass   { float   inInverseMass[]; };
-layout(set = 0, binding = 4)  buffer InKernelWidth   { uint    inKernelWidth[]; };
-layout(set = 0, binding = 5)  buffer OutKernelWidth  { float  outKernelWidth[]; };
-layout(set = 0, binding = 6)  buffer InBoundaryDist  { float  inBoundaryDist[]; };
-layout(set = 0, binding = 7)  buffer OutBoundaryDist { float outBoundaryDist[]; };
-layout(set = 0, binding = 8)  buffer OutTargetRadius { float outTargetRadius[]; };
-layout(set = 0, binding = 9)  buffer InNeighbors     { neighbors inNeighbors[]; };
-layout(set = 0, binding = 10) buffer OutPosition     { ivec4     outPosition[]; };
+layout(set = 0, binding = 0)  buffer InIndexList         { uint          inIndexList[]; };
+layout(set = 0, binding = 1)  buffer InPosition          { ivec4          inPosition[]; };
+layout(set = 0, binding = 2)  buffer InRadius            { float            inRadius[]; };
+layout(set = 0, binding = 3)  buffer InInverseMass       { float       inInverseMass[]; };
+layout(set = 0, binding = 4)  buffer InKernelWidth       { uint        inKernelWidth[]; };
+layout(set = 0, binding = 5)  buffer OutKernelWidth      { float      outKernelWidth[]; };
+layout(set = 0, binding = 6)  buffer InBoundaryDist      { float      inBoundaryDist[]; };
+layout(set = 0, binding = 7)  buffer OutBoundaryDist     { float     outBoundaryDist[]; };
+layout(set = 0, binding = 8)  buffer OutTargetRadius     { float     outTargetRadius[]; };
+layout(set = 0, binding = 9)  buffer InNeighbors         { neighbors     inNeighbors[]; };
+layout(set = 0, binding = 10) buffer OutPosition         { ivec4         outPosition[]; };
+layout(set = 0, binding = 11) buffer OutTransferSource   { uint    outTransferSource[]; };
+layout(set = 0, binding = 12) buffer OutTransferTarget   { uint    outTransferTarget[]; };
+layout(set = 0, binding = 13) buffer OutTransferTimeLeft { float outTransferTimeLeft[]; };
+layout(set = 0, binding = 14) buffer InOutTransferring   { uint    inOutTransferring[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set = 1, binding = 0) buffer InIndexListLength   { uint inIndexListLength; };
+layout(set = 1, binding = 1) buffer InOutTransferLength { uint inOutTransferLength; };
 // ----------------------------------------------------
 
 void add_to_pos(uint particleId, ivec3 posShift)
@@ -133,14 +138,36 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	}
 }
 
-void update_target_radius(uint id, float boundaryDistance, float radius, float invMass, float selfGradLength, float underpressure)
+void update_target_radius_and_transfers(uint id, float boundaryDistance, float radius, float invMass, float selfGradLength, float underpressure, float nearestNeighborDist, uint nearestNeighborId, bool nearestNeighborLarger)
 {
-	outTargetRadius[id] = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
+	float targetRadius = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
 	
 	selfGradLength /= (invMass * INV_SELF_GRAD_LENGTH_FACTOR);
 	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
 	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
 	outBoundaryDist[id] = (boundaryDistance + radius) * (1 - boundariness);
+	outTargetRadius[id] = targetRadius;
+
+	// update transfer list (split & merge)
+	bool split = targetRadius * (pow(2, 1 / DIMENSIONS) * 0.99) <= radius;
+	bool merge = nearestNeighborDist < radius;
+	if (!merge) return; // TODO also enable split
+
+	uint sourceId = (merge && nearestNeighborLarger) ? nearestNeighborId : id;
+	uint targetId = (merge && nearestNeighborLarger) ? id : nearestNeighborId;
+	if (atomicExchange(inOutTransferring[sourceId], 1u) == 1u) return;
+	if (merge) {
+		if (atomicExchange(inOutTransferring[targetId], 1u) == 1u) {
+			inOutTransferring[sourceId] = 0u;
+			return;
+		}
+		uint tIdx = atomicAdd(inOutTransferLength, 1u);
+		outTransferSource  [tIdx] = sourceId;
+		outTransferTarget  [tIdx] = targetId;
+		outTransferTimeLeft[tIdx] = 4.0f;
+	} else {
+		// TODO write into split list
+	}
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -164,6 +191,9 @@ void main()
 	vec3  weightedGradients[NEIGHBOR_LIST_MAX_LENGTH];
 	vec3  weightedGradientsSum = vec3(0, 0, 0);
 	uint  neighborSelfIdx;
+	uint  nearestNeighborId;
+	float nearestNeighborDist = 1.0 / 0.0; // infinity
+	bool  nearestNeighborLarger;
 	float density = 0;
 	float squaredGradSum = 0;
 	float boundaryDistance = 1.0 / 0.0; // infinity
@@ -177,11 +207,9 @@ void main()
 		float invMassN      = inInverseMass[idxN];
 		float boundaryDistN = inBoundaryDist[idN];
 		vec3  diff          = vec3(posN - pos) / POS_RESOLUTION;
+		float dist          = length(diff);
 
 		density += kernel_height(diff, kernelWidth) / invMassN;
-#if ADAPTIVE_SAMPLING
-		boundaryDistance = min(boundaryDistance, boundaryDistN + length(diff));
-#endif
 
 		sqrtInvMass[i] = sqrt(invMassN);
 
@@ -197,6 +225,16 @@ void main()
 			weightedGradients[i] *= sqrtInvMass[i];
 
 			squaredGradSum += dot(weightedGradients[i], weightedGradients[i]);
+
+#if ADAPTIVE_SAMPLING
+			boundaryDistance = min(boundaryDistance, boundaryDistN + dist);
+
+			if (dist < nearestNeighborDist) {
+				nearestNeighborId   = idN;
+				nearestNeighborDist = dist;
+				nearestNeighborLarger = radiusN > radius || (radiusN == radius && idxN > idx);
+			}
+#endif
 		}
 	}
 	// now compute the missing weighted gradient - the one for the current particle itself:
@@ -206,7 +244,7 @@ void main()
 
 	float underpressure = 1 - density * invRestDensity;
 #if ADAPTIVE_SAMPLING
-	update_target_radius(id, boundaryDistance, radius, invMass, sqrt(selfGradLengthSquared), underpressure);
+	update_target_radius_and_transfers(id, boundaryDistance, radius, invMass, sqrt(selfGradLengthSquared), underpressure, nearestNeighborDist, nearestNeighborId, nearestNeighborLarger);
 #endif
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);

@@ -6,6 +6,7 @@
 #include "neighborhood_green.h"
 #include "inter_particle_collision.h"
 #include "incompressibility.h"
+#include "particle_transfer.h"
 
 #define NEIGHBORHOOD_TYPE 0 // 0 = brute force, 1 = Green
 
@@ -20,6 +21,7 @@ public:
 private:
 	pbd::particles mParticles;
 	pbd::fluid mFluid;
+	pbd::transfers mTransfers;
 	// mNeighbors is a list of index lists; the current gpu_list framework doesn't support
 	// automatic index updates for this structure, so don't even bother linking it to mParticles.
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
@@ -31,6 +33,7 @@ private:
 	pbd::neighborhood_brute_force mNeighborhoodCollision;
 	pbd::inter_particle_collision mInterParticleCollision;
 	pbd::incompressibility mIncompressibility;
+	pbd::particle_transfer mParticleTransfer;
 #if NEIGHBORHOOD_TYPE == 0
 	pbd::neighborhood_brute_force mNeighborhoodFluid;
 #else

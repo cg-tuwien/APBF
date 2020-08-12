@@ -602,7 +602,7 @@ void shader_provider::inter_particle_collision(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aOutKernelWidth, const avk::buffer& aInBoundaryDist, const avk::buffer& aOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNeighbors, const avk::buffer& aOutPosition, const avk::buffer& aInIndexListLength)
+void shader_provider::incompressibility(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aOutKernelWidth, const avk::buffer& aInBoundaryDist, const avk::buffer& aOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNeighbors, const avk::buffer& aOutPosition, const avk::buffer& aOutTransferSource, const avk::buffer& aOutTransferTarget, const avk::buffer& aOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutTransferTargetLength)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility.comp",
@@ -617,7 +617,12 @@ void shader_provider::incompressibility(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(0, 8, aOutTargetRadius),
 		avk::descriptor_binding(0, 9, aInNeighbors),
 		avk::descriptor_binding(0, 10, aOutPosition),
-		avk::descriptor_binding(1, 0, aInIndexListLength)
+		avk::descriptor_binding(0, 11, aOutTransferSource),
+		avk::descriptor_binding(0, 12, aOutTransferTarget),
+		avk::descriptor_binding(0, 13, aOutTransferTimeLeft),
+		avk::descriptor_binding(0, 14, aInOutTransferring),
+		avk::descriptor_binding(1, 0, aInIndexListLength),
+		avk::descriptor_binding(1, 1, aInOutTransferTargetLength)
 	);
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(pipeline);
@@ -633,8 +638,56 @@ void shader_provider::incompressibility(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(0, 8, aOutTargetRadius),
 		avk::descriptor_binding(0, 9, aInNeighbors),
 		avk::descriptor_binding(0, 10, aOutPosition),
-		avk::descriptor_binding(1, 0, aInIndexListLength)
+		avk::descriptor_binding(0, 11, aOutTransferSource),
+		avk::descriptor_binding(0, 12, aOutTransferTarget),
+		avk::descriptor_binding(0, 13, aOutTransferTimeLeft),
+		avk::descriptor_binding(0, 14, aInOutTransferring),
+		avk::descriptor_binding(1, 0, aInIndexListLength),
+		avk::descriptor_binding(1, 1, aInOutTransferTargetLength)
 	}));
+	dispatch_indirect();
+}
+
+void shader_provider::particle_transfer(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInOutRadius, const avk::buffer& aInOutInverseMass, const avk::buffer& aInOutVelocity, const avk::buffer& aInOutTransferSource, const avk::buffer& aInOutTransferTarget, const avk::buffer& aInOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutDeleteParticleList, const avk::buffer& aOutDeleteTransferList, const avk::buffer& aInTransferLength, const avk::buffer& aInOutDeleteParticleListLength, const avk::buffer& aInOutDeleteTransferListLength, float aDeltaTime)
+{
+	struct push_constants { float mDeltaTime; } pushConstants{ aDeltaTime };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/particle_transfer.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInOutPosition),
+		avk::descriptor_binding(0, 2, aInOutRadius),
+		avk::descriptor_binding(0, 3, aInOutInverseMass),
+		avk::descriptor_binding(0, 4, aInOutVelocity),
+		avk::descriptor_binding(0, 5, aInOutTransferSource),
+		avk::descriptor_binding(0, 6, aInOutTransferTarget),
+		avk::descriptor_binding(0, 7, aInOutTransferTimeLeft),
+		avk::descriptor_binding(0, 8, aInOutTransferring),
+		avk::descriptor_binding(0, 9, aOutDeleteParticleList),
+		avk::descriptor_binding(0, 10, aOutDeleteTransferList),
+		avk::descriptor_binding(1, 0, aInTransferLength),
+		avk::descriptor_binding(1, 1, aInOutDeleteParticleListLength),
+		avk::descriptor_binding(1, 2, aInOutDeleteTransferListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInTransferLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInOutPosition),
+		avk::descriptor_binding(0, 2, aInOutRadius),
+		avk::descriptor_binding(0, 3, aInOutInverseMass),
+		avk::descriptor_binding(0, 4, aInOutVelocity),
+		avk::descriptor_binding(0, 5, aInOutTransferSource),
+		avk::descriptor_binding(0, 6, aInOutTransferTarget),
+		avk::descriptor_binding(0, 7, aInOutTransferTimeLeft),
+		avk::descriptor_binding(0, 8, aInOutTransferring),
+		avk::descriptor_binding(0, 9, aOutDeleteParticleList),
+		avk::descriptor_binding(0, 10, aOutDeleteTransferList),
+		avk::descriptor_binding(1, 0, aInTransferLength),
+		avk::descriptor_binding(1, 1, aInOutDeleteParticleListLength),
+		avk::descriptor_binding(1, 2, aInOutDeleteTransferListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }
 

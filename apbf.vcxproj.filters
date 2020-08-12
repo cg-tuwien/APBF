@@ -154,6 +154,9 @@
     <None Include="shaders\neighborhood_green.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\particle_transfer.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -196,6 +199,9 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
     <ClCompile Include="source\neighborhood_green.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\particle_transfer.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -258,6 +264,9 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
     <ClInclude Include="source\neighborhood_green.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\particle_transfer.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
