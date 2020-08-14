@@ -22,14 +22,22 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
-shared uvec4 temp[BLOCKSIZE];
+shared uvec2 temp[BLOCKSIZE];
 
 layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
 	uint id = gl_GlobalInvocationID.x;
+
+	// if the sort was not split up into multiple blocks, just copy
+	if (gl_NumWorkGroups.x < 2u) {
+		outBuffer[id] = inBuffer[id];
+		outSecondBuffer[id] = inSecondBuffer[id];
+		return;
+	}
 	
-	uint bucketCount = uint(pow(2u, mSubkeyLength));
+	//uint bucketCount = uint(pow(2u, mSubkeyLength));
+	uint bucketCount = 1u << mSubkeyLength;
 	//uint blockCount = (bufferLength + BLOCKSIZE - 1u) / BLOCKSIZE;
 	uint blockCount = gl_NumWorkGroups.x;
 	uint mask = bucketCount - 1u;

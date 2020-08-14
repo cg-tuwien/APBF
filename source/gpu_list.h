@@ -33,6 +33,9 @@ namespace pbd
 		gpu_list& set_owner(list_interface<gpu_list<4ui64>>* aOwner);
 		/// <summary><para>Request the buffer containing the list. The buffer is valid until another function of this object is called, or until this object is copied.</para></summary>
 		avk::buffer& buffer() const;
+		/// <summary><para>Read the list content from the GPU. Only intended for debugging.</para></summary>
+		template<class T>
+		std::vector<T> read(bool aBeyondLength = false) const;
 
 		/// <summary><para>Request write access to the list. The intended use is: gpu_list.write().buffer() and gpu_list.write().length().</para></summary>
 		gpu_list& write();
@@ -153,6 +156,23 @@ inline avk::buffer& pbd::gpu_list<Stride>::buffer() const
 	// if this assert fails, you have either forgotten to call write() or have not requested a length
 	assert(mData != nullptr);
 	return mData->mBuffer;
+}
+
+template<size_t Stride>
+template<class T>
+inline std::vector<T> pbd::gpu_list<Stride>::read(bool aBeyondLength) const
+{
+	shader_provider::end_recording();
+	auto data = std::vector<T>();
+	auto len = 0u;
+	data.resize(buffer()->meta_at_index<avk::buffer_meta>().total_size() / sizeof(T));
+	buffer()->read(data.data(), 0, avk::sync::wait_idle(true));
+	if (!aBeyondLength) {
+		length()->read(&len, 0, avk::sync::wait_idle(true));
+		data.resize(len);
+	}
+	shader_provider::start_recording();
+	return data;
 }
 
 template<size_t Stride>

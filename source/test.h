@@ -29,12 +29,15 @@ namespace pbd
 		static bool prefix_sum();
 		static bool long_prefix_sum();
 		static bool very_long_prefix_sum();
+		static bool short_prefix_sum_in_long_buffer();
 		static bool sort();
 		static bool sort_many_values();
 		static bool sort_small_values();
 		static bool sort_many_small_values();
+		static bool sort_few_values_in_long_buffer();
 		static bool delete_these_1();
 		static bool delete_these_2();
+		static bool delete_these_3();
 		static bool neighborhood_brute_force();
 		static bool neighborhood_green();
 /*		static bool sortByPositions();
@@ -52,7 +55,6 @@ namespace pbd
 		auto result = pbd::gpu_list<sizeof(T)>();
 		result.set_length(aData.size());
 		algorithms::copy_bytes(aData.data(), result.write().buffer(), aData.size() * sizeof(T));
-		//result.write().buffer()->fill(aData.data(), 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr()));
 		return result;
 	}
 

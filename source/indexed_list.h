@@ -36,6 +36,8 @@ namespace pbd
 		/// <summary><para>Request the buffer containing the list. The buffer is valid until another function of this object is called, or until this object is copied.</para></summary>
 		avk::buffer& index_buffer() const;
 		DataList& hidden_list();
+		/// <summary><para>Read the index list content from the GPU. Only intended for debugging.</para></summary>
+		std::vector<uint32_t> index_read(bool aBeyondLength = false) const;
 
 		/// <summary><para>Request write access to the list. The intended use is: indexed_list.write().index_buffer() and indexed_list.write().length().</para></summary>
 		indexed_list& write();
@@ -119,10 +121,10 @@ inline void pbd::indexed_list<DataList>::delete_these()
 	shader_provider::write_sequence(helperList.write().buffer(), mHiddenData->mData.length(), 1u, 0u);
 	shader_provider::scattered_write(mIndexList.buffer(), helperList.write().buffer(), mIndexList.length(), 0u);
 	mIndexList.set_length(0);
-	algorithms::prefix_sum(helperList.write().buffer(), prefixHelper.write().buffer(), mHiddenData->mData.length());
+	algorithms::prefix_sum(helperList.write().buffer(), prefixHelper.write().buffer(), mHiddenData->mData.length(), helperListLength);
 	auto editList = gpu_list<4ui64>().request_length(mHiddenData->mData.requested_length());
 	shader_provider::find_value_changes(helperList.buffer(), editList.write().buffer(), mHiddenData->mData.length(), editList.write().length());
-	mHiddenData->mData.apply_edit(editList, this);
+	mHiddenData->apply_edit(editList, this);
 }
 
 template<class DataList>
@@ -232,6 +234,12 @@ inline DataList& pbd::indexed_list<DataList>::hidden_list()
 }
 
 template<class DataList>
+inline std::vector<uint32_t> pbd::indexed_list<DataList>::index_read(bool aBeyondLength) const
+{
+	return mIndexList.read<uint32_t>(aBeyondLength);
+}
+
+template<class DataList>
 inline pbd::indexed_list<DataList>& pbd::indexed_list<DataList>::write()
 {
 	mIndexList.write();
@@ -254,7 +262,7 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 		auto increasing = gpu_list<4ui64>().request_length(mIndexList.requested_length());
 		sortMapping.request_length(mIndexList.requested_length());
 		shader_provider::write_sequence(increasing.write().buffer(), mIndexList.length(), 0u, 1u);
-		algorithms::sort(oldIndexList.write().buffer(), increasing.write().buffer(), sortHelper.write().buffer(), mIndexList.write().length(), mIndexList.write().buffer(), sortMapping.write().buffer(), indexListContentUpperBound);
+		algorithms::sort(oldIndexList.write().buffer(), increasing.write().buffer(), sortHelper.write().buffer(), mIndexList.write().length(), mIndexList.requested_length(), mIndexList.write().buffer(), sortMapping.write().buffer(), indexListContentUpperBound);
 	}
 
 	// generate histogram bin start list and histogram bin end list from index list; example:
@@ -279,7 +287,7 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 
 	auto& prefixHelper = binEndIdx; // re-use list
 	prefixHelper.request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(targetIndexList.requested_length()));
-	algorithms::prefix_sum(targetIndexList.write().buffer(), prefixHelper.write().buffer(), aEditList.length());
+	algorithms::prefix_sum(targetIndexList.write().buffer(), prefixHelper.write().buffer(), aEditList.length(), targetIndexList.requested_length());
 
 	// generate new index list; example:
 	// target index list: 1, 3, 3, 4, 4    =>    new index list: 0, 1, 1, 3

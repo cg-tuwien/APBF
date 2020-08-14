@@ -39,7 +39,7 @@ void pbd::neighborhood_green::apply()
 	// TODO only hash particles selected by index list!
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), positionList.length(), 0u, 1u);
 	shader_provider::calculate_position_hash(positionList.buffer(), unsortedHashList.write().buffer(), positionList.length(), mMinPos, mMaxPos, mResolutionLog2);
-	algorithms::sort(unsortedHashList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), positionList.length(), sortedHashList.write().buffer(), sortedIndexList.write().buffer(), maxHash);
+	algorithms::sort(unsortedHashList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), positionList.length(), unsortedHashList.requested_length(), sortedHashList.write().buffer(), sortedIndexList.write().buffer(), maxHash);
 	mParticles->hidden_list().apply_edit(sortedIndexList, nullptr); // sort particles according to hash (z-curve)
 
 	cellStartList.set_length(maxHash);

@@ -17,12 +17,15 @@ void pbd::test::test_all()
 	if (!prefix_sum())                             failCount++;
 	if (!long_prefix_sum())                        failCount++;
 	if (!very_long_prefix_sum())                   failCount++;
+	if (!short_prefix_sum_in_long_buffer())        failCount++;
 	if (!sort())                                   failCount++;
 	if (!sort_many_values())                       failCount++;
 	if (!sort_small_values())                      failCount++;
 	if (!sort_many_small_values())                 failCount++;
+	if (!sort_few_values_in_long_buffer())         failCount++;
 	if (!delete_these_1())                         failCount++;
 	if (!delete_these_2())                         failCount++;
+	if (!delete_these_3())                         failCount++;
 	if (!neighborhood_brute_force())               failCount++;
 	if (!neighborhood_green())                     failCount++;
 //	if (!sortByPositions())                        failCount++;
@@ -168,7 +171,7 @@ bool pbd::test::prefix_sum()
 	auto list           = to_gpu_list(listData);
 	auto prefixHelper   = pbd::gpu_list<4ui64>();
 	prefixHelper.request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(listData.size()));
-	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length());
+	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length(), listData.size());
 	shader_provider::end_recording();
 	return validate_list(list.buffer(), expectedResult, "prefix sum");
 }
@@ -194,7 +197,7 @@ bool pbd::test::long_prefix_sum()
 	auto list         = to_gpu_list(listData);
 	auto prefixHelper = pbd::gpu_list<4ui64>();
 	prefixHelper.request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(listData.size()));
-	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length());
+	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length(), listData.size());
 	shader_provider::end_recording();
 	return validate_list(list.buffer(), expectedResult, "long prefix sum");
 }
@@ -235,7 +238,7 @@ bool pbd::test::very_long_prefix_sum()
 	auto list         = to_gpu_list(listData);
 	auto prefixHelper = pbd::gpu_list<4ui64>();
 	prefixHelper.request_length(helperLength);
-	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length());
+	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length(), listLength);
 	shader_provider::end_recording();
 	auto pass = true;
 	pass = validate_list(        list.buffer(), expectedResult, "very long prefix sum"       ) && pass;
@@ -243,12 +246,27 @@ bool pbd::test::very_long_prefix_sum()
 	return pass;
 }
 
+bool pbd::test::short_prefix_sum_in_long_buffer()
+{
+	shader_provider::start_recording();
+	auto listData       = std::vector<uint32_t>({ 43u, 1u, 4567u, 0u, 1u, 0u, 84523487u });
+	auto expectedResult = std::vector<uint32_t>({ 43u, 44u, 4611u, 4611u, 4612u, 4612u, 84528099u });
+	auto list           = pbd::gpu_list<4ui64>();
+	auto prefixHelper   = pbd::gpu_list<4ui64>();
+	list.request_length(10000).set_length(listData.size());
+	prefixHelper.request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(10000));
+	algorithms::copy_bytes(listData.data(), list.write().buffer(), listData.size() * sizeof(uint32_t));
+	algorithms::prefix_sum(list.write().buffer(), prefixHelper.write().buffer(), list.write().length(), 10000);
+	shader_provider::end_recording();
+	return validate_list(list.buffer(), expectedResult, "short prefix sum in long buffer");
+}
+
 bool pbd::test::sort()
 {
 	shader_provider::start_recording();
-	auto listData = std::vector<uint32_t>({ 15u, 2u, 1234u, 2u, 0u, 4294967295u, 1u, 4294967294u });
-	auto expectedResult = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 15u, 1234u, 4294967294u, 4294967295u });
-	auto indexData = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
+	auto listData            = std::vector<uint32_t>({ 15u, 2u, 1234u, 2u, 0u, 4294967295u, 1u, 4294967294u });
+	auto expectedResult      = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 15u, 1234u, 4294967294u, 4294967295u });
+	auto indexData           = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
 	auto expectedIndexResult = std::vector<uint32_t>({ 4u, 6u, 1u, 3u, 0u, 2u, 7u, 5u });
 	auto list        = to_gpu_list(listData);
 	auto indices     = to_gpu_list(indexData);
@@ -258,7 +276,7 @@ bool pbd::test::sort()
 	result     .request_length(listData.size());
 	indexResult.request_length(indexData.size());
 	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
-	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), listData.size(), result.write().buffer(), indexResult.write().buffer());
 	shader_provider::end_recording();
 	auto pass = true;
 	pass = validate_list(result.buffer(), expectedResult, "sort") && pass;
@@ -270,10 +288,10 @@ bool pbd::test::sort_many_values()
 {
 	shader_provider::start_recording();
 	srand(0);
-	auto blocksize = 512u;
+	auto blocksize  = 512u;
 	auto listLength = blocksize * blocksize + 123u;
-	auto listData = std::vector<uint32_t>();
-	auto indexData = std::vector<uint32_t>();
+	auto listData   = std::vector<uint32_t>();
+	auto indexData  = std::vector<uint32_t>();
 	listData.reserve(listLength);
 	indexData.reserve(listLength);
 
@@ -292,7 +310,7 @@ bool pbd::test::sort_many_values()
 	result     .request_length(listData.size());
 	indexResult.request_length(indexData.size());
 	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
-	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), listData.size(), result.write().buffer(), indexResult.write().buffer());
 	shader_provider::end_recording();
 	std::stable_sort(indexData.begin(), indexData.end(), [&listData](size_t i0, size_t i1) { return listData[i0] < listData[i1]; });
 	std::sort(listData.begin(), listData.end());
@@ -305,9 +323,9 @@ bool pbd::test::sort_many_values()
 bool pbd::test::sort_small_values()
 {
 	shader_provider::start_recording();
-	auto listData = std::vector<uint32_t>({ 15u, 2u, 3u, 2u, 0u, 14u, 1u, 14u });
-	auto expectedResult = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 3u, 14u, 14u, 15u });
-	auto indexData = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
+	auto listData            = std::vector<uint32_t>({ 15u, 2u, 3u, 2u, 0u, 14u, 1u, 14u });
+	auto expectedResult      = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 3u, 14u, 14u, 15u });
+	auto indexData           = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
 	auto expectedIndexResult = std::vector<uint32_t>({ 4u, 6u, 1u, 3u, 2u, 5u, 7u, 0u });
 	auto list        = to_gpu_list(listData);
 	auto indices     = to_gpu_list(indexData);
@@ -317,7 +335,7 @@ bool pbd::test::sort_small_values()
 	result     .request_length(listData.size());
 	indexResult.request_length(indexData.size());
 	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
-	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), listData.size(), result.write().buffer(), indexResult.write().buffer());
 	shader_provider::end_recording();
 	auto pass = true;
 	pass = validate_list(result.buffer(), expectedResult, "sort (small values)") && pass;
@@ -329,10 +347,10 @@ bool pbd::test::sort_many_small_values()
 {
 	shader_provider::start_recording();
 	srand(0);
-	auto blocksize = 512u;
+	auto blocksize  = 512u;
 	auto listLength = blocksize * blocksize + 1000u;
-	auto listData = std::vector<uint32_t>();
-	auto indexData = std::vector<uint32_t>();
+	auto listData   = std::vector<uint32_t>();
+	auto indexData  = std::vector<uint32_t>();
 	listData.reserve(listLength);
 	indexData.reserve(listLength);
 
@@ -351,13 +369,38 @@ bool pbd::test::sort_many_small_values()
 	result     .request_length(listData.size());
 	indexResult.request_length(indexData.size());
 	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(listData.size()));
-	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), result.write().buffer(), indexResult.write().buffer());
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), listData.size(), result.write().buffer(), indexResult.write().buffer());
 	shader_provider::end_recording();
 	std::stable_sort(indexData.begin(), indexData.end(), [&listData](size_t i0, size_t i1) { return listData[i0] < listData[i1]; });
 	std::sort(listData.begin(), listData.end());
 	auto pass = true;
 	pass = validate_list(result.buffer(), listData, "sort (many small values)") && pass;
 	pass = validate_list(indexResult.buffer(), indexData, "sort indices (many small values)") && pass;
+	return pass;
+}
+
+bool pbd::test::sort_few_values_in_long_buffer()
+{
+	shader_provider::start_recording();
+	auto listData            = std::vector<uint32_t>({ 15u, 2u, 1234u, 2u, 0u, 4294967295u, 1u, 4294967294u });
+	auto expectedResult      = std::vector<uint32_t>({ 0u, 1u, 2u, 2u, 15u, 1234u, 4294967294u, 4294967295u });
+	auto indexData           = std::vector<uint32_t>({ 0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u });
+	auto expectedIndexResult = std::vector<uint32_t>({ 4u, 6u, 1u, 3u, 0u, 2u, 7u, 5u });
+	auto list        = pbd::gpu_list<4ui64>();
+	auto indices     = to_gpu_list(indexData);
+	auto result      = pbd::gpu_list<4ui64>();
+	auto indexResult = pbd::gpu_list<4ui64>();
+	auto sortHelper  = pbd::gpu_list<4ui64>();
+	list       .request_length(10000).set_length(listData.size());
+	result     .request_length(listData.size());
+	indexResult.request_length(indexData.size());
+	sortHelper .request_length(algorithms::sort_calculate_needed_helper_list_length(10000));
+	algorithms::copy_bytes(listData.data(), list.write().buffer(), listData.size() * sizeof(uint32_t));
+	algorithms::sort(list.write().buffer(), indices.write().buffer(), sortHelper.write().buffer(), list.write().length(), 10000, result.write().buffer(), indexResult.write().buffer());
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_list(result.buffer(), expectedResult, "sort (few values in long buffer)") && pass;
+	pass = validate_list(indexResult.buffer(), expectedIndexResult, "sort indices (few values in long buffer)") && pass;
 	return pass;
 }
 
@@ -397,6 +440,26 @@ bool pbd::test::delete_these_2()
 	pass = validate_length(listA.length(), 0, "delete_these() 2 length A") && pass;
 	pass = validate_length(listB.length(), 0, "delete_these() 2 length B") && pass;
 	pass = validate_length(listA.hidden_list().length(), 0, "delete_these() 2 length Hidden List") && pass;
+	return pass;
+}
+
+bool pbd::test::delete_these_3()
+{
+	shader_provider::start_recording();
+	auto hiddenValues = std::vector<uint32_t>({ 0, 1, 2, 3, 4, 5, 6, 7 });
+	auto listA = indexed_list<gpu_list<4ui64>>(13).request_length(13);
+	listA.increase_length(8);
+	algorithms::copy_bytes(hiddenValues.data(), listA.hidden_list().write().buffer(), hiddenValues.size() * 4);
+	auto listB = listA;
+	listB.set_length(0);
+	listB.delete_these();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), 8, "delete_these() 3 length A") && pass;
+	pass = validate_length(listB.length(), 0, "delete_these() 3 length B") && pass;
+	pass = validate_length(listA.hidden_list().length(), 8, "delete_these() 3 length Hidden List") && pass;
+	pass = validate_list(listA.hidden_list().buffer(), hiddenValues, "delete_these() 3") && pass;
+	pass = validate_list(listA.index_buffer(), hiddenValues, "delete_these() 3 indices") && pass;
 	return pass;
 }
 
