@@ -28,6 +28,7 @@ void pbd::incompressibility::apply()
 	shader_provider::write_sequence(uintKernelWidthList.write().buffer(), kernelWidthList.length(), 0, 0);
 	shader_provider::kernel_width(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), targetRadiusList.buffer(), kernelWidthList.buffer(), uintKernelWidthList.write().buffer(), mNeighbors->write().buffer(), mFluid->length());
 	shader_provider::incompressibility(particleList.index_buffer(), oldPositionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), uintKernelWidthList.buffer(), kernelWidthList.write().buffer(), oldBoundaryDistList.buffer(), boundaryDistList.write().buffer(), targetRadiusList.write().buffer(), mNeighbors->buffer(), positionList.write().buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), mFluid->length(), mTransfers->hidden_list().write().length());
+
 	// the new length of the transfers list was written into mTransfers->hidden_list().length(), which is the length buffer
 	// of the first list in the uninterleaved_list bundle (the transfer source). It's important that at least the transfer
 	// target list also has the correct length assigned, so that particle edits (e.g. deletion) affect the list correctly.

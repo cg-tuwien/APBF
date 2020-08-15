@@ -138,7 +138,7 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	}
 }
 
-void update_target_radius_and_transfers(uint id, float boundaryDistance, float radius, float invMass, float selfGradLength, float underpressure, float nearestNeighborDist, uint nearestNeighborId, bool nearestNeighborLarger)
+void update_target_radius_and_transfers(uint id, float boundaryDistance, float radius, float invMass, float selfGradLength, float underpressure, float nearestNeighborDist, uint nearestNeighborId, bool nearestNeighborLarger, float nearestNeighborRadius)
 {
 	float targetRadius = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
 	
@@ -150,7 +150,7 @@ void update_target_radius_and_transfers(uint id, float boundaryDistance, float r
 
 	// update transfer list (split & merge)
 	bool split = targetRadius * (pow(2, 1 / DIMENSIONS) * 0.99) <= radius;
-	bool merge = nearestNeighborDist < radius;
+	bool merge = nearestNeighborDist < radius && pow(radius, DIMENSIONS) + pow(nearestNeighborRadius, DIMENSIONS) <= pow(targetRadius, DIMENSIONS);
 	if (!merge) return; // TODO also enable split
 
 	uint sourceId = (merge && nearestNeighborLarger) ? nearestNeighborId : id;
@@ -164,7 +164,7 @@ void update_target_radius_and_transfers(uint id, float boundaryDistance, float r
 		uint tIdx = atomicAdd(inOutTransferLength, 1u);
 		outTransferSource  [tIdx] = sourceId;
 		outTransferTarget  [tIdx] = targetId;
-		outTransferTimeLeft[tIdx] = 4.0f;
+		outTransferTimeLeft[tIdx] = MERGE_DURATION;
 	} else {
 		// TODO write into split list
 	}
@@ -193,6 +193,7 @@ void main()
 	uint  neighborSelfIdx;
 	uint  nearestNeighborId;
 	float nearestNeighborDist = 1.0 / 0.0; // infinity
+	float nearestNeighborRadius;
 	bool  nearestNeighborLarger;
 	float density = 0;
 	float squaredGradSum = 0;
@@ -232,6 +233,7 @@ void main()
 			if (dist < nearestNeighborDist) {
 				nearestNeighborId   = idN;
 				nearestNeighborDist = dist;
+				nearestNeighborRadius = radiusN;
 				nearestNeighborLarger = radiusN > radius || (radiusN == radius && idxN > idx);
 			}
 #endif
@@ -244,7 +246,7 @@ void main()
 
 	float underpressure = 1 - density * invRestDensity;
 #if ADAPTIVE_SAMPLING
-	update_target_radius_and_transfers(id, boundaryDistance, radius, invMass, sqrt(selfGradLengthSquared), underpressure, nearestNeighborDist, nearestNeighborId, nearestNeighborLarger);
+	update_target_radius_and_transfers(id, boundaryDistance, radius, invMass, sqrt(selfGradLengthSquared), underpressure, nearestNeighborDist, nearestNeighborId, nearestNeighborLarger, nearestNeighborRadius);
 #endif
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);

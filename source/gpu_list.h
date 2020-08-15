@@ -284,7 +284,7 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthABuffer), std::move(newLengthBBuffer)));
 		if (mReservedLists.size() >= 50)
 		{
-			LOG_DEBUG("high number of reserved GPU buffers (" + std::to_string(mReservedLists.size()) + ")");
+			LOG_WARNING("high number of reserved GPU buffers (" + std::to_string(mReservedLists.size()) + ")");
 		}
 		bestExisting = &mReservedLists.back();
 	}
