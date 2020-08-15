@@ -35,7 +35,7 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= inTransferLength) return;
 
-	float ttl            = inOutTransferTimeLeft[id];
+	float ttl            = max(mDeltaTime, inOutTransferTimeLeft[id]);
 	uint  idS            = inTransferSource[id];
 	uint  idT            = inTransferTarget[id];
 	uint  idxS           = inIndexList[idS];
@@ -64,11 +64,11 @@ void main()
 	// TODO
 	inOutTransferTimeLeft[id] = ttl - mDeltaTime;
 
-//	if (ttl < mDeltaTime) {
+//	if (ttl == mDeltaTime) {
 //		uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
 //		outDeleteTransferList[dtlIdx] = id;
 //	}
-	if (ttl < mDeltaTime) {
+	if (ttl == mDeltaTime) {
 		uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
 		outDeleteParticleList[dplIdx] = idxS;
 		inOutTransferrring[idS] = 0u;

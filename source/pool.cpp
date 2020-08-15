@@ -12,6 +12,8 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 //	mTransfers.request_length(100); // not even necessary because index list never gets used
 	mNeighbors.request_length(100000);
 	mNeighborsFluid.request_length(100000);
+	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
+	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), 4, 0);
