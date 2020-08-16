@@ -185,10 +185,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		drawIndexedIndirectCommand.mFirstIndex = 0;
 		drawIndexedIndirectCommand.mVertexOffset = 0;
 		drawIndexedIndirectCommand.mFirstInstance = 0;
-			mDrawIndexedIndirectCommand = context().create_buffer(
-				memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
-				storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
-			);
+		mDrawIndexedIndirectCommand = context().create_buffer(
+			memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
+			storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
+		);
 		mDrawIndexedIndirectCommand->fill(&drawIndexedIndirectCommand, 0, sync::wait_idle(true));
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:

@@ -4,11 +4,12 @@
 #include "box_collision.h"
 #include "neighborhood_brute_force.h"
 #include "neighborhood_green.h"
+#include "neighborhood_rtx.h"
 #include "inter_particle_collision.h"
 #include "incompressibility.h"
 #include "particle_transfer.h"
 
-#define NEIGHBORHOOD_TYPE 0 // 0 = brute force, 1 = Green
+#define NEIGHBORHOOD_TYPE 2 // 0 = brute force, 1 = Green, 2 = RTX
 
 class pool
 {
@@ -36,7 +37,9 @@ private:
 	pbd::particle_transfer mParticleTransfer;
 #if NEIGHBORHOOD_TYPE == 0
 	pbd::neighborhood_brute_force mNeighborhoodFluid;
-#else
+#elif NEIGHBORHOOD_TYPE == 1
 	pbd::neighborhood_green mNeighborhoodFluid;
+#else
+	pbd::neighborhood_rtx mNeighborhoodFluid;
 #endif
 };

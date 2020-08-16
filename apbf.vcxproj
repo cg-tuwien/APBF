@@ -29,6 +29,7 @@
     <None Include="shaders\copy_scattered_read.comp" />
     <None Include="shaders\find_value_changes.comp" />
     <None Include="shaders\find_value_ranges.comp" />
+    <None Include="shaders\generate_acceleration_structure_instances.comp" />
     <None Include="shaders\generate_new_edit_list.comp" />
     <None Include="shaders\generate_new_index_list.comp" />
     <None Include="shaders\indexed_subtract.comp" />
@@ -41,6 +42,7 @@
     <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\incompressibility.comp" />
     <None Include="shaders\neighborhood_green.comp" />
+    <None Include="shaders\neighborhood_rtx.comp" />
     <None Include="shaders\particle_transfer.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />
@@ -70,6 +72,7 @@
     <ClCompile Include="source\measurements.cpp" />
     <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\neighborhood_green.cpp" />
+    <ClCompile Include="source\neighborhood_rtx.cpp" />
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
@@ -92,6 +95,7 @@
     <ClInclude Include="source\measurements.h" />
     <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\neighborhood_green.h" />
+    <ClInclude Include="source\neighborhood_rtx.h" />
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\velocity_handling.h" />

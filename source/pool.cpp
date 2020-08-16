@@ -45,7 +45,9 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 void pool::update(float aDeltaTime)
 {
 	mVelocityHandling.apply(aDeltaTime);
-//	mParticleTransfer.apply(aDeltaTime);
+#if ADAPTIVE_SAMPLING
+	mParticleTransfer.apply(aDeltaTime);
+#endif
 	mBoxCollision.apply();
 	measurements::record_timing_interval_start("Neighborhood");
 //	mNeighborhoodCollision.apply();

@@ -157,6 +157,12 @@
     <None Include="shaders\particle_transfer.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\neighborhood_rtx.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\generate_acceleration_structure_instances.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -202,6 +208,9 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
     <ClCompile Include="source\particle_transfer.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\neighborhood_rtx.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -267,6 +276,9 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
     <ClInclude Include="source\particle_transfer.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\neighborhood_rtx.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,0 +1,70 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#extension GL_ARB_gpu_shader_int64 : require
+#include "cpu_gpu_shared_config.h"
+
+struct asi
+{
+    mat3x4   mTransform;
+    uint     mInstanceCustomIndex_and_mask;
+    uint     mInstanceShaderBindingTableRecordOffset_and_flags;
+    uint64_t mAccelerationStructureReference;
+};
+
+struct neighbors
+{
+	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
+layout(set = 0, binding = 1) buffer InPosition   { ivec4       inPosition[]; };
+layout(set = 0, binding = 2) buffer InRange      { float          inRange[]; };
+layout(set = 0, binding = 3) buffer OutInstances { asi       outInstances[]; };
+layout(set = 0, binding = 4) buffer OutNeighbors { neighbors outNeighbors[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint64_t mBlasReference;
+	float    mRangeScale;
+	uint     mMaxInstanceCount;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= mMaxInstanceCount) return;
+
+	vec3  pos;
+	float range;
+	uint  mask;
+
+	if (id < inIndexListLength) {
+		uint idx = inIndexList[id];
+		pos      = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
+		range    = inRange[id] * mRangeScale;
+		mask     = 255u;
+		outNeighbors[id].mNeighbor[0] = 0u;
+	} else {
+		pos      = vec3(0, 0, 0);
+		range    = 0;
+		mask     = 0u;
+	}
+
+	asi instance;
+//	instance.mTransform                                        = mat3x4(range, 0, 0,   0, range, 0,   0, 0, range,   pos.x, pos.y, pos.z);
+	instance.mTransform                                        = mat3x4(range, 0, 0, pos.x,   0, range, 0, pos.y,   0, 0, range, pos.z);
+	instance.mInstanceCustomIndex_and_mask                     = id | (mask << 24u);
+	instance.mInstanceShaderBindingTableRecordOffset_and_flags = 0u;
+	instance.mAccelerationStructureReference                   = mBlasReference;
+
+	outInstances[id] = instance;
+}
