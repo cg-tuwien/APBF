@@ -27,6 +27,7 @@
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
+    <None Include="shaders\find_split_and_merge.comp" />
     <None Include="shaders\find_value_changes.comp" />
     <None Include="shaders\find_value_ranges.comp" />
     <None Include="shaders\generate_acceleration_structure_instances.comp" />
@@ -59,7 +60,9 @@
     <None Include="shaders\rt_stupid_intersection.rint" />
     <None Include="shaders\rt_trace_rays.rgen" />
     <None Include="shaders\scattered_write.comp" />
+    <None Include="shaders\uint_to_float.comp" />
     <None Include="shaders\write_increasing_sequence.comp" />
+    <None Include="shaders\write_increasing_sequence_from_to.comp" />
     <None Include="shaders\write_sequence.comp" />
     <None Include="shaders\write_sequence_float.comp" />
   </ItemGroup>
@@ -75,6 +78,8 @@
     <ClCompile Include="source\neighborhood_rtx.cpp" />
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
+    <ClCompile Include="source\spread_kernel_width.cpp" />
+    <ClCompile Include="source\update_transfers.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
     <ClCompile Include="source\shader_provider.cpp" />
     <ClCompile Include="source\stdafx.cpp">
@@ -98,6 +103,8 @@
     <ClInclude Include="source\neighborhood_rtx.h" />
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
+    <ClInclude Include="source\spread_kernel_width.h" />
+    <ClInclude Include="source\update_transfers.h" />
     <ClInclude Include="source\velocity_handling.h" />
     <ClInclude Include="source\gpu_list.h" />
     <ClInclude Include="source\indexed_list.h" />

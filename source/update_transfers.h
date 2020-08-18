@@ -5,15 +5,16 @@
 
 namespace pbd
 {
-	class incompressibility
+	class update_transfers
 	{
 	public:
 		//will only write transfers into hidden list, the index list of aTransfers remains untouched
-		incompressibility& set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors);
+		update_transfers& set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors, transfers* aTransfers);
 		void apply();
 
 	private:
 		fluid* mFluid;
 		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors;
+		transfers* mTransfers;
 	};
 }

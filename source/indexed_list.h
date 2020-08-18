@@ -18,6 +18,7 @@ namespace pbd
 
 		indexed_list& share_hidden_data_from(const indexed_list& aBenefactor);
 		void delete_these();
+		indexed_list duplicate_these();
 
 		bool empty() const;
 		avk::buffer& length() const;
@@ -125,6 +126,20 @@ inline void pbd::indexed_list<DataList>::delete_these()
 	auto editList = gpu_list<4ui64>().request_length(mHiddenData->mData.requested_length());
 	shader_provider::find_value_changes(helperList.buffer(), editList.write().buffer(), mHiddenData->mData.length(), editList.write().length());
 	mHiddenData->apply_edit(editList, this);
+}
+
+template<class DataList>
+inline pbd::indexed_list<DataList> pbd::indexed_list<DataList>::duplicate_these()
+{
+	auto editList   = gpu_list<4ui64>().request_length(mHiddenData->mData.requested_length()).set_length(mHiddenData->mData.length());
+	auto newIndices = gpu_list<4ui64>().request_length(mIndexList.requested_length());
+	shader_provider::write_sequence(editList.write().buffer(), mHiddenData->mData.length(), 0, 1);
+	editList += mIndexList;
+	shader_provider::write_increasing_sequence_from_to(newIndices.write().buffer(), newIndices.write().length(), mHiddenData->mData.length(), editList.length(), mIndexList.length());
+	mHiddenData->apply_edit(editList, this);
+	auto result = *this;
+	result.mIndexList = newIndices;
+	return result;
 }
 
 template<class DataList>

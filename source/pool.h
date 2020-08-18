@@ -6,7 +6,9 @@
 #include "neighborhood_green.h"
 #include "neighborhood_rtx.h"
 #include "inter_particle_collision.h"
+#include "spread_kernel_width.h"
 #include "incompressibility.h"
+#include "update_transfers.h"
 #include "particle_transfer.h"
 
 #define NEIGHBORHOOD_TYPE 2 // 0 = brute force, 1 = Green, 2 = RTX
@@ -20,6 +22,7 @@ public:
 	pbd::fluid& fluid();
 
 private:
+	uint32_t mSolverIterations;
 	pbd::particles mParticles;
 	pbd::fluid mFluid;
 	pbd::transfers mTransfers;
@@ -33,7 +36,9 @@ private:
 	pbd::box_collision mBoxCollision;
 	pbd::neighborhood_brute_force mNeighborhoodCollision;
 	pbd::inter_particle_collision mInterParticleCollision;
+	pbd::spread_kernel_width mSpreadKernelWidth;
 	pbd::incompressibility mIncompressibility;
+	pbd::update_transfers mUpdateTransfers;
 	pbd::particle_transfer mParticleTransfer;
 #if NEIGHBORHOOD_TYPE == 0
 	pbd::neighborhood_brute_force mNeighborhoodFluid;

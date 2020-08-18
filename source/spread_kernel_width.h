@@ -5,11 +5,10 @@
 
 namespace pbd
 {
-	class incompressibility
+	class spread_kernel_width
 	{
 	public:
-		//will only write transfers into hidden list, the index list of aTransfers remains untouched
-		incompressibility& set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors);
+		spread_kernel_width& set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors);
 		void apply();
 
 	private:

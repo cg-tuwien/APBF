@@ -4,7 +4,8 @@
 
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
-	mTransfers(100)
+	mTransfers(100),
+	mSolverIterations(1u)
 {
 	shader_provider::start_recording();
 	mParticles.request_length(100000);
@@ -29,7 +30,9 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mBoxCollision.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
 	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
 	mInterParticleCollision.set_data(&mParticles, &mNeighbors);
-	mIncompressibility.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
+	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
+	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
+	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 	mParticleTransfer.set_data(&mFluid, &mTransfers);
 	mNeighborhoodCollision.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighbors);
 	mNeighborhoodCollision.set_range_scale(2.0f);
@@ -48,13 +51,19 @@ void pool::update(float aDeltaTime)
 #if ADAPTIVE_SAMPLING
 	mParticleTransfer.apply(aDeltaTime);
 #endif
-	mBoxCollision.apply();
 	measurements::record_timing_interval_start("Neighborhood");
 //	mNeighborhoodCollision.apply();
 	mNeighborhoodFluid.apply();
 	measurements::record_timing_interval_end("Neighborhood");
-//	mInterParticleCollision.apply();
-	mIncompressibility.apply();
+	mSpreadKernelWidth.apply();
+
+	for (uint32_t i = 0u; i < mSolverIterations; i++) {
+//		mInterParticleCollision.apply();
+		mBoxCollision.apply();
+		mIncompressibility.apply();
+	}
+
+	mUpdateTransfers.apply();
 }
 
 pbd::particles& pool::particles()

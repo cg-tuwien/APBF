@@ -163,6 +163,15 @@
     <None Include="shaders\generate_acceleration_structure_instances.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\write_increasing_sequence_from_to.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\find_split_and_merge.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\uint_to_float.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -211,6 +220,12 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
     <ClCompile Include="source\neighborhood_rtx.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\spread_kernel_width.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\update_transfers.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -279,6 +294,12 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
     <ClInclude Include="source\neighborhood_rtx.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\spread_kernel_width.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\update_transfers.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
