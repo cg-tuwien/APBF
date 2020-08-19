@@ -348,6 +348,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			        values.erase(values.begin());
 		        }
 	            ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
+				ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
 
 				ImGui::Separator();
 
@@ -600,7 +601,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		pbd::gpu_list<16>::cleanup();
 		pbd::gpu_list<32>::cleanup();
 		pbd::gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>::cleanup();
-		measurements::clean_up_timing_resources();
+		measurements::clean_up_resources();
 	}
 
 

@@ -49,11 +49,9 @@ namespace pbd
 		class gpu_list_data
 		{
 		public:
-			gpu_list_data(avk::buffer aBuffer, avk::buffer aLengthA, avk::buffer aLengthB) : mBuffer{ std::move(aBuffer) }, mLengthA{ std::move(aLengthA) }, mLengthB{ std::move(aLengthB) }, mLengthAIsActive{ true } {}
+			gpu_list_data(avk::buffer aBuffer, avk::buffer aLength) : mBuffer{ std::move(aBuffer) }, mLength{ std::move(aLength) } {}
 			avk::buffer mBuffer;
-			avk::buffer mLengthA;
-			avk::buffer mLengthB;
-			bool mLengthAIsActive;
+			avk::buffer mLength;
 		};
 
 		std::shared_ptr<gpu_list_data> mData;
@@ -129,7 +127,7 @@ inline bool pbd::gpu_list<Stride>::empty() const
 template<size_t Stride>
 inline avk::buffer& pbd::gpu_list<Stride>::length() const
 {
-	return mData->mLengthAIsActive ? mData->mLengthA : mData->mLengthB;
+	return mData->mLength;
 }
 
 template<size_t Stride>
@@ -235,7 +233,7 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 	if (oldData == nullptr) {
 		set_length(0);
 	} else {
-		algorithms::copy_bytes(oldData->mLengthAIsActive ? oldData->mLengthA : oldData->mLengthB, length(), 4);
+		algorithms::copy_bytes(oldData->mLength, length(), 4);
 	}
 
 	if (aCurrentContentNeeded)
@@ -273,15 +271,11 @@ inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_l
 			avk::storage_buffer_meta::create_from_size(aMinLength * Stride),
 			avk::instance_buffer_meta::create_from_element_size(Stride, aMinLength) // TODO should this be avoided?
 		);
-		auto newLengthABuffer = gvk::context().create_buffer(
+		auto newLengthBuffer = gvk::context().create_buffer(
 			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
 			avk::storage_buffer_meta::create_from_size(4)
 		);
-		auto newLengthBBuffer = gvk::context().create_buffer(
-			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
-			avk::storage_buffer_meta::create_from_size(4)
-		);
-		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthABuffer), std::move(newLengthBBuffer)));
+		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthBuffer)));
 		if (mReservedLists.size() >= 50)
 		{
 			LOG_WARNING("high number of reserved GPU buffers (" + std::to_string(mReservedLists.size()) + ")");
