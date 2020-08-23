@@ -33,6 +33,13 @@ layout(set = 1, binding = 1) buffer InOutTransferLength { uint inOutTransferLeng
 layout(set = 1, binding = 2) buffer InOutSplitLength    { uint inOutSplitLength; };
 // ----------------------------------------------------
 
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mMaxTransferLength;
+	uint mMaxSplitLength;
+};
+// ----------------------------------------------------
+
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
@@ -99,11 +106,19 @@ void main()
 			return;
 		}
 		uint tIdx = atomicAdd(inOutTransferLength, 1u);
+		if (tIdx >= mMaxTransferLength) {
+			inOutTransferLength = mMaxTransferLength;
+			return;
+		}
 		outTransferSource  [tIdx] = sourceId;
 		outTransferTarget  [tIdx] = targetId;
 		outTransferTimeLeft[tIdx] = MERGE_DURATION;
 	} else {
 		uint sIdx = atomicAdd(inOutSplitLength, 1u);
+		if (sIdx >= mMaxSplitLength) {
+			inOutSplitLength = mMaxSplitLength;
+			return;
+		}
 		outSplit[sIdx] = id;
 	}
 }
