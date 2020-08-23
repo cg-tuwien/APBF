@@ -303,4 +303,9 @@
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="gears_vk\assets\1st_party\models\icosahedron.obj">
+      <Filter>assets</Filter>
+    </Object>
+  </ItemGroup>
 </Project>

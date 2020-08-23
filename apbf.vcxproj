@@ -121,6 +121,11 @@
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="gears_vk\assets\1st_party\models\icosahedron.obj">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{14a56153-6a01-4430-9f58-c43b0fe03e21}</ProjectGuid>

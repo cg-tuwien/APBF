@@ -5,7 +5,7 @@
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
 	mTransfers(100),
-	mSolverIterations(1u)
+	mSolverIterations(3u)
 {
 	shader_provider::start_recording();
 	mParticles.request_length(100000);

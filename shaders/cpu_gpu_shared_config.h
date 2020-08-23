@@ -1,3 +1,5 @@
+// -------- neighborhood RTX proof of concept ---------
+#define NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT 0
 
 #define BLAS_CENTRIC 0
 #if !BLAS_CENTRIC
@@ -13,16 +15,18 @@
 #define RTX_NEIGHBORHOOD_RADIUS_FACTOR 30
 
 #define UNIFORM_PARTICLE_RADIUS 0.07
+// ----------------------------------------------------
 
 
 
 
 
 
+// ----------------------- PBD ------------------------
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
 #define NEIGHBOR_LIST_MAX_LENGTH 512
-#define DIMENSIONS 2
+#define DIMENSIONS 3
 #define ADAPTIVE_SAMPLING 0
 #define PARTICLE_RENDER_SCALE 0.25
 
@@ -36,3 +40,4 @@
 
 #define MERGE_DURATION 2.0f
 #define SPLIT_DURATION 2.0f
+// ----------------------------------------------------

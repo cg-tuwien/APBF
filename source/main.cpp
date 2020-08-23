@@ -60,7 +60,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -60), glm::vec3(40, 30, -40), 1.0f);
+		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -77,6 +77,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				uniform_buffer_meta::create_from_data(application_data{})
 			));
 		}
+
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 		
 		// Create particles in a regular grid with random radius:
 		std::vector<particle> testParticles;
@@ -173,9 +175,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			tlas->build(gib);
 #endif
 		}
+
+#endif
 		
 		// Load a sphere model for drawing a single particle:
-		auto sphere = model_t::load_from_file("assets/sphere.obj");
+		auto sphere = model_t::load_from_file("assets/icosahedron.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
 
 		// Create the buffer containing parameters for the indirect fluid draw call:
@@ -190,6 +194,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
 		);
 		mDrawIndexedIndirectCommand->fill(&drawIndexedIndirectCommand, 0, sync::wait_idle(true));
+
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
 		mGraphicsPipelineInstanced = context().create_graphics_pipeline_for(
@@ -225,6 +231,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
+
+#endif
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
 		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
@@ -261,6 +269,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
+
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 
 		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
 		//mTest = context().create_buffer(memory_usage::device, {}, vertex_buffer_meta::create_from_data(four));
@@ -330,6 +340,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			descriptor_binding(2, 0, mOffscreenImageViews[0]->as_storage_image()), // Just take any, this is just to define the layout
 			descriptor_binding(3, 0, mTopLevelAS[0])                               // Just take any, this is just to define the layout
 		);
+#endif
 		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
 		auto imguiManager = current_composition()->element_by_type<imgui_manager>();
@@ -444,6 +455,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		measurements::record_timing_interval_end("PBD");
 
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
+		
 		// COMPUTE
 
 #if BLAS_CENTRIC
@@ -494,6 +507,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			memory_access::acceleration_structure_write_access, /* -> */ memory_access::acceleration_structure_read_access
 		);
 		cmdBfr->establish_global_memory_barrier(pipeline_stage::all_commands, pipeline_stage::all_commands,	memory_access::any_write_access, memory_access::any_read_access);
+		
+#else
+		auto& cmdBfr = shader_provider::cmd_bfr();
+#endif
 
 		// GRAPHICS
 
