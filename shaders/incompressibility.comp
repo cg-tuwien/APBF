@@ -5,7 +5,7 @@
 
 #define EPSILON 0.01
 #define PI 3.14159265
-#define INV_SELF_GRAD_LENGTH_FACTOR 1.0
+#define SELF_GRAD_LENGTH_FACTOR 4.0
 #define UNDERPRESSURE_FACTOR 2.0
 
 struct neighbors
@@ -130,9 +130,9 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	}
 }
 
-void compute_boundariness(uint id, float invMass, float selfGradLength, float underpressure)
+void compute_boundariness(uint id, float selfGradLength, float underpressure)
 {
-	selfGradLength /= (invMass * INV_SELF_GRAD_LENGTH_FACTOR);
+	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
 	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
 	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
 	outBoundariness[id] = boundariness;
@@ -186,13 +186,13 @@ void main()
 		}
 	}
 	// now compute the missing weighted gradient - the one for the current particle itself:
-	weightedGradients[neighborSelfIdx] = -weightedGradientsSum * sqrt(invMass);
+	weightedGradients[neighborSelfIdx] = -weightedGradientsSum * sqrtInvMass[neighborSelfIdx];
 	float selfGradLengthSquared = dot(weightedGradients[neighborSelfIdx], weightedGradients[neighborSelfIdx]);
 	squaredGradSum += selfGradLengthSquared;
 
 	float underpressure = 1 - density * invRestDensity;
 #if ADAPTIVE_SAMPLING
-	compute_boundariness(id, invMass, sqrt(selfGradLengthSquared), underpressure);
+	compute_boundariness(id, sqrt(selfGradLengthSquared) / sqrtInvMass[neighborSelfIdx], underpressure);
 #endif
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);

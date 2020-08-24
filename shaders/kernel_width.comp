@@ -41,7 +41,7 @@ void main()
 	float originalKernelWidth = radius * KERNEL_SCALE;
 #endif
 	float neighborhoodCutoff  = max(originalKernelWidth, oldKernelWidth);
-	uint newNeighborCount     = 0u;
+	uint  newNeighborCount    = 0u;
 	
 	for (uint i = 1; i <= neighborCount; i++) {
 		uint  idN           = inOutNeighbors[id].mNeighbor[i];
