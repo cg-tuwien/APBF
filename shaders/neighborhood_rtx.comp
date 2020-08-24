@@ -56,6 +56,8 @@ void main()
 		uint i = 1u + atomicAdd(outNeighbors[idN].mNeighbor[0], 1u);
 		if (i < NEIGHBOR_LIST_MAX_LENGTH) {
 			outNeighbors[idN].mNeighbor[i] = id;
+		} else {
+			outNeighbors[idN].mNeighbor[0] = NEIGHBOR_LIST_MAX_LENGTH - 1u;
 		}
 	}
 }

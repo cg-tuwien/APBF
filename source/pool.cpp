@@ -63,7 +63,9 @@ void pool::update(float aDeltaTime)
 		mIncompressibility.apply();
 	}
 
+#if ADAPTIVE_SAMPLING
 	mUpdateTransfers.apply();
+#endif
 }
 
 pbd::particles& pool::particles()
