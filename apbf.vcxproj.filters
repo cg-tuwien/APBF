@@ -55,6 +55,9 @@
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">
       <Filter>assets</Filter>
     </None>
+    <None Include="gears_vk\assets\1st_party\models\icosahedron.obj">
+      <Filter>assets</Filter>
+    </None>
     <None Include="shaders\copy_scattered_read.comp">
       <Filter>shaders</Filter>
     </None>
@@ -228,6 +231,9 @@
     <ClCompile Include="source\update_transfers.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
+    <ClCompile Include="source\settings.cpp">
+      <Filter>source\pbd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -302,10 +308,8 @@
     <ClInclude Include="source\update_transfers.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="gears_vk\assets\1st_party\models\icosahedron.obj">
-      <Filter>assets</Filter>
-    </Object>
+    <ClInclude Include="source\settings.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

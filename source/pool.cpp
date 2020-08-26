@@ -1,6 +1,7 @@
 #include "pool.h"
 #include "initialize.h"
 #include "measurements.h"
+#include "settings.h"
 
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
@@ -48,9 +49,9 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 void pool::update(float aDeltaTime)
 {
 	mVelocityHandling.apply(aDeltaTime);
-#if ADAPTIVE_SAMPLING
-	mParticleTransfer.apply(aDeltaTime);
-#endif
+	if (pbd::settings::merge || pbd::settings::split) {
+		mParticleTransfer.apply(aDeltaTime);
+	}
 	measurements::record_timing_interval_start("Neighborhood");
 //	mNeighborhoodCollision.apply();
 	mNeighborhoodFluid.apply();
@@ -63,9 +64,9 @@ void pool::update(float aDeltaTime)
 		mIncompressibility.apply();
 	}
 
-#if ADAPTIVE_SAMPLING
-	mUpdateTransfers.apply();
-#endif
+	if (pbd::settings::merge || pbd::settings::split || pbd::settings::baseKernelWidthOnTargetRadius) {
+		mUpdateTransfers.apply();
+	}
 }
 
 pbd::particles& pool::particles()

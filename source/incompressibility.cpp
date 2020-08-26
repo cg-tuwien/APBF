@@ -1,4 +1,5 @@
 #include "incompressibility.h"
+#include "settings.h"
 
 pbd::incompressibility& pbd::incompressibility::set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
 {
@@ -19,5 +20,5 @@ void pbd::incompressibility::apply()
 	auto oldPositionList       = positionList;
 	auto uintKernelWidthList   = pbd::gpu_list<4>().request_length(kernelWidthList.requested_length());
 
-	shader_provider::incompressibility(particleList.index_buffer(), oldPositionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), boundarinessList.write().buffer(), positionList.write().buffer(), mFluid->length());
+	shader_provider::incompressibility(particleList.index_buffer(), oldPositionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), boundarinessList.write().buffer(), positionList.write().buffer(), mFluid->length(), pbd::settings::updateBoundariness);
 }

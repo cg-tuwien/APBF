@@ -4,12 +4,12 @@
 #include "shader_provider.h"
 #include "pool.h"
 #include "measurements.h"
+#include "settings.h"
+#include "../shaders/cpu_gpu_shared_config.h"
 
 #ifdef _DEBUG
 #include "Test.h"
 #endif
-
-#include "../shaders/cpu_gpu_shared_config.h"
 
 class apbf : public gvk::invokee
 {
@@ -233,7 +233,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		);
 
 #endif
-		
+
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
 		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
 			// Shaders to be used with this pipeline:
@@ -243,7 +243,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()    -> to_location(0),	// Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
 			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
 			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
-			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 2
+			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 3
+			from_buffer_binding(4) -> stream_per_instance<float>()      -> to_location(4),	// Stream instance data from the buffer at binding 4
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -267,7 +268,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			),
 			// Further config for the pipeline:
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			descriptor_binding(0, 0, mCameraDataBuffer[0])
+			descriptor_binding(0, 0, mCameraDataBuffer[0]),
+			avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 4 }
 		);
 
 #if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
@@ -374,10 +376,17 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Checkbox("Set Uniform Particle Radius", &mSetUniformParticleRadius);
 				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
+				static const char* const sColors[] = { "Boundariness", "Boundary Distance" };
+				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
+				ImGui::Checkbox("Split", &pbd::settings::split);
+				ImGui::Checkbox("Merge", &pbd::settings::merge);
+				ImGui::Checkbox("Update Boundariness", &pbd::settings::updateBoundariness);
+				ImGui::Checkbox("Update Target Radius", &pbd::settings::updateTargetRadius);
+				ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
 
 				ImGui::Separator();
 
@@ -451,6 +460,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
 		auto boundaryDistance = mPool->fluid().get<pbd::fluid::id::boundary_distance>(); // only corresponds to position and radius lists because the scene creates only fluid particles
+		auto boundariness     = mPool->fluid().get<pbd::fluid::id::boundariness>(); // only corresponds to position and radius lists because the scene creates only fluid particles
 		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
 
 		measurements::record_timing_interval_end("PBD");
@@ -527,8 +537,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
+			{
+				struct push_constants { int32_t mColor; } pushConstants{ pbd::settings::color };
+				cmdBfr->push_constants(mGraphicsPipelineInstanced2->layout(), pushConstants);
+			}
 			
-			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), boundaryDistance.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), boundariness.buffer()->buffer_handle(), boundaryDistance.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
 			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
 			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);	
 			cmdBfr->end_render_pass();

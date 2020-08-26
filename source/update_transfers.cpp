@@ -1,4 +1,5 @@
 #include "update_transfers.h"
+#include "settings.h"
 
 pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors, transfers* aTransfers)
 {
@@ -24,7 +25,7 @@ void pbd::update_transfers::apply()
 	auto  splitList               = particles().share_hidden_data_from(particleList).request_length(particleList.requested_length());
 	auto  timeLeftList            = gpu_list<4>().request_length(splitList.requested_length());
 
-	shader_provider::find_split_and_merge(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), mNeighbors->buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), mTransfers->hidden_list().requested_length(), splitList.requested_length());
+	shader_provider::find_split_and_merge(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), mNeighbors->buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), mTransfers->hidden_list().requested_length(), splitList.requested_length(), pbd::settings::updateTargetRadius, pbd::settings::merge, pbd::settings::split);
 
 	// the new length of the transfers list was written into mTransfers->hidden_list().length(), which is the length buffer
 	// of the first list in the uninterleaved_list bundle (the transfer source). It's important that at least the transfer

@@ -5,7 +5,7 @@
 
 #define EPSILON 0.01
 #define PI 3.14159265
-#define SELF_GRAD_LENGTH_FACTOR 4.0
+#define SELF_GRAD_LENGTH_FACTOR 8.0
 #define UNDERPRESSURE_FACTOR 2.0
 
 struct neighbors
@@ -26,6 +26,12 @@ layout(set = 0, binding = 7) buffer OutPosition         { ivec4         outPosit
 
 // ------------------- list lengths -------------------
 layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	bool mUpdateBoundariness;
+};
 // ----------------------------------------------------
 
 void add_to_pos(uint particleId, ivec3 posShift)
@@ -134,8 +140,14 @@ void compute_boundariness(uint id, float selfGradLength, float underpressure)
 {
 	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
 	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
-	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
-	outBoundariness[id] = boundariness;
+//	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+//	float oldBoundariness = outBoundariness[id];
+//	float targetShift = boundariness - oldBoundariness;
+//	float maxStep = mDeltaTime * 5; // TODO
+//	float maxStep = 0.005;
+//	outBoundariness[id] = oldBoundariness + min(abs(targetShift), maxStep) * sign(targetShift);
+//	outBoundariness[id] = boundariness;
+	outBoundariness[id] = selfGradLength + underpressure > 1 ? 1 : 0;
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -191,9 +203,10 @@ void main()
 	squaredGradSum += selfGradLengthSquared;
 
 	float underpressure = 1 - density * invRestDensity;
-#if ADAPTIVE_SAMPLING
-	compute_boundariness(id, sqrt(selfGradLengthSquared) / sqrtInvMass[neighborSelfIdx], underpressure);
-#endif
+	if (mUpdateBoundariness) {
+		float factor = pow(radius * KERNEL_SCALE / kernelWidth, 2);
+		compute_boundariness(id, factor * sqrt(selfGradLengthSquared) / sqrtInvMass[neighborSelfIdx], underpressure);
+	}
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);
 

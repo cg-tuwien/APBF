@@ -78,6 +78,7 @@
     <ClCompile Include="source\neighborhood_rtx.cpp" />
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
+    <ClCompile Include="source\settings.cpp" />
     <ClCompile Include="source\spread_kernel_width.cpp" />
     <ClCompile Include="source\update_transfers.cpp" />
     <ClCompile Include="source\velocity_handling.cpp" />
@@ -103,6 +104,7 @@
     <ClInclude Include="source\neighborhood_rtx.h" />
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
+    <ClInclude Include="source\settings.h" />
     <ClInclude Include="source\spread_kernel_width.h" />
     <ClInclude Include="source\update_transfers.h" />
     <ClInclude Include="source\velocity_handling.h" />

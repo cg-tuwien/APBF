@@ -22,6 +22,17 @@ layout(set = 0, binding = 6) buffer InOutNeighbors   { neighbors inOutNeighbors[
 layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	bool mBaseKernelWidthOnTargetRadius;
+};
+// ----------------------------------------------------
+
+/*float move_towards(float oldValue, float targetShift, float maxStep)
+{
+	return oldValue + min(abs(targetShift), maxStep) * sign(targetShift);
+}*/
+
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
@@ -35,13 +46,15 @@ void main()
 	float oldKernelWidth = inOldKernelWidth[id];
 	uint  neighborCount  = inOutNeighbors[id].mNeighbor[0];
 
-#if ADAPTIVE_SAMPLING
+	if (!mBaseKernelWidthOnTargetRadius) {
+		targetRadius = 0;
+	}
 	float originalKernelWidth = max(radius, targetRadius) * KERNEL_SCALE;
-#else
-	float originalKernelWidth = radius * KERNEL_SCALE;
-#endif
 	float neighborhoodCutoff  = max(originalKernelWidth, oldKernelWidth);
 	uint  newNeighborCount    = 0u;
+
+//	atomicMax(inOutKernelWidth[id], uint(oldKernelWidth * 0.9 * KERNEL_WIDTH_RESOLUTION));
+//	atomicMax(inOutKernelWidth[id], uint(move_towards(oldKernelWidth, originalKernelWidth - oldKernelWidth, 0.01) * KERNEL_WIDTH_RESOLUTION));
 	
 	for (uint i = 1; i <= neighborCount; i++) {
 		uint  idN           = inOutNeighbors[id].mNeighbor[i];
