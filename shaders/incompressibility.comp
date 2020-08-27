@@ -7,6 +7,7 @@
 #define PI 3.14159265
 #define SELF_GRAD_LENGTH_FACTOR 8.0
 #define UNDERPRESSURE_FACTOR 2.0
+#define BOUNDARINESS_THRESHOLD 0.8
 
 struct neighbors
 {
@@ -136,10 +137,10 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 	}
 }
 
-void compute_boundariness(uint id, float selfGradLength, float underpressure)
+void compute_boundariness(uint id, float selfGradLength, float underpressure, vec3 avgDiff)
 {
-	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
-	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
+//	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
+//	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
 //	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
 //	float oldBoundariness = outBoundariness[id];
 //	float targetShift = boundariness - oldBoundariness;
@@ -147,7 +148,8 @@ void compute_boundariness(uint id, float selfGradLength, float underpressure)
 //	float maxStep = 0.005;
 //	outBoundariness[id] = oldBoundariness + min(abs(targetShift), maxStep) * sign(targetShift);
 //	outBoundariness[id] = boundariness;
-	outBoundariness[id] = selfGradLength + underpressure > 1 ? 1 : 0;
+//	outBoundariness[id] = selfGradLength + underpressure > 1 ? 1 : 0;
+	outBoundariness[id] = length(avgDiff) > BOUNDARINESS_THRESHOLD ? 1 : 0;
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -167,9 +169,11 @@ void main()
 	float sqrtInvMass[NEIGHBOR_LIST_MAX_LENGTH];
 	vec3  weightedGradients[NEIGHBOR_LIST_MAX_LENGTH];
 	vec3  weightedGradientsSum = vec3(0, 0, 0);
+	vec3  avgDiff = vec3(0, 0, 0);
 	uint  neighborSelfIdx;
 	float density = 0;
 	float squaredGradSum = 0;
+	float massSum = 0;
 	
 	// compute weighted gradients, density and the sum of the squared gradients
 	for (uint i = 1; i <= neighborCount; i++) {
@@ -177,18 +181,21 @@ void main()
 		uint  idxN          = inIndexList[idN];
 		ivec3 posN          = inPosition[idxN].xyz;
 		float invMassN      = inInverseMass[idxN];
+		float massN         = 1.0 / invMassN;
 		vec3  diff          = vec3(posN - pos) / POS_RESOLUTION;
 
-		density += kernel_height(diff, kernelWidth) / invMassN;
+		density += kernel_height(diff, kernelWidth) * massN;
 
 		sqrtInvMass[i] = sqrt(invMassN);
+		avgDiff += diff * massN;
+		massSum += massN;
 
 		// weighted gradient of the current particle itself depends on sum of all other gradients,
 		// so wait with its computation until after the for loop.
 		if (idx == idxN) {
 			neighborSelfIdx = i;
 		} else {
-			weightedGradients[i] = kernel_gradient(diff, kernelWidth) * invRestDensity / invMassN;
+			weightedGradients[i] = kernel_gradient(diff, kernelWidth) * invRestDensity * massN;
 			weightedGradientsSum += weightedGradients[i];
 
 			// scale gradients by inverse mass so that moving lighter particles gets preferred
@@ -204,8 +211,10 @@ void main()
 
 	float underpressure = 1 - density * invRestDensity;
 	if (mUpdateBoundariness) {
-		float factor = pow(radius * KERNEL_SCALE / kernelWidth, 2);
-		compute_boundariness(id, factor * sqrt(selfGradLengthSquared) / sqrtInvMass[neighborSelfIdx], underpressure);
+//		float factor = pow(radius * KERNEL_SCALE / kernelWidth, 2);
+		float factor = 1;
+		avgDiff /= massSum;
+		compute_boundariness(id, factor * sqrt(selfGradLengthSquared) / sqrtInvMass[neighborSelfIdx], underpressure, avgDiff);
 	}
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);
