@@ -21,7 +21,7 @@ void shader_provider::start_recording()
 void shader_provider::end_recording()
 {
 	cmd_bfr()->end_recording();
-	mQueue->submit(cmd_bfr());
+	mQueue->submit(cmd_bfr(), std::optional<std::reference_wrapper<avk::semaphore_t>>{});
 	gvk::context().main_window()->handle_lifetime(std::move(mCmdBfr));
 }
 
