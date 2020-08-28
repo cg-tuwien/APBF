@@ -139,17 +139,17 @@ vec3 kernel_gradient(vec3 r, float aKernelWidth)
 
 void compute_boundariness(uint id, float selfGradLength, float underpressure, vec3 avgDiff)
 {
-//	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
-//	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
-//	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
+	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
+	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
 //	float oldBoundariness = outBoundariness[id];
 //	float targetShift = boundariness - oldBoundariness;
 //	float maxStep = mDeltaTime * 5; // TODO
 //	float maxStep = 0.005;
 //	outBoundariness[id] = oldBoundariness + min(abs(targetShift), maxStep) * sign(targetShift);
-//	outBoundariness[id] = boundariness;
+	outBoundariness[id] = boundariness;
 //	outBoundariness[id] = selfGradLength + underpressure > 1 ? 1 : 0;
-	outBoundariness[id] = length(avgDiff) > BOUNDARINESS_THRESHOLD ? 1 : 0;
+//	outBoundariness[id] = length(avgDiff) > BOUNDARINESS_THRESHOLD ? 1 : 0;
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
