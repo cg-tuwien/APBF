@@ -22,10 +22,8 @@ layout(set = 0, binding = 6) buffer InOutNeighbors   { neighbors inOutNeighbors[
 layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
-// ------------------ push constants ------------------
-layout(push_constant) uniform PushConstants {
-	bool mBaseKernelWidthOnTargetRadius;
-};
+// ------------------ apbf settings -------------------
+layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 /*float move_towards(float oldValue, float targetShift, float maxStep)
@@ -46,7 +44,7 @@ void main()
 	float oldKernelWidth = inOldKernelWidth[id];
 	uint  neighborCount  = inOutNeighbors[id].mNeighbor[0];
 
-	if (!mBaseKernelWidthOnTargetRadius) {
+	if (!bool(apbfSettings.mBaseKernelWidthOnTargetRadius)) {
 		targetRadius = 0;
 	}
 	float originalKernelWidth = max(radius, targetRadius) * KERNEL_SCALE;

@@ -29,10 +29,8 @@ layout(set = 0, binding = 7) buffer OutPosition         { ivec4         outPosit
 layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
-// ------------------ push constants ------------------
-layout(push_constant) uniform PushConstants {
-	bool mUpdateBoundariness;
-};
+// ------------------ apbf settings -------------------
+layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 void add_to_pos(uint particleId, ivec3 posShift)
@@ -210,7 +208,7 @@ void main()
 	squaredGradSum += selfGradLengthSquared;
 
 	float underpressure = 1 - density * invRestDensity;
-	if (mUpdateBoundariness) {
+	if (bool(apbfSettings.mUpdateBoundariness)) {
 //		float factor = pow(radius * KERNEL_SCALE / kernelWidth, 2);
 		float factor = 1;
 		avgDiff /= massSum;

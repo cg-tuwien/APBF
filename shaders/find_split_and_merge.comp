@@ -33,13 +33,14 @@ layout(set = 1, binding = 1) buffer InOutTransferLength { uint inOutTransferLeng
 layout(set = 1, binding = 2) buffer InOutSplitLength    { uint inOutSplitLength; };
 // ----------------------------------------------------
 
+// ------------------ apbf settings -------------------
+layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+// ----------------------------------------------------
+
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
 	uint mMaxTransferLength;
 	uint mMaxSplitLength;
-	bool mMerge;
-	bool mSplit;
-	bool mUpdateTargetRadius;
 };
 // ----------------------------------------------------
 
@@ -85,7 +86,7 @@ void main()
 	}
 
 	float targetRadius;
-	if (mUpdateTargetRadius) {
+	if (bool(apbfSettings.mUpdateTargetRadius)) {
 		targetRadius = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
 //		targetRadius = min(targetRadius, radius * 4); // also to prevent targetRadius from ever becoming infinity (neighbor list could be empty if the first NEIGHBOR_LIST_MAX_LENGTH - 1 all get removed in kernel_width.comp)
 		outTargetRadius[id] = targetRadius;
@@ -100,9 +101,9 @@ void main()
 	// in case of merge, add directly to the transfers list
 	// in case of split, add to outSplit; the particles in this list will later be duplicated and added to the transfers list
 
-//	bool split = mSplit && (targetRadius * (pow(2, 1 / DIMENSIONS) * 0.99) <= radius);
+//	bool split = bool(apbfSettings.mSplit) && (targetRadius * (pow(2, 1 / DIMENSIONS) * 0.99) <= radius);
 	bool split = false;
-	bool merge = mMerge && nearestNeighborDist < radius && pow(radius, DIMENSIONS) + pow(nearestNeighborRadius, DIMENSIONS) <= pow(targetRadius, DIMENSIONS);
+	bool merge = bool(apbfSettings.mMerge) && nearestNeighborDist < radius && pow(radius, DIMENSIONS) + pow(nearestNeighborRadius, DIMENSIONS) <= pow(targetRadius, DIMENSIONS);
 	if (!merge && !split) return;
 
 	uint sourceId = (merge && nearestNeighborLarger) ? nearestNeighborId : id;

@@ -382,12 +382,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
-				ImGui::Checkbox("Split", &pbd::settings::split);
-				ImGui::Checkbox("Merge", &pbd::settings::merge);
-				ImGui::Checkbox("Update Boundariness", &pbd::settings::updateBoundariness);
-				ImGui::Checkbox("Update Target Radius", &pbd::settings::updateTargetRadius);
-				ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
-
+				pbd::settings::add_apbf_settings_im_gui_entries();
 				ImGui::Separator();
 
 		        ImGui::End();
@@ -451,6 +446,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			}
 		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, sync::not_required());
+		pbd::settings::update_apbf_settings_buffer();
 
 		shader_provider::start_recording();
 		measurements::record_timing_interval_start("PBD");

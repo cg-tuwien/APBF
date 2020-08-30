@@ -1,5 +1,4 @@
 #include "spread_kernel_width.h"
-#include "settings.h"
 
 pbd::spread_kernel_width& pbd::spread_kernel_width::set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
 {
@@ -18,6 +17,6 @@ void pbd::spread_kernel_width::apply()
 	auto uintKernelWidthList   = pbd::gpu_list<4>().request_length(kernelWidthList.requested_length());
 
 	shader_provider::write_sequence(uintKernelWidthList.write().buffer(), kernelWidthList.length(), 0, 0);
-	shader_provider::kernel_width(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), targetRadiusList.buffer(), kernelWidthList.buffer(), uintKernelWidthList.write().buffer(), mNeighbors->write().buffer(), mFluid->length(), pbd::settings::baseKernelWidthOnTargetRadius);
+	shader_provider::kernel_width(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), targetRadiusList.buffer(), kernelWidthList.buffer(), uintKernelWidthList.write().buffer(), mNeighbors->write().buffer(), mFluid->length());
 	shader_provider::uint_to_float(uintKernelWidthList.buffer(), kernelWidthList.write().buffer(), mFluid->length(), 1.0f / KERNEL_WIDTH_RESOLUTION);
 }

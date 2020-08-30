@@ -41,3 +41,23 @@
 #define MERGE_DURATION 2.0f
 #define SPLIT_DURATION 2.0f
 // ----------------------------------------------------
+
+
+
+
+
+// ---------------------- structs ---------------------
+#ifndef APBF_SETTINGS
+#define APBF_SETTINGS
+
+struct apbf_settings
+{
+	int mKernelId;
+	int mMerge;
+	int mSplit;
+	int mBaseKernelWidthOnTargetRadius;
+	int mUpdateTargetRadius;
+	int mUpdateBoundariness;
+};
+#endif
+// ----------------------------------------------------
