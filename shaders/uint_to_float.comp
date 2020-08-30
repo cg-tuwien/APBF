@@ -1,5 +1,7 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
 layout(set = 0, binding = 0) buffer InBuffer  { uint   inBuffer[]; };
@@ -8,6 +10,10 @@ layout(set = 0, binding = 1) buffer OutBuffer { float outBuffer[]; };
 
 // ------------------- list lengths -------------------
 layout(set = 1, binding = 0) buffer InBufferLength { uint inBufferLength; };
+// ----------------------------------------------------
+
+// ------------------ apbf settings -------------------
+layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
@@ -30,6 +36,6 @@ void main()
 	if (id >= inBufferLength) return;
 
 	float value = float(inBuffer[id]) * mFactor;
-	value = move_towards(outBuffer[id], value, 0.01);
+	value = move_towards(outBuffer[id], value, apbfSettings.mKernelWidthAdaptionSpeed);
 	outBuffer[id] = value;
 }

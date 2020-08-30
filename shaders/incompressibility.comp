@@ -115,24 +115,32 @@ vec3 gauss_kernel_gradient(vec3 r, float height)
 
 float kernel_height(vec3 r, float aKernelWidth)
 {
-	switch (KERNEL_ID)
+	switch (apbfSettings.mHeightKernelId)
 	{
 		case 0: return cubic_kernel_height(r, aKernelWidth);
 		case 1: return gauss_kernel_height(r, 0.6f / pow(aKernelWidth / 2.0f, DIMENSIONS));
 		case 2: return poly6_kernel_height(r, aKernelWidth);
+		case 3: return cone_kernel_height(r, aKernelWidth);
 		default: return 0.0f;
 	}
 }
 
 vec3 kernel_gradient(vec3 r, float aKernelWidth)
 {
-	switch (KERNEL_ID)
+	switch (apbfSettings.mGradientKernelId)
 	{
 		case 0: return cubic_kernel_gradient(r, aKernelWidth);
 		case 1: return gauss_kernel_gradient(r, 0.6f / pow(aKernelWidth / 2.0f, DIMENSIONS));
 		case 2: return spiky_kernel_gradient(r, aKernelWidth);
+		case 3: return cone_kernel_gradient(r, aKernelWidth);
 		default: return vec3(0.0f, 0.0f, 0.0f);
 	}
+}
+
+float move_towards(float oldValue, float newValue, float maxStep)
+{
+	float step = newValue - oldValue;
+	return oldValue + min(abs(step), maxStep) * sign(step);
 }
 
 void compute_boundariness(uint id, float selfGradLength, float underpressure, vec3 avgDiff)
@@ -140,11 +148,7 @@ void compute_boundariness(uint id, float selfGradLength, float underpressure, ve
 	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
 	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
 	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
-//	float oldBoundariness = outBoundariness[id];
-//	float targetShift = boundariness - oldBoundariness;
-//	float maxStep = mDeltaTime * 5; // TODO
-//	float maxStep = 0.005;
-//	outBoundariness[id] = oldBoundariness + min(abs(targetShift), maxStep) * sign(targetShift);
+	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed);
 	outBoundariness[id] = boundariness;
 //	outBoundariness[id] = selfGradLength + underpressure > 1 ? 1 : 0;
 //	outBoundariness[id] = length(avgDiff) > BOUNDARINESS_THRESHOLD ? 1 : 0;

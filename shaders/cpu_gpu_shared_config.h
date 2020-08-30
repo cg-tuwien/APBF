@@ -30,7 +30,6 @@
 #define ADAPTIVE_SAMPLING 0
 #define PARTICLE_RENDER_SCALE 0.25
 
-#define KERNEL_ID 1
 #define KERNEL_SCALE 4.0
 #define KERNEL_SPREADING_FACTOR 0.5
 
@@ -52,12 +51,16 @@
 
 struct apbf_settings
 {
-	int mKernelId;
+	int mHeightKernelId;
+	int mGradientKernelId;
 	int mMerge;
 	int mSplit;
 	int mBaseKernelWidthOnTargetRadius;
 	int mUpdateTargetRadius;
 	int mUpdateBoundariness;
+	int mGroundTruthBoundaryDistance;
+	float mBoundarinessAdaptionSpeed;
+	float mKernelWidthAdaptionSpeed;
 };
 #endif
 // ----------------------------------------------------

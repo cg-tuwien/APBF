@@ -44,6 +44,14 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
+bvec3 smallestComponent(vec3 v)
+{
+	bool b1 = v.x <= v.y;
+	bool b2 = v.x <= v.z;
+	bool b3 = v.y <= v.z;
+	return bvec3(b1 && b2, !b1 && b3, !b2 && !b3);
+}
+
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
@@ -83,6 +91,17 @@ void main()
 			nearestNeighborRadius = radiusN;
 			nearestNeighborLarger = radiusN > radius || (radiusN == radius && idxN > idx);
 		}
+	}
+
+	if (bool(apbfSettings.mGroundTruthBoundaryDistance)) {
+		// hardcoded ground-truth for boundaryDistance for the pool scene:
+		vec3 poolMin = vec3(-40, -10, -80);
+		vec3 poolMax = vec3(40, 30, -40);
+		vec3 posF = vec3(pos) / POS_RESOLUTION;
+		vec3 toMin = posF - poolMin;
+		vec3 toMax = poolMax - posF;
+		boundaryDistance =     dot(toMin, vec3(smallestComponent(toMin)));
+		boundaryDistance = min(dot(toMax, vec3(smallestComponent(toMax))), boundaryDistance);
 	}
 
 	float targetRadius;
