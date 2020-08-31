@@ -244,7 +244,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
 			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
 			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 3
-			from_buffer_binding(4) -> stream_per_instance<float>()      -> to_location(4),	// Stream instance data from the buffer at binding 4
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
 					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
@@ -269,7 +268,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			// Further config for the pipeline:
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			descriptor_binding(0, 0, mCameraDataBuffer[0]),
-			avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 4 }
+			avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 32 }
 		);
 
 #if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
@@ -376,7 +375,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Checkbox("Set Uniform Particle Radius", &mSetUniformParticleRadius);
 				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
-				static const char* const sColors[] = { "Boundariness", "Boundary Distance" };
+				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Target Radius" };
 				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 
 				ImGui::Separator();
@@ -455,8 +454,16 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		auto boundaryDistance = mPool->fluid().get<pbd::fluid::id::boundary_distance>(); // only corresponds to position and radius lists because the scene creates only fluid particles
-		auto boundariness     = mPool->fluid().get<pbd::fluid::id::boundariness>(); // only corresponds to position and radius lists because the scene creates only fluid particles
+		pbd::gpu_list<4> floatForColor; // only corresponds to position and radius lists because the scene creates only fluid particles
+		auto color1 = glm::vec3(0, 0.2, 0);
+		auto color2 = glm::vec3(1, 0.2, 0);
+		auto color1Float = 0.0f;
+		auto color2Float = 1.0f;
+		switch (pbd::settings::color) {
+			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();                                    break;
+			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();                  color2Float = 20; break;
+			case 2: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >(); color1Float = 1; color2Float =  2; break;
+		}
 		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
 
 		measurements::record_timing_interval_end("PBD");
@@ -530,17 +537,17 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
-			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			{
-				struct push_constants { int32_t mColor; } pushConstants{ pbd::settings::color };
+				struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; } pushConstants{ color1, color1Float, color2, color2Float };
 				cmdBfr->push_constants(mGraphicsPipelineInstanced2->layout(), pushConstants);
 			}
 			
-			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), boundariness.buffer()->buffer_handle(), boundaryDistance.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), floatForColor.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
 			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
-			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);	
+			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);
 			cmdBfr->end_render_pass();
 
 			break;

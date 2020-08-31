@@ -35,7 +35,9 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= inTransferLength) return;
 
-	float ttl            = max(mDeltaTime, inOutTransferTimeLeft[id]);
+	float ttl_and_type   = inOutTransferTimeLeft[id];
+	float ttl            = max(mDeltaTime, abs(ttl_and_type));
+	bool  merge          = ttl_and_type > 0;
 	uint  idS            = inTransferSource[id];
 	uint  idT            = inTransferTarget[id];
 	uint  idxS           = inIndexList[idS];
@@ -50,8 +52,7 @@ void main()
 	vec3  velocityT      = inOutVelocity[idxT].xyz;
 	float volS           = pow(radiusS, DIMENSIONS);
 	float volT           = pow(radiusT, DIMENSIONS);
-//	float factorS        = mDeltaTime * (volT - volS) / (2 * ttl * volS);      // goal: both particles same size
-	float factorS        = min(1, mDeltaTime / ttl);                           // goal: source particle vanishes
+	float factorS        = merge ? min(1, mDeltaTime / ttl) : mDeltaTime * (volT - volS) / (2 * ttl * volS);
 	float transfMass     = factorS / invMassS;
 	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
 
@@ -62,16 +63,17 @@ void main()
 	inOutRadius[idxT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
 //	inOutPosition[idxT]       = 
 	// TODO
-	inOutTransferTimeLeft[id] = ttl - mDeltaTime;
+	inOutTransferTimeLeft[id] = (ttl - mDeltaTime) * (merge ? 1 : -1);
 
-//	if (ttl == mDeltaTime) {
-//		uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
-//		outDeleteTransferList[dtlIdx] = id;
-//	}
 	if (ttl == mDeltaTime) {
-		uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
-		outDeleteParticleList[dplIdx] = idxS;
-		inOutTransferrring[idS] = 0u;
-		inOutTransferrring[idT] = 0u;
+		if (merge) {
+			uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
+			outDeleteParticleList[dplIdx] = idxS;
+			inOutTransferrring[idS] = 0u;
+			inOutTransferrring[idT] = 0u;
+		} else {
+			uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
+			outDeleteTransferList[dtlIdx] = id;
+		}
 	}
 }

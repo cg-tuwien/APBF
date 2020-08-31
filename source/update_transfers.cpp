@@ -1,4 +1,5 @@
 #include "update_transfers.h"
+#include "settings.h"
 
 pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors, transfers* aTransfers)
 {
@@ -33,11 +34,13 @@ void pbd::update_transfers::apply()
 
 	// perform split
 
-//	timeLeftList.set_length(splitList.length());
-//	shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), SPLIT_DURATION, 0);
-//	auto duplicates = splitList.duplicate_these();
-//
-//	transferSourceList   += splitList;
-//	transferTargetList   += duplicates;
-//	transferTimeLeftList += timeLeftList;
+	if (settings::split) {
+		timeLeftList.set_length(splitList.length());
+		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -SPLIT_DURATION, 0);
+		auto duplicates = splitList.duplicate_these();
+
+		transferSourceList += splitList;
+		transferTargetList += duplicates;
+		transferTimeLeftList += timeLeftList;
+	}
 }
