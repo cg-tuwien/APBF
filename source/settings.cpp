@@ -16,8 +16,8 @@ int   pbd::settings::color                         = 0;
 
 void pbd::settings::add_apbf_settings_im_gui_entries()
 {
-	static const char* const   sHeightKernels[] = { "Cubic", "Gauss", "poly6", "cone" };
-	static const char* const sGradientKernels[] = { "Cubic", "Gauss", "spiky", "cone" };
+	static const char* const   sHeightKernels[] = { "Cubic", "Gauss", "Poly6", "Cone", "Quadratic Spike" };
+	static const char* const sGradientKernels[] = { "Cubic", "Gauss", "Spiky", "Cone", "Quadratic Spike" };
 	ImGui::Combo(  "Kernel", &pbd::settings::heightKernelId  , sHeightKernels  , IM_ARRAYSIZE(sHeightKernels)  );
 	ImGui::Combo("Gradient", &pbd::settings::gradientKernelId, sGradientKernels, IM_ARRAYSIZE(sGradientKernels));
 	ImGui::Checkbox("Match Gradient to Kernel", &pbd::settings::matchGradientToHeightKernel);
