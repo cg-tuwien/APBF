@@ -5,8 +5,7 @@
 
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
-	mTransfers(100),
-	mSolverIterations(3u)
+	mTransfers(100)
 {
 	shader_provider::start_recording();
 	mParticles.request_length(100000);
@@ -58,7 +57,7 @@ void pool::update(float aDeltaTime)
 	measurements::record_timing_interval_end("Neighborhood");
 	mSpreadKernelWidth.apply();
 
-	for (uint32_t i = 0u; i < mSolverIterations; i++) {
+	for (uint32_t i = 0u; i < pbd::settings::solverIterations; i++) {
 //		mInterParticleCollision.apply();
 		mBoxCollision.apply();
 		mIncompressibility.apply();

@@ -13,9 +13,11 @@ bool  pbd::settings::groundTruthBoundaryDistance   = true;
 float pbd::settings::boundarinessAdaptionSpeed     = 0.01f;
 float pbd::settings::kernelWidthAdaptionSpeed      = 0.01f;
 int   pbd::settings::color                         = 0;
+int   pbd::settings::solverIterations              = 3;
 
 void pbd::settings::add_apbf_settings_im_gui_entries()
 {
+	ImGui::SliderInt("Solver Iterations", &pbd::settings::solverIterations, 0, 10);
 	static const char* const   sHeightKernels[] = { "Cubic", "Gauss", "Poly6", "Cone", "Quadratic Spike" };
 	static const char* const sGradientKernels[] = { "Cubic", "Gauss", "Spiky", "Cone", "Quadratic Spike" };
 	ImGui::Combo(  "Kernel", &pbd::settings::heightKernelId  , sHeightKernels  , IM_ARRAYSIZE(sHeightKernels)  );

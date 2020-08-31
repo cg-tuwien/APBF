@@ -13,17 +13,18 @@ namespace pbd
 		static void update_apbf_settings_buffer();
 		static avk::buffer& apbf_settings_buffer();
 
-		static int  heightKernelId;
-		static int  gradientKernelId;
-		static bool matchGradientToHeightKernel;
-		static bool merge;
-		static bool split;
-		static bool baseKernelWidthOnTargetRadius;
-		static bool updateTargetRadius;
-		static bool updateBoundariness;
-		static bool groundTruthBoundaryDistance;
+		static int   heightKernelId;
+		static int   gradientKernelId;
+		static bool  matchGradientToHeightKernel;
+		static bool  merge;
+		static bool  split;
+		static bool  baseKernelWidthOnTargetRadius;
+		static bool  updateTargetRadius;
+		static bool  updateBoundariness;
+		static bool  groundTruthBoundaryDistance;
 		static float boundarinessAdaptionSpeed;
 		static float kernelWidthAdaptionSpeed;
-		static int  color; // 0 = boundariness, 1 = boundary distance, 2 = target radius, 3 = transferring
+		static int   color; // 0 = boundariness, 1 = boundary distance, 2 = target radius, 3 = transferring
+		static int   solverIterations;
 	};
 }

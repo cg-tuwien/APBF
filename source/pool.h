@@ -22,7 +22,6 @@ public:
 	pbd::fluid& fluid();
 
 private:
-	uint32_t mSolverIterations;
 	pbd::particles mParticles;
 	pbd::fluid mFluid;
 	pbd::transfers mTransfers;
