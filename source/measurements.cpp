@@ -1,7 +1,7 @@
 #include "measurements.h"
 #include "shader_provider.h"
 
-std::unordered_map<std::string, std::tuple<vk::UniqueQueryPool, std::array<uint32_t, 2>, float>> measurements::mIntervals;
+std::unordered_map<std::string, std::tuple<vk::UniqueQueryPool, std::array<uint32_t, 2>, float, uint32_t>> measurements::mIntervals;
 std::unordered_map<std::string, avk::buffer> measurements::mBuffers;
 
 uint32_t measurements::async_read_uint(const std::string& aName, const avk::buffer& aBuffer)
@@ -45,10 +45,14 @@ float measurements::get_timing_interval_in_ms(const std::string& aName)
 	if (iter == mIntervals.end()) {
 		return 0.0f;
 	}
-	auto& [queryPool, timestamps, avgRendertime] = iter->second;
+	auto& [queryPool, timestamps, avgRendertime, queryUsed] = iter->second;
 	auto mainWindow = gvk::context().main_window();
 	auto oldestFrame = std::max(0i64, mainWindow->current_frame() - mainWindow->number_of_frames_in_flight() + 1i64);
-	auto query = mainWindow->in_flight_index_for_frame(oldestFrame) * 2u; // choose oldest query
+	auto oldestInFlight = mainWindow->in_flight_index_for_frame(oldestFrame);
+	if (!((queryUsed >> oldestInFlight) & 1u)) {
+		return 0.0f;
+	}
+	auto query = oldestInFlight * 2u; // choose oldest query
 	gvk::context().mLogicalDevice.getQueryPoolResults(*queryPool, query, 2u, sizeof(timestamps), timestamps.data(), sizeof(uint32_t), vk::QueryResultFlagBits::eWait);
 	float delta = (timestamps[1] - timestamps[0]) * gvk::context().physical_device().getProperties().limits.timestampPeriod / 1000000.0f;
 	avgRendertime = avgRendertime * 0.9f + delta * 0.1f;
@@ -69,7 +73,9 @@ vk::QueryPool& measurements::add_timing_interval_and_get_query_pool(const std::s
 		queryPoolCreateInfo.setQueryCount(gvk::context().main_window()->number_of_frames_in_flight() * 2u);
 		queryPoolCreateInfo.setQueryType(vk::QueryType::eTimestamp);
 
-		iter = mIntervals.try_emplace(aName, gvk::context().mLogicalDevice.createQueryPoolUnique(queryPoolCreateInfo), std::array<uint32_t, 2>(), 0.0f).first;
+		iter = mIntervals.try_emplace(aName, gvk::context().mLogicalDevice.createQueryPoolUnique(queryPoolCreateInfo), std::array<uint32_t, 2>(), 0.0f, 0u).first;
 	}
+	auto& queryUsed = std::get<3>(iter->second);
+	queryUsed = queryUsed | 1u << gvk::context().main_window()->current_in_flight_index();
 	return *std::get<0>(iter->second);
 }

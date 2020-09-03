@@ -14,8 +14,8 @@
 class apbf : public gvk::invokee
 {
 	struct particle {
-	    glm::vec4 mOriginalPositionRand;
-	    glm::vec4 mCurrentPositionRadius;
+		glm::vec4 mOriginalPositionRand;
+		glm::vec4 mCurrentPositionRadius;
 	};
 
 	struct application_data {
@@ -347,7 +347,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto imguiManager = current_composition()->element_by_type<imgui_manager>();
 		if (nullptr != imguiManager) {
 			imguiManager->add_callback([this](){
-		        ImGui::Begin("Info & Settings");
+				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("PBD"));
@@ -356,10 +356,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 				static std::vector<float> values;
 				values.push_back(1000.0f / ImGui::GetIO().Framerate);
-		        if (values.size() > 90) {
-			        values.erase(values.begin());
-		        }
-	            ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
+				if (values.size() > 90) {
+					values.erase(values.begin());
+				}
+				ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
 				ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
 
 				ImGui::Separator();
@@ -381,10 +381,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
+				ImGui::SliderFloat("Max Delta Time", &mMaxDeltaTime, 0.0f, 0.1f, "%.2f ms");
 				pbd::settings::add_apbf_settings_im_gui_entries();
 				ImGui::Separator();
 
-		        ImGui::End();
+				ImGui::End();
 			});
 		}
 	}
@@ -403,6 +404,14 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				mQuakeCam.enable();
 				if (nullptr != imguiManager) { imguiManager->enable_user_interaction(false); }
 			}
+		}
+
+		if (input().key_pressed(key_code::space)) {
+			mFreezeParticleAnimation = !mFreezeParticleAnimation;
+		}
+
+		if (input().key_pressed(key_code::enter)) {
+			mPerformSingleSimulationStep = true;
 		}
 		
 		// On Esc pressed,
@@ -450,7 +459,13 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		shader_provider::start_recording();
 		measurements::record_timing_interval_start("PBD");
 
-		mPool->update(std::min(gvk::time().delta_time(), 0.1f));
+		if (!mFreezeParticleAnimation || mPerformSingleSimulationStep) {
+			mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
+		}
+		if (mPerformSingleSimulationStep) {
+			mPerformSingleSimulationStep = false;
+			mFreezeParticleAnimation = true;
+		}
 
 		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
@@ -681,10 +696,12 @@ private: // v== Member variables ==v
 	int mRenderingMethod = 3;
 	int mRenderNeighbors = 1;
 	int mNeighborhoodOriginParticleId = 0;
-	bool mFreezeParticleAnimation = false;
+	bool mFreezeParticleAnimation = true;
 	bool mResetParticlePositions = false;
 	bool mSetUniformParticleRadius = false;
+	bool mPerformSingleSimulationStep = false;
 	int mIntersectionType = 0;
+	float mMaxDeltaTime = 0.1f;
 	
 }; // class apbf
 
@@ -699,7 +716,7 @@ int main() // <== Starting point ==
 		mainWnd->set_additional_back_buffer_attachments({ 
 			attachment::declare(vk::Format::eD32Sfloat, on_load::clear, depth_stencil(), on_store::dont_care)
 		});
-		mainWnd->set_presentaton_mode(presentation_mode::mailbox);
+		mainWnd->set_presentaton_mode(presentation_mode::fifo);
 		mainWnd->set_number_of_concurrent_frames(3u);
 		mainWnd->open();
 

@@ -15,6 +15,6 @@ public:
 
 private:
 	static vk::QueryPool& add_timing_interval_and_get_query_pool(const std::string& aName);
-	static std::unordered_map<std::string, std::tuple<vk::UniqueQueryPool, std::array<uint32_t, 2>, float>> mIntervals;
+	static std::unordered_map<std::string, std::tuple<vk::UniqueQueryPool, std::array<uint32_t, 2>, float, uint32_t>> mIntervals;
 	static std::unordered_map<std::string, avk::buffer> mBuffers;
 };
