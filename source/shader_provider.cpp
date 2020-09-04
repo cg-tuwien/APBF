@@ -81,7 +81,7 @@ const avk::buffer& shader_provider::append_list(const avk::buffer& aTargetList, 
 		avk::descriptor_binding(1, 2, length_result_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	prepare_dispatch_indirect(aAppendingListLength, 0u, aStride);
+	prepare_dispatch_indirect(aAppendingListLength, 0u, aStride, 1u);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aTargetList),
@@ -360,7 +360,7 @@ void shader_provider::prefix_sum_apply_on_block_level(const avk::buffer& aInBuff
 		avk::descriptor_binding(0, 3, aLengthsAndOffsets),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	prepare_dispatch_indirect(aLengthsAndOffsets, aLengthsAndOffsetsOffset + aRecursionDepth, 1u, 512u);
+	prepare_dispatch_indirect(aLengthsAndOffsets, aLengthsAndOffsetsOffset + aRecursionDepth, 1u, 0u, 512u);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInBuffer),
@@ -383,7 +383,7 @@ void shader_provider::prefix_sum_spread_from_block_level(const avk::buffer& aInB
 		avk::descriptor_binding(0, 3, aLengthsAndOffsets),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	prepare_dispatch_indirect(aLengthsAndOffsets, aLengthsAndOffsetsOffset + aRecursionDepth, 1u, 512u);
+	prepare_dispatch_indirect(aLengthsAndOffsets, aLengthsAndOffsetsOffset + aRecursionDepth, 1u, 0u, 512u);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInBuffer),
@@ -409,7 +409,7 @@ void shader_provider::radix_sort_apply_on_block_level(const avk::buffer& aInBuff
 		avk::descriptor_binding(1, 0, aBufferLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 512u);
+	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 0u, 512u);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInBuffer),
@@ -437,7 +437,7 @@ void shader_provider::radix_sort_scattered_write(const avk::buffer& aInBuffer, c
 		avk::descriptor_binding(1, 0, aBufferLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
-	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 512u);
+	prepare_dispatch_indirect(aBufferLength, 0u, 1u, 0u, 512u);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInBuffer),
@@ -782,6 +782,28 @@ void shader_provider::find_split_and_merge(const avk::buffer& aInIndexList, cons
 	dispatch_indirect();
 }
 
+void shader_provider::initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength)
+{
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/initialize_split_particles.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInOutPosition),
+		avk::descriptor_binding(0, 2, aOutInverseMass),
+		avk::descriptor_binding(0, 3, aInOutRadius),
+		avk::descriptor_binding(1, 0, aInIndexListLength)
+	);
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(0, 1, aInOutPosition),
+		avk::descriptor_binding(0, 2, aOutInverseMass),
+		avk::descriptor_binding(0, 3, aInOutRadius),
+		avk::descriptor_binding(1, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::particle_transfer(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInOutRadius, const avk::buffer& aInOutInverseMass, const avk::buffer& aInOutVelocity, const avk::buffer& aInOutTransferSource, const avk::buffer& aInOutTransferTarget, const avk::buffer& aInOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutDeleteParticleList, const avk::buffer& aOutDeleteTransferList, const avk::buffer& aInTransferLength, const avk::buffer& aInOutDeleteParticleListLength, const avk::buffer& aInOutDeleteTransferListLength, float aDeltaTime)
 {
 	struct push_constants { float mDeltaTime; } pushConstants{ aDeltaTime };
@@ -948,9 +970,9 @@ void shader_provider::dispatch(uint32_t aX, uint32_t aY, uint32_t aZ, uint32_t a
 	sync_after_compute();
 }
 
-void shader_provider::prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aOffset, uint32_t aScalingFactor, uint32_t aLocalSizeX, uint32_t aLocalSizeY, uint32_t aLocalSizeZ)
+void shader_provider::prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aOffset, uint32_t aScalingFactor, uint32_t aMinThreadCount, uint32_t aLocalSizeX, uint32_t aLocalSizeY, uint32_t aLocalSizeZ)
 {
-	struct push_constants { uint32_t mOffset, mScalingFactor, mX, mY, mZ; } pushConstants{ aOffset, aScalingFactor, aLocalSizeX, aLocalSizeY, aLocalSizeZ };
+	struct push_constants { uint32_t mOffset, mScalingFactor, mX, mY, mZ, mMinThreadCount; } pushConstants{ aOffset, aScalingFactor, aLocalSizeX, aLocalSizeY, aLocalSizeZ, aMinThreadCount };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/dispatch_indirect.comp",
 		avk::descriptor_binding(0, 0, aXyz),

@@ -120,8 +120,7 @@ void main()
 	// in case of merge, add directly to the transfers list
 	// in case of split, add to outSplit; the particles in this list will later be duplicated and added to the transfers list
 
-//	bool split = bool(apbfSettings.mSplit) && (targetRadius * (pow(2, 1 / DIMENSIONS) * 0.99) <= radius);
-	bool split = false;
+	bool split = bool(apbfSettings.mSplit) && (targetRadius * (pow(2.0, 1.0 / DIMENSIONS) * 0.99) <= radius);
 	bool merge = bool(apbfSettings.mMerge) && nearestNeighborDist < radius && pow(radius, DIMENSIONS) + pow(nearestNeighborRadius, DIMENSIONS) <= pow(targetRadius, DIMENSIONS);
 	if (!merge && !split) return;
 

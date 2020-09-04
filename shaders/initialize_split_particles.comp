@@ -1,0 +1,28 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
+layout(set = 0, binding = 1) buffer InOutPosition  { ivec4  inOutPosition[]; };
+layout(set = 0, binding = 2) buffer OutInverseMass { float outInverseMass[]; };
+layout(set = 0, binding = 3) buffer InOutRadius    { float    inOutRadius[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+	uint idx = inIndexList[id];
+	
+	float radius        = inOutRadius[idx];
+//	inOutPosition[idx] += ivec4(radius * POS_RESOLUTION, 0, 0);
+	inOutRadius[idx]    = 0;
+	outInverseMass[idx] = 1 / 0;
+}

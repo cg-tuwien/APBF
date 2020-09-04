@@ -18,6 +18,7 @@ void pbd::update_transfers::apply()
 	auto& transferringList        = mFluid->get<fluid::id::transferring>();
 	auto& positionList            = particleList.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto& radiusList              = particleList.hidden_list().get<pbd::hidden_particles::id::radius>();
+	auto& inverseMassList         = particleList.hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
 	auto& transferSourceList      = mTransfers->hidden_list().get<hidden_transfers::id::source>();
 	auto& transferTargetList      = mTransfers->hidden_list().get<hidden_transfers::id::target>();
 	auto& transferTimeLeftList    = mTransfers->hidden_list().get<hidden_transfers::id::time_left>();
@@ -38,6 +39,7 @@ void pbd::update_transfers::apply()
 		timeLeftList.set_length(splitList.length());
 		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -SPLIT_DURATION, 0);
 		auto duplicates = splitList.duplicate_these();
+		shader_provider::initialize_split_particles(duplicates.index_buffer(), positionList.write().buffer(), inverseMassList.write().buffer(), radiusList.write().buffer(), duplicates.length());
 
 		transferSourceList += splitList;
 		transferTargetList += duplicates;

@@ -21,6 +21,7 @@ namespace pbd
 
 		static bool gpu_list_concatenation_1();
 		static bool gpu_list_concatenation_2();
+		static bool gpu_list_append_empty();
 		static bool gpu_list_apply_edit();
 		static bool indexed_list_write_increasing_sequence();
 		static bool indexed_list_apply_hidden_edit_1();
@@ -38,6 +39,8 @@ namespace pbd
 		static bool delete_these_1();
 		static bool delete_these_2();
 		static bool delete_these_3();
+		static bool duplicate_these();
+		static bool duplicate_these_empty();
 		static bool neighborhood_brute_force();
 		static bool neighborhood_green();
 /*		static bool sortByPositions();
@@ -53,7 +56,7 @@ namespace pbd
 	inline pbd::gpu_list<sizeof(T)> test::to_gpu_list(const std::vector<T>& aData)
 	{
 		auto result = pbd::gpu_list<sizeof(T)>();
-		result.set_length(aData.size());
+		result.request_length(1).set_length(aData.size());
 		algorithms::copy_bytes(aData.data(), result.write().buffer(), aData.size() * sizeof(T));
 		return result;
 	}

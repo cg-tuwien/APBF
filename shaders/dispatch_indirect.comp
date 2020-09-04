@@ -13,13 +13,14 @@ layout(push_constant) uniform PushConstants {
 	uint mLocalSizeX;
 	uint mLocalSizeY;
 	uint mLocalSizeZ;
+	uint mMinThreadCount;
 };
 // ----------------------------------------------------
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
-	outWorkgroupCount[0] = (inThreadCount[0 + mOffset] * mScalingFactor + mLocalSizeX - 1) / mLocalSizeX;
+	outWorkgroupCount[0] = max((inThreadCount[0 + mOffset] * mScalingFactor + mLocalSizeX - 1) / mLocalSizeX, mMinThreadCount);
 //	outWorkgroupCount[1] = (inThreadCount[1 + mOffset] * mScalingFactor + mLocalSizeY - 1) / mLocalSizeY;
 //	outWorkgroupCount[2] = (inThreadCount[2 + mOffset] * mScalingFactor + mLocalSizeZ - 1) / mLocalSizeZ;
 	outWorkgroupCount[1] = 1;

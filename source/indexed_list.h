@@ -185,6 +185,7 @@ template<class DataList>
 inline pbd::indexed_list<DataList> pbd::indexed_list<DataList>::increase_length(size_t aAddedLength)
 {
 	auto result = indexed_list().share_hidden_data_from(*this).request_length(mIndexList.requested_length());
+	if (aAddedLength == 0) return result;
 	mHiddenData->mData.write().set_length(shader_provider::write_increasing_sequence(result.write().index_buffer(), result.write().length(), mHiddenData->mData.write().length(), mHiddenData->mData.requested_length(), aAddedLength));
 	result.mSorted = true;
 	*this += result;

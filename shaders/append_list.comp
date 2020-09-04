@@ -23,8 +23,8 @@ void main()
 {
 	uint id = gl_GlobalInvocationID.x;
 
-	if (id >= appendingListLength * mStride) return;
 	if (id == 0) newTargetListLength = min(targetListLength + appendingListLength, targetList.length() / mStride);
+	if (id >= appendingListLength * mStride) return;
 
 	targetList[targetListLength * mStride + id] = appendingList[id];
 }

@@ -52,12 +52,12 @@ void main()
 	vec3  velocityT      = inOutVelocity[idxT].xyz;
 	float volS           = pow(radiusS, DIMENSIONS);
 	float volT           = pow(radiusT, DIMENSIONS);
-	float factorS        = merge ? min(1, mDeltaTime / ttl) : mDeltaTime * (volT - volS) / (2 * ttl * volS);
+	float factorS        = merge ? min(1, mDeltaTime / ttl) : mDeltaTime * (volS - volT) / (2 * ttl * volS);
 	float transfMass     = factorS / invMassS;
 	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
 
-	inOutInverseMass[idxS]    = invMassS / (1 - invMassS * transfMass);
-	inOutInverseMass[idxT]    = invMassT / (1 + invMassT * transfMass);
+	inOutInverseMass[idxS]    =                                    invMassS / (1 - invMassS * transfMass);
+	inOutInverseMass[idxT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
 //	inOutRadius[idxS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
 	inOutRadius[idxS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
 	inOutRadius[idxT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
@@ -69,11 +69,11 @@ void main()
 		if (merge) {
 			uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
 			outDeleteParticleList[dplIdx] = idxS;
-			inOutTransferrring[idS] = 0u;
-			inOutTransferrring[idT] = 0u;
 		} else {
 			uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
 			outDeleteTransferList[dtlIdx] = id;
 		}
+		inOutTransferrring[idS] = 0u;
+		inOutTransferrring[idT] = 0u;
 	}
 }

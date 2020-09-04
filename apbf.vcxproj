@@ -36,6 +36,7 @@
     <None Include="shaders\indexed_subtract.comp" />
     <None Include="shaders\infer_velocity.comp" />
     <None Include="shaders\initialize_box.comp" />
+    <None Include="shaders\initialize_split_particles.comp" />
     <None Include="shaders\instanced2.vert" />
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\kernel_width.comp" />

@@ -175,6 +175,9 @@
     <None Include="shaders\uint_to_float.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\initialize_split_particles.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

@@ -10,8 +10,8 @@ bool  pbd::settings::baseKernelWidthOnTargetRadius = false;
 bool  pbd::settings::updateTargetRadius            = true;
 bool  pbd::settings::updateBoundariness            = true;
 bool  pbd::settings::groundTruthBoundaryDistance   = true;
-float pbd::settings::boundarinessAdaptionSpeed     = 0.01f;
-float pbd::settings::kernelWidthAdaptionSpeed      = 0.01f;
+float pbd::settings::boundarinessAdaptionSpeed     = 1.0f;
+float pbd::settings::kernelWidthAdaptionSpeed      = 1.0f;
 int   pbd::settings::color                         = 0;
 int   pbd::settings::solverIterations              = 3;
 

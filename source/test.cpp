@@ -9,6 +9,7 @@ void pbd::test::test_all()
 	auto failCount = 0u;
 	if (!gpu_list_concatenation_1())               failCount++;
 	if (!gpu_list_concatenation_2())               failCount++;
+	if (!gpu_list_append_empty())                  failCount++;
 	if (!gpu_list_apply_edit())                    failCount++;
 	if (!indexed_list_write_increasing_sequence()) failCount++;
 	if (!indexed_list_apply_hidden_edit_1())       failCount++;
@@ -26,6 +27,8 @@ void pbd::test::test_all()
 	if (!delete_these_1())                         failCount++;
 	if (!delete_these_2())                         failCount++;
 	if (!delete_these_3())                         failCount++;
+	if (!duplicate_these())                        failCount++;
+	if (!duplicate_these_empty())                  failCount++;
 	if (!neighborhood_brute_force())               failCount++;
 	if (!neighborhood_green())                     failCount++;
 //	if (!sortByPositions())                        failCount++;
@@ -66,6 +69,21 @@ bool pbd::test::gpu_list_concatenation_2()
 	listAData.insert(listAData.end(), listCData.begin(), listCData.end());
 	shader_provider::end_recording();
 	return validate_list(listB.buffer(), listAData, "gpu_list concatenation 2");
+}
+
+bool pbd::test::gpu_list_append_empty()
+{
+	shader_provider::start_recording();
+	auto listAData = std::vector<uint32_t>({ 3u, 64u, 12683u, 4294967295u });
+	auto listBData = std::vector<uint32_t>();
+	auto listA = to_gpu_list(listAData).request_length(listAData.size() + 5);
+	auto listB = to_gpu_list(listBData).request_length(listAData.size() + 5);
+	listA += listB;
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), 4, "gpu_list append empty") && pass;
+	pass = validate_list(listA.buffer(), listAData, "gpu_list append empty content") && pass;
+	return pass;
 }
 
 bool pbd::test::gpu_list_apply_edit()
@@ -460,6 +478,53 @@ bool pbd::test::delete_these_3()
 	pass = validate_length(listA.hidden_list().length(), 8, "delete_these() 3 length Hidden List") && pass;
 	pass = validate_list(listA.hidden_list().buffer(), hiddenValues, "delete_these() 3") && pass;
 	pass = validate_list(listA.index_buffer(), hiddenValues, "delete_these() 3 indices") && pass;
+	return pass;
+}
+
+bool pbd::test::duplicate_these()
+{
+	shader_provider::start_recording();
+	auto hiddenValues   = std::vector<uint32_t>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+	auto expectedListA  = std::vector<uint32_t>({ 0, 1, 2 });
+	auto expectedListB  = std::vector<uint32_t>({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 });
+	auto expectedListC  = std::vector<uint32_t>({ 3, 4, 5, 6, 7, 8, 9 });
+	auto expectedHidden = std::vector<uint32_t>({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3 });
+	auto listA = indexed_list<gpu_list<4ui64>>(13).request_length(13);
+	listA.increase_length(3);
+	auto listB = listA;
+	auto listC = listB.increase_length(7);
+	algorithms::copy_bytes(hiddenValues.data(), listA.hidden_list().write().buffer(), hiddenValues.size() * 4);
+	listA.duplicate_these();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(),  3, "duplicate_these() length A") && pass;
+	pass = validate_length(listB.length(), 13, "duplicate_these() length B") && pass;
+	pass = validate_length(listC.length(),  7, "duplicate_these() length C") && pass;
+	pass = validate_length(listA.hidden_list().length(), 13, "duplicate_these() length Hidden List") && pass;
+	pass = validate_list(listA.index_buffer(), expectedListA, "duplicate_these() content List A") && pass;
+	pass = validate_list(listB.index_buffer(), expectedListB, "duplicate_these() content List B") && pass;
+	pass = validate_list(listC.index_buffer(), expectedListC, "duplicate_these() content List C") && pass;
+	pass = validate_list(listC.hidden_list().buffer(), expectedHidden, "duplicate_these() content Hidden List") && pass;
+	return pass;
+}
+
+bool pbd::test::duplicate_these_empty()
+{
+	shader_provider::start_recording();
+	auto hiddenValues   = std::vector<uint32_t>({ 10, 20, 30, 40, 50 });
+	auto expectedResult = std::vector<uint32_t>({ 0, 1, 2, 3, 4 });
+	auto listA = indexed_list<gpu_list<4ui64>>(10).request_length(10);
+	auto listB = listA;
+	listB.increase_length(5);
+	algorithms::copy_bytes(hiddenValues.data(), listA.hidden_list().write().buffer(), hiddenValues.size() * 4);
+	listA.write().duplicate_these();
+	shader_provider::end_recording();
+	auto pass = true;
+	pass = validate_length(listA.length(), 0, "duplicate_these() empty length A") && pass;
+	pass = validate_length(listB.length(), 5, "duplicate_these() empty length B") && pass;
+	pass = validate_length(listA.hidden_list().length(), 5, "duplicate_these() empty length Hidden List") && pass;
+	pass = validate_list(listB.index_buffer(), expectedResult, "duplicate_these() empty content List B") && pass;
+	pass = validate_list(listA.hidden_list().buffer(), hiddenValues, "duplicate_these() empty content Hidden List") && pass;
 	return pass;
 }
 
