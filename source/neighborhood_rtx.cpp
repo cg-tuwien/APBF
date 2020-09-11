@@ -6,11 +6,12 @@ pbd::neighborhood_rtx::neighborhood_rtx()
 	mBlas->build({ VkAabbPositionsKHR{ /* min: */ -1.f, -1.f, -1.f,  /* max: */ 1.f,  1.f,  1.f } });
 }
 
-pbd::neighborhood_rtx& pbd::neighborhood_rtx::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
+pbd::neighborhood_rtx& pbd::neighborhood_rtx::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors, gpu_list<8>* aNeighbors2)
 {
 	mParticles = aParticles;
 	mRange = aRange;
 	mNeighbors = aNeighbors;
+	mNeighbors2 = aNeighbors2;
 	if (!mTlas.has_value() || mMaxInstanceCount < mParticles->requested_length()) {
 		mMaxInstanceCount = mParticles->requested_length();
 		mTlas = gvk::context().create_top_level_acceleration_structure(mMaxInstanceCount, true);
@@ -28,11 +29,13 @@ void pbd::neighborhood_rtx::apply()
 {
 	auto& positionList     = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	auto  blasReference   = mBlas->device_address();
+	mNeighbors2->set_length(0);
 
 	reserve_geometry_instances_buffer(mParticles->requested_length());
 	shader_provider::generate_acceleration_structure_instances(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mGeometryInstances, mNeighbors->write().buffer(), mParticles->length(), blasReference, mRangeScale, mMaxInstanceCount);
 	build_acceleration_structure();
 	shader_provider::neighborhood_rtx(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mNeighbors->write().buffer(), mParticles->length(), mTlas, mRangeScale);
+	shader_provider::neighborhood_rtx_2(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mNeighbors2->write().buffer(), mParticles->length(), mNeighbors2->write().length(), mTlas, mRangeScale);
 }
 
 void pbd::neighborhood_rtx::reserve_geometry_instances_buffer(size_t aSize)

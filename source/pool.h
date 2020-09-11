@@ -30,6 +30,7 @@ private:
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
 	pbd::gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH> mNeighbors;
 	pbd::gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH> mNeighborsFluid;
+	pbd::gpu_list<sizeof(glm::uvec2)> mNeighborsFluid2;
 
 	pbd::velocity_handling mVelocityHandling;
 	pbd::box_collision mBoxCollision;

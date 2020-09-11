@@ -32,6 +32,9 @@
     <Filter Include="source\scenes">
       <UniqueIdentifier>{cd48ffe5-1275-46bd-99b5-ca9c603f420f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shader_includes">
+      <UniqueIdentifier>{1f74b116-ce97-4400-9f4b-d94659189245}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
@@ -178,6 +181,21 @@
     <None Include="shaders\initialize_split_particles.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\neighborhood_rtx_2.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\incompressibility_2.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\incompressibility_1.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\incompressibility_3.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\incompressibility_0.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -260,9 +278,6 @@
     <ClInclude Include="source\test.h">
       <Filter>source\pbd</Filter>
     </ClInclude>
-    <ClInclude Include="shaders\cpu_gpu_shared_config.h">
-      <Filter>shaders</Filter>
-    </ClInclude>
     <ClInclude Include="source\uninterleaved_list.h">
       <Filter>source\pbd\gpu_lists</Filter>
     </ClInclude>
@@ -313,6 +328,12 @@
     </ClInclude>
     <ClInclude Include="source\settings.h">
       <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\cpu_gpu_shared_config.h">
+      <Filter>shader_includes</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders\kernels.glsl">
+      <Filter>shader_includes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

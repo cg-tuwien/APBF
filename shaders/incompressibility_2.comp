@@ -1,0 +1,88 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+#define EPSILON 0.01
+#define SELF_GRAD_LENGTH_FACTOR 8.0
+#define UNDERPRESSURE_FACTOR 2.0
+
+struct incomp_data {
+	ivec3 mWeightedGradSum;
+	uint  mDensity;
+	uint  mSquaredGradSum;
+	uint  padding0;
+	uint  padding1;
+	uint  padding2;
+};
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
+layout(set = 0, binding = 1) buffer InRadius            { float            inRadius[]; };
+layout(set = 0, binding = 2) buffer InInverseMass       { float       inInverseMass[]; };
+layout(set = 0, binding = 3) buffer InIncompData        { incomp_data  inIncompData[]; };
+layout(set = 0, binding = 4) buffer OutBoundariness     { float     outBoundariness[]; };
+layout(set = 0, binding = 5) buffer OutLambda           { float           outLambda[]; };
+layout(set = 0, binding = 6) buffer InOutPosition       { ivec4       inOutPosition[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ apbf settings -------------------
+layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+// ----------------------------------------------------
+
+float move_towards(float oldValue, float newValue, float maxStep)
+{
+	float step = newValue - oldValue;
+	return oldValue + min(abs(step), maxStep) * sign(step);
+}
+
+void compute_boundariness(uint id, float selfGradLength, float underpressure)
+{
+	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
+	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
+	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed);
+	outBoundariness[id] = boundariness;
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint  idx             = inIndexList[id];
+	float radius          = inRadius[idx];
+	float invMass         = inInverseMass[idx];
+	float invRestDensity  = pow(2 * radius, DIMENSIONS) * invMass;
+	float density         = float(inIncompData[id].mDensity        ) / INCOMPRESSIBILITY_DATA_RESOLUTION;
+	vec3  weightedGradSum =  vec3(inIncompData[id].mWeightedGradSum) / INCOMPRESSIBILITY_DATA_RESOLUTION;
+	float squaredGradSum  = float(inIncompData[id].mSquaredGradSum ) / INCOMPRESSIBILITY_DATA_RESOLUTION;
+	float sqrtInvMass     = sqrt(invMass);
+
+	vec3 selfGrad = weightedGradSum * (-sqrtInvMass);
+	float selfGradLengthSquared = dot(selfGrad, selfGrad);
+	squaredGradSum += selfGradLengthSquared;
+
+	float underpressure = 1 - density * invRestDensity;
+	if (bool(apbfSettings.mUpdateBoundariness)) {
+		compute_boundariness(id, sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
+	}
+
+	float lambda = underpressure / (squaredGradSum + EPSILON);
+	outLambda[id] = lambda;
+
+
+
+	// shift the particle itself right here - the neighbors will be shifted in incompressibility_3.comp
+
+	// if the density is already lower than the rest density, do nothing
+	if (lambda >= 0) return;
+
+	// now we can shift the particle so that the density is decreased towards the rest density:
+	inOutPosition[id].xyz += ivec3(selfGrad * (lambda * sqrtInvMass * POS_RESOLUTION));
+}

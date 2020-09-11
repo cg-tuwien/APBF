@@ -13,6 +13,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 //	mTransfers.request_length(100); // not even necessary because index list never gets used
 	mNeighbors.request_length(100000);
 	mNeighborsFluid.request_length(100000);
+	mNeighborsFluid2.request_length(10000000);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
@@ -31,13 +32,13 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
 	mInterParticleCollision.set_data(&mParticles, &mNeighbors);
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
-	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
+	mIncompressibility.set_data(&mFluid, &mNeighborsFluid, &mNeighborsFluid2);
 	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 	mParticleTransfer.set_data(&mFluid, &mTransfers);
 	mNeighborhoodCollision.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighbors);
 	mNeighborhoodCollision.set_range_scale(2.0f);
 //	mNeighborhoodFluid.set_data(&mParticles, &mParticles.hidden_list().get<pbd::hidden_particles::id::radius>(), &mNeighborsFluid);
-	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
+	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid, &mNeighborsFluid2);
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 6u);
 #endif

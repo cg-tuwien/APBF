@@ -646,6 +646,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	{
 		// TODO let all templated classes use the same buffer cache
 		pbd::gpu_list<4>::cleanup();
+		pbd::gpu_list<8>::cleanup();
 		pbd::gpu_list<12>::cleanup();
 		pbd::gpu_list<16>::cleanup();
 		pbd::gpu_list<32>::cleanup();
