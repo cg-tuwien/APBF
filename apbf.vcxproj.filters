@@ -145,9 +145,6 @@
     <None Include="shaders\color.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\incompressibility.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
     <None Include="shaders\kernel_width.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>

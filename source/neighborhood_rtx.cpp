@@ -31,7 +31,7 @@ void pbd::neighborhood_rtx::apply()
 	mNeighbors->set_length(0);
 
 	reserve_geometry_instances_buffer(mParticles->requested_length());
-	shader_provider::generate_acceleration_structure_instances(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mGeometryInstances, mNeighbors->write().buffer(), mParticles->length(), blasReference, mRangeScale, mMaxInstanceCount);
+	shader_provider::generate_acceleration_structure_instances(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mGeometryInstances, mParticles->length(), blasReference, mRangeScale, mMaxInstanceCount);
 	build_acceleration_structure();
 	shader_provider::neighborhood_rtx_2(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mTlas, mRangeScale);
 }

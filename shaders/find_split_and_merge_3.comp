@@ -78,7 +78,6 @@ void main()
 	float targetRadius;
 	if (bool(apbfSettings.mUpdateTargetRadius)) {
 		targetRadius = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
-//		targetRadius = min(targetRadius, radius * 4); // also to prevent targetRadius from ever becoming infinity (neighbor list could be empty if the first NEIGHBOR_LIST_MAX_LENGTH - 1 all get removed in kernel_width.comp)
 		outTargetRadius[id] = targetRadius;
 	} else {
 		targetRadius = outTargetRadius[id]; // TODO inOut

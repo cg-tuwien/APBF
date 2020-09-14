@@ -12,17 +12,11 @@ struct asi
     uint64_t mAccelerationStructureReference;
 };
 
-struct neighbors
-{
-	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
-};
-
 // ---------------------- lists -----------------------
 layout(set = 0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
 layout(set = 0, binding = 1) buffer InPosition   { ivec4       inPosition[]; };
 layout(set = 0, binding = 2) buffer InRange      { float          inRange[]; };
 layout(set = 0, binding = 3) buffer OutInstances { asi       outInstances[]; };
-layout(set = 0, binding = 4) buffer OutNeighbors { neighbors outNeighbors[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -52,7 +46,6 @@ void main()
 		pos      = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
 		range    = inRange[id] * mRangeScale;
 		mask     = 255u;
-		outNeighbors[id].mNeighbor[0] = 0u;
 	} else {
 		pos      = vec3(0, 0, 0);
 		range    = 0;
