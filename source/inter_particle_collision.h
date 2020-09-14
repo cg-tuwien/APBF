@@ -13,6 +13,6 @@ namespace pbd
 
 	private:
 		particles* mParticles;
-		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors;
+		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors; // TODO switch to list of neighborhood pairs
 	};
 }

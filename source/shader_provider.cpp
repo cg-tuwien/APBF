@@ -290,7 +290,6 @@ void shader_provider::uint_to_float(const avk::buffer& aInUintBuffer, const avk:
 		avk::descriptor_binding(0, 0, aInUintBuffer),
 		avk::descriptor_binding(0, 1, aOutFloatBuffer),
 		avk::descriptor_binding(1, 0, aInUintBufferLength),
-		avk::descriptor_binding(2, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
 	prepare_dispatch_indirect(aInUintBufferLength);
@@ -298,9 +297,29 @@ void shader_provider::uint_to_float(const avk::buffer& aInUintBuffer, const avk:
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInUintBuffer),
 		avk::descriptor_binding(0, 1, aOutFloatBuffer),
-		avk::descriptor_binding(1, 0, aInUintBufferLength),
-		avk::descriptor_binding(2, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(1, 0, aInUintBufferLength)
 	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::uint_to_float_but_gradual(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor, float aMaxAdationStep)
+{
+	struct push_constants { float mFactor, mMaxAdationStep; } pushConstants{ aFactor, aMaxAdationStep };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/uint_to_float_but_gradual.comp",
+		avk::descriptor_binding(0, 0, aInUintBuffer),
+		avk::descriptor_binding(0, 1, aOutFloatBuffer),
+		avk::descriptor_binding(1, 0, aInUintBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInUintBufferLength);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInUintBuffer),
+		avk::descriptor_binding(0, 1, aOutFloatBuffer),
+		avk::descriptor_binding(1, 0, aInUintBufferLength)
+		}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }

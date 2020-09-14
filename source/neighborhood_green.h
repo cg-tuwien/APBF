@@ -17,7 +17,7 @@ namespace pbd
 		float mRangeScale;
 		particles* mParticles;
 		const gpu_list<sizeof(float)>* mRange;
-		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors;
+		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors; // TODO switch to list of neighborhood pairs
 		glm::vec3 mMinPos, mMaxPos;
 		uint32_t mResolutionLog2;
 	};
