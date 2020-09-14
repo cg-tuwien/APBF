@@ -1,0 +1,35 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// ---------------------- lists -----------------------
+layout(set = 0, binding = 0) buffer InNeighbors            { uvec2            inNeighbors[]; };
+layout(set = 0, binding = 1) buffer InIndexList            { uint             inIndexList[]; };
+layout(set = 0, binding = 2) buffer InPosition             { ivec4             inPosition[]; };
+layout(set = 0, binding = 3) buffer InOldBoundaryDist      { uint       inOldBoundaryDist[]; };
+layout(set = 0, binding = 4) buffer InOutBoundaryDist      { uint       inOutBoundaryDist[]; };
+layout(set = 0, binding = 5) buffer InOutMinNeighborSqDist { uint  inOutMinNeighborSqDist[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set = 1, binding = 0) buffer InNeighborsLength   { uint inNeighborsLength; };
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inNeighborsLength) return;
+
+	uvec2 n = inNeighbors[id];
+
+	uint  idx              = inIndexList[n[0]];
+	uint  idxN             = inIndexList[n[1]];
+	ivec3 pos              = inPosition[idx ].xyz;
+	ivec3 posN             = inPosition[idxN].xyz;
+	uint  boundaryDistN    = inOldBoundaryDist[n[1]];
+	ivec3 diff             = posN - pos;
+	uint  dist             = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;   // dot(diff, diff);
+	
+	atomicMin(inOutBoundaryDist[n[0]], boundaryDistN + dist);
+	atomicMin(inOutMinNeighborSqDist[n[0]], dist);
+}

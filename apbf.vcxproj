@@ -27,7 +27,9 @@
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
-    <None Include="shaders\find_split_and_merge.comp" />
+    <None Include="shaders\find_split_and_merge_1.comp" />
+    <None Include="shaders\find_split_and_merge_2.comp" />
+    <None Include="shaders\find_split_and_merge_3.comp" />
     <None Include="shaders\find_value_changes.comp" />
     <None Include="shaders\find_value_ranges.comp" />
     <None Include="shaders\generate_acceleration_structure_instances.comp" />

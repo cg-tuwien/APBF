@@ -474,10 +474,14 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto color2 = glm::vec3(1, 0.2, 0);
 		auto color1Float = 0.0f;
 		auto color2Float = 1.0f;
+		auto isUint = false;
 		switch (pbd::settings::color) {
-			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();                                    break;
-			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();                  color2Float = 20; break;
-			case 2: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >(); color1Float = 1; color2Float =  2; break;
+			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();                                                   break;
+			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();                  color2Float = 20; isUint = true; break;
+			case 2: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >(); color1Float = 1; color2Float =  2;                break;
+		}
+		if (isUint) {
+			shader_provider::uint_to_float(floatForColor.write().buffer(), floatForColor.write().buffer(), floatForColor.write().length(), 1.0 / POS_RESOLUTION);
 		}
 		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
 

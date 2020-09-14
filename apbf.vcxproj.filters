@@ -172,9 +172,6 @@
     <None Include="shaders\write_increasing_sequence_from_to.comp">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\find_split_and_merge.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
     <None Include="shaders\uint_to_float.comp">
       <Filter>shaders</Filter>
     </None>
@@ -194,6 +191,15 @@
       <Filter>shaders\particle manipulation</Filter>
     </None>
     <None Include="shaders\incompressibility_0.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\find_split_and_merge_1.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\find_split_and_merge_2.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\find_split_and_merge_3.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
   </ItemGroup>

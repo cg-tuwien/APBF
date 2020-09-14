@@ -36,6 +36,6 @@ void main()
 	if (id >= inBufferLength) return;
 
 	float value = float(inBuffer[id]) * mFactor;
-	value = move_towards(outBuffer[id], value, apbfSettings.mKernelWidthAdaptionSpeed);
+//	value = move_towards(outBuffer[id], value, apbfSettings.mKernelWidthAdaptionSpeed);
 	outBuffer[id] = value;
 }

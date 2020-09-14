@@ -8,11 +8,11 @@ namespace pbd
 	class spread_kernel_width
 	{
 	public:
-		spread_kernel_width& set_data(fluid* aFluid, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors);
+		spread_kernel_width& set_data(fluid* aFluid, gpu_list<8>* aNeighbors);
 		void apply();
 
 	private:
 		fluid* mFluid;
-		gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* mNeighbors;
+		gpu_list<8>* mNeighbors;
 	};
 }
