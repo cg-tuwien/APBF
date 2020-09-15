@@ -6,7 +6,7 @@ pbd::neighborhood_rtx::neighborhood_rtx()
 	mBlas->build({ VkAabbPositionsKHR{ /* min: */ -1.f, -1.f, -1.f,  /* max: */ 1.f,  1.f,  1.f } });
 }
 
-pbd::neighborhood_rtx& pbd::neighborhood_rtx::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<8>* aNeighbors)
+pbd::neighborhood_rtx& pbd::neighborhood_rtx::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, neighbors* aNeighbors)
 {
 	mParticles = aParticles;
 	mRange = aRange;

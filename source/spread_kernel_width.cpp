@@ -1,7 +1,7 @@
 #include "spread_kernel_width.h"
 #include "settings.h"
 
-pbd::spread_kernel_width& pbd::spread_kernel_width::set_data(fluid* aFluid, gpu_list<8>* aNeighbors)
+pbd::spread_kernel_width& pbd::spread_kernel_width::set_data(fluid* aFluid, neighbors* aNeighbors)
 {
 	mFluid = aFluid;
 	mNeighbors = aNeighbors;

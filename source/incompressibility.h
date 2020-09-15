@@ -9,11 +9,11 @@ namespace pbd
 	{
 	public:
 		//will only write transfers into hidden list, the index list of aTransfers remains untouched
-		incompressibility& set_data(fluid* aFluid, gpu_list<8>* aNeighbors);
+		incompressibility& set_data(fluid* aFluid, neighbors* aNeighbors);
 		void apply();
 
 	private:
 		fluid* mFluid;
-		gpu_list<8>* mNeighbors;
+		neighbors* mNeighbors;
 	};
 }

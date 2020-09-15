@@ -1,7 +1,7 @@
 #include "update_transfers.h"
 #include "settings.h"
 
-pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, gpu_list<8>* aNeighbors, transfers* aTransfers)
+pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, neighbors* aNeighbors, transfers* aTransfers)
 {
 	mFluid = aFluid;
 	mNeighbors = aNeighbors;
@@ -29,7 +29,6 @@ void pbd::update_transfers::apply()
 	auto  nearestNeighborList     = gpu_list<4>().request_length(mFluid->requested_length());
 
 	shader_provider::write_sequence(minNeighborSqDistList.write().buffer(), mNeighbors->length(), std::numeric_limits<uint32_t>::max(), 0u);
-//	shader_provider::find_split_and_merge(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), mNeighbors->buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), mTransfers->hidden_list().requested_length(), splitList.requested_length());
 	shader_provider::find_split_and_merge_1(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), minNeighborSqDistList.write().buffer(), mNeighbors->length());
 	shader_provider::find_split_and_merge_2(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), minNeighborSqDistList.buffer(), nearestNeighborList.write().buffer(), mNeighbors->length());
 	shader_provider::find_split_and_merge_3(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), nearestNeighborList.buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), mTransfers->hidden_list().requested_length(), splitList.requested_length());

@@ -1,6 +1,6 @@
 #include "incompressibility.h"
 
-pbd::incompressibility& pbd::incompressibility::set_data(fluid* aFluid, gpu_list<8>* aNeighbors)
+pbd::incompressibility& pbd::incompressibility::set_data(fluid* aFluid, neighbors* aNeighbors)
 {
 	mFluid = aFluid;
 	mNeighbors = aNeighbors;

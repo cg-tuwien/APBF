@@ -56,7 +56,7 @@ void pool::update(float aDeltaTime)
 		mIncompressibility.apply();
 	}
 
-	if (pbd::settings::merge || pbd::settings::split || pbd::settings::baseKernelWidthOnTargetRadius) {
+	if (pbd::settings::merge || pbd::settings::split || pbd::settings::baseKernelWidthOnTargetRadius|| pbd::settings::color == 1 || pbd::settings::color == 2) {
 		mUpdateTransfers.apply();
 	}
 }
@@ -69,4 +69,9 @@ pbd::particles& pool::particles()
 pbd::fluid& pool::fluid()
 {
 	return mFluid;
+}
+
+pbd::neighbors& pool::neighbors()
+{
+	return mNeighborsFluid;
 }

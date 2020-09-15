@@ -16,4 +16,6 @@ namespace pbd
 	enum class hidden_transfers_enum { source, target, time_left };
 	using hidden_transfers = uninterleaved_list<hidden_transfers_enum, particles, particles, gpu_list<4>>;
 	using transfers = indexed_list<hidden_transfers>;
+
+	using neighbors = gpu_list<8>;
 }

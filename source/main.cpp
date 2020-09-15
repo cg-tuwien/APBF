@@ -361,20 +361,25 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				}
 				ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
 				ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
+				ImGui::Text("%d Neighbor Pairs", mPool->neighbors().empty() ? 0 : measurements::async_read_uint("neighbor count", mPool->neighbors().length()));
 
 				ImGui::Separator();
 
 				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 				static const char* const sRenderingMethods[] = {"Instanced Spheres", "Points", "Ray Tracing", "Fluid"};
 				ImGui::Combo("Rendering Method", &mRenderingMethod, sRenderingMethods, IM_ARRAYSIZE(sRenderingMethods));
 				static const char* const sNeighborRenderOptions[] = {"All", "Only Neighbors", "All But Neighbors"};
 				ImGui::Combo("Particles to Render", &mRenderNeighbors, sNeighborRenderOptions, IM_ARRAYSIZE(sNeighborRenderOptions));
 				ImGui::DragInt("Neighborhood-Origin Particle-ID", &mNeighborhoodOriginParticleId, 1, 0, static_cast<int>(mNumParticles));
+#endif
 				ImGui::Checkbox("Freeze Particle Animation", &mFreezeParticleAnimation);
+#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 				ImGui::Checkbox("Reset Particle Positions", &mResetParticlePositions);
 				ImGui::Checkbox("Set Uniform Particle Radius", &mSetUniformParticleRadius);
 				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
+#endif
 				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Target Radius" };
 				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 

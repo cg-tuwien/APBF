@@ -20,6 +20,7 @@ public:
 	void update(float aDeltaTime);
 	pbd::particles& particles();
 	pbd::fluid& fluid();
+	pbd::neighbors& neighbors();
 
 private:
 	pbd::particles mParticles;
@@ -28,7 +29,7 @@ private:
 	// mNeighborsFluid is a list of index pairs; the current gpu_list framework doesn't support
 	// automatic index updates for this structure, so don't even bother linking it to mParticles.
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
-	pbd::gpu_list<sizeof(glm::uvec2)> mNeighborsFluid;
+	pbd::neighbors mNeighborsFluid;
 
 	pbd::velocity_handling mVelocityHandling;
 	pbd::box_collision mBoxCollision;
