@@ -92,6 +92,7 @@ template<size_t Stride>
 inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(size_t aLength)
 {
 	if (mRequestedLength < aLength) mRequestedLength = aLength;
+	if (aLength == 0 && mData.use_count() > 2) mData = nullptr;
 
 	auto l = static_cast<uint32_t>(aLength);
 	algorithms::copy_bytes(&l, write().length(), 4);
