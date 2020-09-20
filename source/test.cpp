@@ -2,6 +2,7 @@
 #include "algorithms.h"
 #include "neighborhood_brute_force.h"
 #include "neighborhood_green.h"
+#include "time_machine.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
 void pbd::test::test_all()
@@ -31,6 +32,7 @@ void pbd::test::test_all()
 	if (!duplicate_these_empty())                  failCount++;
 	if (!neighborhood_brute_force())               failCount++;
 	if (!neighborhood_green())                     failCount++;
+	if (!time_machine())                           failCount++;
 //	if (!sortByPositions())                        failCount++;
 //	if (!merge())                                  failCount++;
 //	if (!mergeGenerator())                         failCount++;
@@ -575,6 +577,44 @@ bool pbd::test::neighborhood_green()
 	pass = validate_list(neighbors.buffer(), expectedNeighbors3, "neighborhood_green", 2 * NEIGHBOR_LIST_MAX_LENGTH) && pass;
 	pass = validate_list(particles.hidden_list().get<hidden_particles::id::position>().buffer(), positionsData, "neighborhood_green") && pass;
 	pass = validate_length(particles.hidden_list().get<hidden_particles::id::position>().length(), positionsData.size(), "neighborhood_green length") && pass;
+	return pass;
+}
+
+bool pbd::test::time_machine()
+{
+	shader_provider::start_recording();
+	float f = 0.0f;
+	int i = 0;
+	auto listData = std::vector({ 0u, 1u, 2u });
+	auto list = to_gpu_list(listData);
+	auto timeMachine = pbd::time_machine(f, i, list);
+	timeMachine.set_max_keyframes(2u);
+	timeMachine.set_keyframe_interval(3u);
+	timeMachine.save_state();
+
+	auto pass = true;
+	for (auto id = 1u; id < 4; id++) {
+		pass = !timeMachine.step_forward() && pass;
+		shader_provider::write_sequence(list.write().buffer(), list.write().length(), id, 1u);
+		i = id;
+		f = id * 1.1f;
+		timeMachine.save_state();
+	}
+	timeMachine.jump_back();
+	pass = i == 0 && pass;
+	pass = !timeMachine.step_forward() && pass;
+	timeMachine.save_state();
+	pass = i == 1 && pass;
+	pass = !timeMachine.step_forward() && pass;
+	timeMachine.save_state();
+	pass = i == 2 && pass;
+	pass = timeMachine.step_forward() && pass;
+	timeMachine.save_state();
+	pass = i == 3 && pass;
+	pass = !timeMachine.step_forward() && pass;
+	timeMachine.save_state();
+	pass = i == 3 && pass;
+	shader_provider::end_recording();
 	return pass;
 }
 

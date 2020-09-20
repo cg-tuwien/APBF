@@ -43,6 +43,7 @@ namespace pbd
 		static bool duplicate_these_empty();
 		static bool neighborhood_brute_force();
 		static bool neighborhood_green();
+		static bool time_machine();
 /*		static bool sortByPositions();
 		static bool merge();
 		static bool mergeGenerator();

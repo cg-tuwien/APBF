@@ -341,5 +341,8 @@
     <ClInclude Include="shaders\kernels.glsl">
       <Filter>shader_includes</Filter>
     </ClInclude>
+    <ClInclude Include="source\time_machine.h">
+      <Filter>source\pbd</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

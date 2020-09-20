@@ -418,6 +418,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		if (input().key_pressed(key_code::enter)) {
 			mPerformSingleSimulationStep = true;
 		}
+
+		if (input().key_pressed(key_code::backspace)) {
+			mPool->time_machine().jump_back();
+		}
 		
 		// On Esc pressed,
 		if (input().key_pressed(key_code::escape)) {

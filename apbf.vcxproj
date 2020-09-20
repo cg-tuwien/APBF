@@ -115,6 +115,7 @@
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\settings.h" />
     <ClInclude Include="source\spread_kernel_width.h" />
+    <ClInclude Include="source\time_machine.h" />
     <ClInclude Include="source\update_transfers.h" />
     <ClInclude Include="source\velocity_handling.h" />
     <ClInclude Include="source\gpu_list.h" />
