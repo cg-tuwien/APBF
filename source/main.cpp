@@ -422,6 +422,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		if (input().key_pressed(key_code::backspace)) {
 			mPool->time_machine().jump_back();
 		}
+
+		if (input().key_pressed(key_code::t)) {
+			mPool->time_machine().toggle_enabled();
+		}
 		
 		// On Esc pressed,
 		if (input().key_pressed(key_code::escape)) {

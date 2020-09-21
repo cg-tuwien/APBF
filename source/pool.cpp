@@ -38,9 +38,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 6u);
 #endif
 	mNeighborhoodFluid.set_range_scale(1.5f);
-	mTimeMachine.set_max_keyframes(8);
-	mTimeMachine.set_keyframe_interval(120);
-	mTimeMachine.save_state();
+	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 }
 

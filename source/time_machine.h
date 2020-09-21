@@ -8,20 +8,24 @@ namespace pbd {
 	class time_machine {
 	public:
 		// if we are in the past, load data from next step; if we stepped onto an existing keyframe, also load gpu data and return true
-		auto step_forward() { auto past = in_past(); ++mCurrentStep; mPresentStep += past ? 0u : 1u; return past && on_keyframe(); }
+		auto step_forward() { if (!mEnabled) return false; auto past = in_past(); ++mCurrentStep; mPresentStep += past ? 0u : 1u; return past && on_keyframe(); }
 		// if we are in the present, save the current state
 		void save_state() {}
 		// attempt to jump back into the past by one keyframe
 		auto jump_back() { if (on_keyframe() && mCurrentStep + mKeyframeInterval * (mMaxKeyframes - 1u) <= mPresentStep || mCurrentStep == 0u) return false; mCurrentStep = (mCurrentStep - 1u) / mKeyframeInterval * mKeyframeInterval; return true; }
 
 		auto max_keyframes() { return mMaxKeyframes; }
-		void set_max_keyframes(uint32_t aMaxKeyframes) { mMaxKeyframes = aMaxKeyframes; }
+		auto& set_max_keyframes(uint32_t aMaxKeyframes) { mMaxKeyframes = aMaxKeyframes; return *this; }
 		auto keyframe_interval() { return mKeyframeInterval; }
-		void set_keyframe_interval(uint32_t aKeyframeInterval) { mKeyframeInterval = aKeyframeInterval; }
+		auto& set_keyframe_interval(uint32_t aKeyframeInterval) { mKeyframeInterval = aKeyframeInterval; return *this; }
 		auto on_keyframe() { return mCurrentStep % mKeyframeInterval == 0u; }
 		auto history_index() { return std::min(mCurrentStep, mCurrentStep - oldest_history_keyframe_step()); }
 		auto sparse_history_index() { return history_index() / mKeyframeInterval; }
 		auto in_past() { return mCurrentStep != mPresentStep; }
+		auto& enable() { mEnabled = true; return *this; }
+		auto& disable() { mEnabled = false; mCurrentStep = 0u; mPresentStep = 0u; return *this; }
+		auto& toggle_enabled() { mEnabled = !mEnabled; mCurrentStep = 0u; mPresentStep = 0u; return *this; }
+		auto enabled() { return mEnabled; }
 		auto keyframe_step_for(uint32_t aStep) { return aStep / mKeyframeInterval * mKeyframeInterval; }
 		// wrong result if no full history yet - let the min() in history_index handle this case!
 		auto oldest_history_keyframe_step() { return keyframe_step_for(mPresentStep) - (mMaxKeyframes - 1u) * mKeyframeInterval; }
@@ -31,6 +35,7 @@ namespace pbd {
 		uint32_t mKeyframeInterval = 120u;
 		uint32_t mCurrentStep = 0u;
 		uint32_t mPresentStep = 0u;
+		bool mEnabled = false;
 	};
 
 
@@ -47,13 +52,17 @@ namespace pbd {
 		auto jump_back();
 
 		auto max_keyframes() { return mRest.max_keyframes(); }
-		void set_max_keyframes(uint32_t aMaxKeyframes) { mRest.set_max_keyframes(aMaxKeyframes); }
+		auto& set_max_keyframes(uint32_t aMaxKeyframes) { mRest.set_max_keyframes(aMaxKeyframes); return *this; }
 		auto keyframe_interval() { return mRest.keyframe_interval(); }
-		void set_keyframe_interval(uint32_t aKeyframeInterval) { mRest.set_keyframe_interval(aKeyframeInterval); mDataHistory.clear(); }
+		auto& set_keyframe_interval(uint32_t aKeyframeInterval) { mRest.set_keyframe_interval(aKeyframeInterval); mDataHistory.clear(); return *this; }
 		auto on_keyframe() { return mRest.on_keyframe(); }
 		auto history_index() { return mRest.history_index(); }
 		auto sparse_history_index() { return mRest.sparse_history_index(); }
 		auto in_past() { return mRest.in_past(); }
+		auto& enable() { if (!mRest.enabled()) mDataHistory.push_back(mDataPointer); mRest.enable(); return *this; }
+		auto& disable() { mDataHistory.clear(); mRest.disable(); return *this; }
+		auto& toggle_enabled() { enabled() ? disable() : enable(); return *this; }
+		auto enabled() { return mRest.enabled(); }
 
 	private:
 		void load_state();
@@ -76,6 +85,7 @@ namespace pbd {
 	template<class FirstData, class... Data>
 	inline auto pbd::time_machine<FirstData, Data...>::step_forward()
 	{
+		if (!enabled()) return false;
 		auto past = mRest.in_past();
 		auto result = mRest.step_forward();
 		if (past && (!mSparse || result)) {
@@ -92,6 +102,7 @@ namespace pbd {
 	template<class FirstData, class... Data>
 	inline void pbd::time_machine<FirstData, Data...>::save_state()
 	{
+		if (!enabled()) return;
 		auto index = mSparse ? mRest.sparse_history_index() : mRest.history_index();
 		if (mDataHistory.size() <= index) {
 			mDataHistory.push_back(mDataPointer);
