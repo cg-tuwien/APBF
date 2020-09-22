@@ -1,5 +1,6 @@
 #include "spread_kernel_width.h"
 #include "settings.h"
+#include "../shaders/cpu_gpu_shared_config.h"
 
 pbd::spread_kernel_width& pbd::spread_kernel_width::set_data(fluid* aFluid, neighbors* aNeighbors)
 {

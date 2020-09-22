@@ -21,8 +21,9 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), 0, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
 	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::transferring>().write().buffer(), mFluid.length(), 0, 0);
-	mVelocityHandling.add_particles(mParticles, glm::vec3(0, -10, 0)); // TODO: let mVelocityHandling and mBoxCollision only store pointers to mParticles? Especially now with time_machine.
-	mBoxCollision.add_particles(mParticles);
+	mVelocityHandling.set_data(&mParticles);
+	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
+	mBoxCollision.set_data(&mParticles);
 	mBoxCollision.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
 	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
 	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));

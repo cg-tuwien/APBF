@@ -7,11 +7,13 @@ namespace pbd
 	class velocity_handling
 	{
 	public:
-		velocity_handling& add_particles(const particles& aParticles, const glm::vec3& aAcceleration = glm::vec3(0));
+		velocity_handling& set_data(particles* aParticles);
+		velocity_handling& set_acceleration(const glm::vec3& aAcceleration = glm::vec3(0));
 		void apply(float aDeltaTime);
 
 	private:
-		std::list<std::pair<particles, glm::vec3>> mParticles;
+		particles* mParticles;
+		glm::vec3 mAcceleration;
 		float mLastDeltaTime = 1.0f;
 	};
 }

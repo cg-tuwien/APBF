@@ -1,5 +1,6 @@
 #include "update_transfers.h"
 #include "settings.h"
+#include "../shaders/cpu_gpu_shared_config.h"
 
 pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, neighbors* aNeighbors, transfers* aTransfers)
 {

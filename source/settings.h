@@ -1,6 +1,5 @@
 #pragma once
 #include <gvk.hpp>
-#include "../shaders/cpu_gpu_shared_config.h"
 
 namespace pbd
 {

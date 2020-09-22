@@ -1,7 +1,6 @@
 #pragma once
 
 #include "list_definitions.h"
-#include "../shaders/cpu_gpu_shared_config.h"
 
 namespace pbd
 {

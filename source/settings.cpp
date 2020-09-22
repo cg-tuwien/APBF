@@ -1,5 +1,6 @@
 #include "settings.h"
 #include <imgui.h>
+#include "../shaders/cpu_gpu_shared_config.h"
 
 int   pbd::settings::heightKernelId                = 1;
 int   pbd::settings::gradientKernelId              = 1;

@@ -1,13 +1,8 @@
 #include "box_collision.h"
 
-pbd::box_collision::box_collision()
+pbd::box_collision& pbd::box_collision::set_data(particles* aParticles)
 {
-	mParticles.request_length(10000);
-}
-
-pbd::box_collision& pbd::box_collision::add_particles(const particles& aParticles)
-{
-	mParticles += aParticles;
+	mParticles = aParticles;
 	return *this;
 }
 
@@ -27,10 +22,10 @@ void pbd::box_collision::delete_boxes(boxes& aBox)
 
 void pbd::box_collision::apply()
 {
-	if (mParticles.empty()) return;
+	if (mParticles->empty()) return;
 
-	auto& positionList = mParticles.hidden_list().get<pbd::hidden_particles::id::position>();
-	auto& radiusList   = mParticles.hidden_list().get<pbd::hidden_particles::id::radius>();
+	auto& positionList = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
+	auto& radiusList   = mParticles->hidden_list().get<pbd::hidden_particles::id::radius>();
 
-	shader_provider::box_collision(mParticles.index_buffer(), positionList.write().buffer(), radiusList.buffer(), mBoxes.hidden_list().buffer(), mParticles.length(), mBoxes.length());
+	shader_provider::box_collision(mParticles->index_buffer(), positionList.write().buffer(), radiusList.buffer(), mBoxes.hidden_list().buffer(), mParticles->length(), mBoxes.length());
 }
