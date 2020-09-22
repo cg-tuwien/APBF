@@ -6,7 +6,7 @@
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
 	mTransfers(100),
-	mTimeMachine(mParticles, mParticles.hidden_list(), mFluid, mTransfers.hidden_list(), mDeltaTime)
+	mTimeMachine(mParticles, mParticles.hidden_list(), mFluid.get<pbd::fluid::id::particle>(), mFluid.get<pbd::fluid::id::boundariness>(), mFluid.get<pbd::fluid::id::boundary_distance>(), mFluid.get<pbd::fluid::id::kernel_width>(), mFluid.get<pbd::fluid::id::target_radius>(), mFluid.get<pbd::fluid::id::transferring>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::time_left>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>(), mDeltaTime)
 {
 	shader_provider::start_recording();
 	mParticles.request_length(100000);
