@@ -588,9 +588,7 @@ bool pbd::test::time_machine()
 	auto listData = std::vector({ 0u, 1u, 2u });
 	auto list = to_gpu_list(listData);
 	auto timeMachine = pbd::time_machine(f, i, list);
-	timeMachine.set_max_keyframes(2u);
-	timeMachine.set_keyframe_interval(3u);
-	timeMachine.save_state();
+	timeMachine.set_max_keyframes(2u).set_keyframe_interval(3u).enable();
 
 	auto pass = true;
 	for (auto id = 1u; id < 4; id++) {

@@ -54,22 +54,39 @@ namespace pbd {
 		auto max_keyframes() { return mRest.max_keyframes(); }
 		auto& set_max_keyframes(uint32_t aMaxKeyframes) { mRest.set_max_keyframes(aMaxKeyframes); return *this; }
 		auto keyframe_interval() { return mRest.keyframe_interval(); }
-		auto& set_keyframe_interval(uint32_t aKeyframeInterval) { mRest.set_keyframe_interval(aKeyframeInterval); mDataHistory.clear(); return *this; }
+		auto& set_keyframe_interval(uint32_t aKeyframeInterval) { mRest.set_keyframe_interval(aKeyframeInterval); mData.mDataHistory.clear(); return *this; }
 		auto on_keyframe() { return mRest.on_keyframe(); }
 		auto history_index() { return mRest.history_index(); }
 		auto sparse_history_index() { return mRest.sparse_history_index(); }
 		auto in_past() { return mRest.in_past(); }
-		auto& enable() { if (!mRest.enabled()) mDataHistory.push_back(mDataPointer); mRest.enable(); return *this; }
-		auto& disable() { mDataHistory.clear(); mRest.disable(); return *this; }
+		auto& enable() { if (!mRest.enabled()) mData.mDataHistory.push_back(mData.mDataPointer); mRest.enable(); return *this; }
+		auto& disable() { mData.mDataHistory.clear(); mRest.disable(); return *this; }
 		auto& toggle_enabled() { enabled() ? disable() : enable(); return *this; }
 		auto enabled() { return mRest.enabled(); }
 
 	private:
 		void load_state();
 
+		template<class T>
+		class pointer_and_history
+		{
+		public:
+			pointer_and_history(T& aData): mDataPointer(aData) {}
+			T& mDataPointer;
+			std::deque<T> mDataHistory;
+		};
+
+		template<class T>
+		class pointer_and_history<pbd::indexed_list<T>>
+		{
+		public:
+			pointer_and_history(pbd::indexed_list<T>& aData) : mDataPointer(aData.mIndexList) {}
+			pbd::gpu_list<4>& mDataPointer;
+			std::deque<pbd::gpu_list<4>> mDataHistory;
+		};
+
 		bool mSparse;
-		FirstData& mDataPointer;
-		std::deque<FirstData> mDataHistory;
+		pointer_and_history<FirstData> mData;
 		time_machine<Data...> mRest;
 	};
 
@@ -77,7 +94,7 @@ namespace pbd {
 
 	template<class FirstData, class... Data>
 	inline pbd::time_machine<FirstData, Data...>::time_machine(FirstData& aFirstData, Data&... aData) :
-		mDataPointer(aFirstData),
+		mData(aFirstData),
 		mRest(aData...),
 		mSparse(is_gpu_list<FirstData>::value)
 	{}
@@ -93,8 +110,8 @@ namespace pbd {
 		}
 		else if (!past && mRest.on_keyframe()) {
 			auto newHistoryLength = (mRest.max_keyframes() - 1u) * (mSparse ? 1u : mRest.keyframe_interval());
-			auto popCount = newHistoryLength > mDataHistory.size() ? 0u : (mDataHistory.size() - newHistoryLength);
-			for (auto i = popCount; i > 0u; i--) mDataHistory.pop_front();
+			auto popCount = newHistoryLength > mData.mDataHistory.size() ? 0u : (mData.mDataHistory.size() - newHistoryLength);
+			for (auto i = popCount; i > 0u; i--) mData.mDataHistory.pop_front();
 		}
 		return result;
 	}
@@ -104,8 +121,8 @@ namespace pbd {
 	{
 		if (!enabled()) return;
 		auto index = mSparse ? mRest.sparse_history_index() : mRest.history_index();
-		if (mDataHistory.size() <= index) {
-			mDataHistory.push_back(mDataPointer);
+		if (mData.mDataHistory.size() <= index) {
+			mData.mDataHistory.push_back(mData.mDataPointer);
 		}
 		mRest.save_state();
 	}
@@ -120,7 +137,7 @@ namespace pbd {
 	template<class FirstData, class... Data>
 	inline void pbd::time_machine<FirstData, Data...>::load_state()
 	{
-		mDataPointer = mDataHistory[mSparse ? mRest.sparse_history_index() : mRest.history_index()];
+		mData.mDataPointer = mData.mDataHistory[mSparse ? mRest.sparse_history_index() : mRest.history_index()];
 	}
 
 	template<class FirstData, class... Data> time_machine(FirstData& aFirstData, Data&... aData) -> time_machine<FirstData, Data...>;

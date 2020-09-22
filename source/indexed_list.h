@@ -4,6 +4,9 @@
 
 namespace pbd
 {
+	template<class... Data>
+	class time_machine;
+
 	/// <summary><para>A container for two lists: the index list and the hidden list. The index list entries are indices pointing into the hidden list.</para>
 	/// <para>The hidden list is shared among all descendants of an indexed list object.</para>
 	/// <para>List manipulation (set_length, add,...) targets the index list. increase_length() initializes new indices to point to currently unused hidden list entries.</para></summary>
@@ -67,6 +70,9 @@ namespace pbd
 		std::shared_ptr<hidden_data> mHiddenData;
 		list_interface<gpu_list<4ui64>>* mOwner = nullptr;
 		bool mSorted;
+
+		template<typename...>
+		friend class pbd::time_machine;
 	};
 }
 
