@@ -2,11 +2,11 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InNeighbors         { uvec2         inNeighbors[]; };
-layout(set = 0, binding = 1) buffer InIndexList         { uint          inIndexList[]; };
-layout(set = 0, binding = 2) buffer InPosition          { ivec4          inPosition[]; };
-layout(set = 0, binding = 3) buffer InMinNeighborSqDist { uint  inMinNeighborSqDist[]; };
-layout(set = 0, binding = 4) buffer OutNearestNeighbor  { uint   outNearestNeighbor[]; };
+layout(set = 0, binding = 0) buffer InNeighbors        { uvec2        inNeighbors[]; };
+layout(set = 0, binding = 1) buffer InIndexList        { uint         inIndexList[]; };
+layout(set = 0, binding = 2) buffer InPosition         { ivec4         inPosition[]; };
+layout(set = 0, binding = 3) buffer InMinNeighborDist  { uint   inMinNeighborDist[]; };
+layout(set = 0, binding = 4) buffer OutNearestNeighbor { uint  outNearestNeighbor[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -21,15 +21,15 @@ void main()
 
 	uvec2 n = inNeighbors[id];
 
-	uint  idx               = inIndexList[n[0]];
-	uint  idxN              = inIndexList[n[1]];
-	ivec3 pos               = inPosition[idx ].xyz;
-	ivec3 posN              = inPosition[idxN].xyz;
-	uint  minNeighborSqDist = inMinNeighborSqDist[n[0]];
-	ivec3 diff              = posN - pos;
-	uint  dist              = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;   // dot(diff, diff);
+	uint  idx             = inIndexList[n[0]];
+	uint  idxN            = inIndexList[n[1]];
+	ivec3 pos             = inPosition[idx ].xyz;
+	ivec3 posN            = inPosition[idxN].xyz;
+	uint  minNeighborDist = inMinNeighborDist[n[0]];
+	ivec3 diff            = posN - pos;
+	uint  dist            = uint(length(diff));
 	
-	if (dist == minNeighborSqDist) {
+	if (dist == minNeighborDist) {
 		outNearestNeighbor[n[0]] = n[1];
 	}
 }

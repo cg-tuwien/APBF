@@ -2,12 +2,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InNeighbors            { uvec2            inNeighbors[]; };
-layout(set = 0, binding = 1) buffer InIndexList            { uint             inIndexList[]; };
-layout(set = 0, binding = 2) buffer InPosition             { ivec4             inPosition[]; };
-layout(set = 0, binding = 3) buffer InOldBoundaryDist      { uint       inOldBoundaryDist[]; };
-layout(set = 0, binding = 4) buffer InOutBoundaryDist      { uint       inOutBoundaryDist[]; };
-layout(set = 0, binding = 5) buffer InOutMinNeighborSqDist { uint  inOutMinNeighborSqDist[]; };
+layout(set = 0, binding = 0) buffer InNeighbors          { uvec2          inNeighbors[]; };
+layout(set = 0, binding = 1) buffer InIndexList          { uint           inIndexList[]; };
+layout(set = 0, binding = 2) buffer InPosition           { ivec4           inPosition[]; };
+layout(set = 0, binding = 3) buffer InOldBoundaryDist    { uint     inOldBoundaryDist[]; };
+layout(set = 0, binding = 4) buffer InOutBoundaryDist    { uint     inOutBoundaryDist[]; };
+layout(set = 0, binding = 5) buffer InOutMinNeighborDist { uint  inOutMinNeighborDist[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
@@ -28,8 +28,8 @@ void main()
 	ivec3 posN             = inPosition[idxN].xyz;
 	uint  boundaryDistN    = inOldBoundaryDist[n[1]];
 	ivec3 diff             = posN - pos;
-	uint  dist             = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;   // dot(diff, diff);
+	uint  dist             = uint(length(diff));
 	
 	atomicMin(inOutBoundaryDist[n[0]], boundaryDistN + dist);
-	atomicMin(inOutMinNeighborSqDist[n[0]], dist);
+	atomicMin(inOutMinNeighborDist[n[0]], dist);
 }
