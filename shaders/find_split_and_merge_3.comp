@@ -83,7 +83,7 @@ void main()
 		targetRadius = outTargetRadius[id]; // TODO inOut
 	}
 	
-	inOutBoundaryDist[id] = uint((boundaryDistance + radius) * (1 - boundariness) * POS_RESOLUTION);
+	inOutBoundaryDist[id] = uint((boundaryDistance + 2 * radius) * (1 - boundariness) * POS_RESOLUTION);
 
 
 	// check if particle should merge or split using target radius

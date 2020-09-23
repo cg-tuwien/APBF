@@ -23,7 +23,7 @@ namespace pbd
 		static bool  groundTruthBoundaryDistance;
 		static float boundarinessAdaptionSpeed;
 		static float kernelWidthAdaptionSpeed;
-		static int   color; // 0 = boundariness, 1 = boundary distance, 2 = target radius, 3 = transferring
+		static int   color; // 0 = boundariness, 1 = boundary distance, 2 = transferring, 3 = kernel width, 4 = target radius, 5 = radius
 		static int   solverIterations;
 	};
 }
