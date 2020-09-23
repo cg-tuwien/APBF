@@ -757,8 +757,11 @@ int main() // <== Starting point ==
 			[](vk::PhysicalDeviceFeatures& deviceFeatures) {
 				deviceFeatures.setShaderInt64(VK_TRUE);
 			},
+			[](vk::PhysicalDeviceVulkan12Features& vulkan12Features){
+				vulkan12Features.setBufferDeviceAddress(VK_TRUE);
+			},
 			[](vk::PhysicalDeviceRayTracingFeaturesKHR& rayTracingFeatures){
-				rayTracingFeatures.setRayQuery(VK_TRUE);
+				rayTracingFeatures.setRayTracing(VK_TRUE).setRayQuery(VK_TRUE);
 			},
 			mainWnd,
 			app,
