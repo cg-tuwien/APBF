@@ -17,21 +17,21 @@ struct incomp_data {
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
-layout(set = 0, binding = 1) buffer InRadius            { float            inRadius[]; };
-layout(set = 0, binding = 2) buffer InInverseMass       { float       inInverseMass[]; };
-layout(set = 0, binding = 3) buffer InIncompData        { incomp_data  inIncompData[]; };
-layout(set = 0, binding = 4) buffer OutBoundariness     { float     outBoundariness[]; };
-layout(set = 0, binding = 5) buffer OutLambda           { float           outLambda[]; };
-layout(set = 0, binding = 6) buffer InOutPosition       { ivec4       inOutPosition[]; };
+layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
+layout(set =  1, binding = 0) buffer InRadius            { float            inRadius[]; };
+layout(set =  2, binding = 0) buffer InInverseMass       { float       inInverseMass[]; };
+layout(set =  3, binding = 0) buffer InIncompData        { incomp_data  inIncompData[]; };
+layout(set =  4, binding = 0) buffer OutBoundariness     { float     outBoundariness[]; };
+layout(set =  5, binding = 0) buffer OutLambda           { float           outLambda[]; };
+layout(set =  6, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  7, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ apbf settings -------------------
-layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+layout(set =  8, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 float move_towards(float oldValue, float newValue, float maxStep)

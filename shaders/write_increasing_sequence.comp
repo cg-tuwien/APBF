@@ -2,13 +2,13 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer TargetList { uint targetList[]; };
+layout(set =  0, binding = 0) buffer TargetList { uint targetList[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer SequenceMinValue    { uint    sequenceMinValue; };
-layout(set = 1, binding = 1) buffer NewSequenceMinValue { uint newSequenceMinValue; };
-layout(set = 1, binding = 2) buffer NewTargetListLength { uint newTargetListLength; };
+layout(set =  1, binding = 0) buffer SequenceMinValue    { uint    sequenceMinValue; };
+layout(set =  2, binding = 0) buffer NewSequenceMinValue { uint newSequenceMinValue; };
+layout(set =  3, binding = 0) buffer NewTargetListLength { uint newTargetListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

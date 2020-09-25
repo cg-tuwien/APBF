@@ -2,12 +2,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList { uint inIndexList[]; };
-layout(set = 0, binding = 1) buffer OutBuffer   { uint   outBuffer[]; };
+layout(set =  0, binding = 0) buffer InIndexList { uint inIndexList[]; };
+layout(set =  1, binding = 0) buffer OutBuffer   { uint   outBuffer[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  2, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

@@ -13,18 +13,18 @@ struct incomp_data {
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList   { uint          inIndexList[]; };
-layout(set = 0, binding = 1) buffer InInverseMass { float       inInverseMass[]; };
-layout(set = 0, binding = 2) buffer InKernelWidth { float       inKernelWidth[]; };
-layout(set = 0, binding = 3) buffer OutIncompData { incomp_data outIncompData[]; };
+layout(set =  0, binding = 0) buffer InIndexList   { uint          inIndexList[]; };
+layout(set =  1, binding = 0) buffer InInverseMass { float       inInverseMass[]; };
+layout(set =  2, binding = 0) buffer InKernelWidth { float       inKernelWidth[]; };
+layout(set =  3, binding = 0) buffer OutIncompData { incomp_data outIncompData[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  4, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ apbf settings -------------------
-layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+layout(set =  5, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 #include "kernels.glsl"

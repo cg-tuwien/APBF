@@ -2,11 +2,11 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer OutBuffer { float outBuffer[]; };
+layout(set =  0, binding = 0) buffer OutBuffer { float outBuffer[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InBufferLength { uint inBufferLength; };
+layout(set =  1, binding = 0) buffer InBufferLength { uint inBufferLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

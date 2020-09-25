@@ -4,15 +4,15 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
-layout(set = 0, binding = 1) buffer OutPosition    { ivec4    outPosition[]; };
-layout(set = 0, binding = 2) buffer OutVelocity    { vec4     outVelocity[]; };
-layout(set = 0, binding = 3) buffer OutInverseMass { float outInverseMass[]; };
-layout(set = 0, binding = 4) buffer OutRadius      { float      outRadius[]; };
+layout(set =  0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
+layout(set =  1, binding = 0) buffer OutPosition    { ivec4    outPosition[]; };
+layout(set =  2, binding = 0) buffer OutVelocity    { vec4     outVelocity[]; };
+layout(set =  3, binding = 0) buffer OutInverseMass { float outInverseMass[]; };
+layout(set =  4, binding = 0) buffer OutRadius      { float      outRadius[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  5, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

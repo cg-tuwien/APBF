@@ -4,13 +4,13 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
-layout(set = 0, binding = 1) buffer InVelocity    { vec4     inVelocity[]; };
-layout(set = 0, binding = 2) buffer InOutPosition { ivec4 inOutPosition[]; };
+layout(set =  0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
+layout(set =  1, binding = 0) buffer InVelocity    { vec4     inVelocity[]; };
+layout(set =  2, binding = 0) buffer InOutPosition { ivec4 inOutPosition[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  3, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

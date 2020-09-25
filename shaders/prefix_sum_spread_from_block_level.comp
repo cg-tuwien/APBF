@@ -4,10 +4,10 @@
 #define BLOCKSIZE 512
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
-layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
-layout(set = 0, binding = 2) buffer InGroupSumBuffer  { uint  inGroupSumBuffer[]; };
-layout(set = 0, binding = 3) buffer LengthsAndOffsets { uint lengthsAndOffsets[]; };
+layout(set =  0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set =  1, binding = 0) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set =  2, binding = 0) buffer InGroupSumBuffer  { uint  inGroupSumBuffer[]; };
+layout(set =  3, binding = 0) buffer LengthsAndOffsets { uint lengthsAndOffsets[]; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

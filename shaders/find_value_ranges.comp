@@ -2,13 +2,13 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InBuffer      { uint      inBuffer[]; };
-layout(set = 0, binding = 1) buffer OutRangeStart { uint outRangeStart[]; };
-layout(set = 0, binding = 2) buffer OutRangeEnd   { uint   outRangeEnd[]; };
+layout(set =  0, binding = 0) buffer InBuffer      { uint      inBuffer[]; };
+layout(set =  1, binding = 0) buffer OutRangeStart { uint outRangeStart[]; };
+layout(set =  2, binding = 0) buffer OutRangeEnd   { uint   outRangeEnd[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer BufferLength { uint bufferLength; };
+layout(set =  3, binding = 0) buffer BufferLength { uint bufferLength; };
 // ----------------------------------------------------
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;

@@ -8,8 +8,8 @@ struct box
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList { uint inIndexList[]; };
-layout(set = 0, binding = 1) buffer OutBoxes    { box     outBoxes[]; };
+layout(set =  0, binding = 0) buffer InIndexList { uint inIndexList[]; };
+layout(set =  1, binding = 0) buffer OutBoxes    { box     outBoxes[]; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

@@ -4,14 +4,14 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
-layout(set = 0, binding = 1) buffer InOutPosition  { ivec4  inOutPosition[]; };
-layout(set = 0, binding = 2) buffer OutInverseMass { float outInverseMass[]; };
-layout(set = 0, binding = 3) buffer InOutRadius    { float    inOutRadius[]; };
+layout(set =  0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
+layout(set =  1, binding = 0) buffer InOutPosition  { ivec4  inOutPosition[]; };
+layout(set =  2, binding = 0) buffer OutInverseMass { float outInverseMass[]; };
+layout(set =  3, binding = 0) buffer InOutRadius    { float    inOutRadius[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  4, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;

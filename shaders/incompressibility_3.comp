@@ -4,16 +4,16 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
-layout(set = 0, binding = 1) buffer InInverseMass       { float       inInverseMass[]; };
-layout(set = 0, binding = 2) buffer InNeighbors         { uvec2         inNeighbors[]; };
-layout(set = 0, binding = 3) buffer InScaledGradient    { vec4     inScaledGradient[]; };
-layout(set = 0, binding = 4) buffer InLambda            { float            inLambda[]; };
-layout(set = 0, binding = 5) buffer InOutPosition       { ivec4       inOutPosition[]; };
+layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
+layout(set =  1, binding = 0) buffer InInverseMass       { float       inInverseMass[]; };
+layout(set =  2, binding = 0) buffer InNeighbors         { uvec2         inNeighbors[]; };
+layout(set =  3, binding = 0) buffer InScaledGradient    { vec4     inScaledGradient[]; };
+layout(set =  4, binding = 0) buffer InLambda            { float            inLambda[]; };
+layout(set =  5, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
+layout(set =  6, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
 // ----------------------------------------------------
 
 void add_to_pos(uint particleId, ivec3 posShift)

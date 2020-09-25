@@ -4,15 +4,15 @@
 #define BLOCKSIZE 512
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
-layout(set = 0, binding = 1) buffer OutBuffer         { uint         outBuffer[]; };
-layout(set = 0, binding = 2) buffer InSecondBuffer    { uint    inSecondBuffer[]; };
-layout(set = 0, binding = 3) buffer OutSecondBuffer   { uint   outSecondBuffer[]; };
-layout(set = 0, binding = 4) buffer InHistogramTable  { uint  inHistogramTable[]; };
+layout(set =  0, binding = 0) buffer InBuffer          { uint          inBuffer[]; };
+layout(set =  1, binding = 0) buffer OutBuffer         { uint         outBuffer[]; };
+layout(set =  2, binding = 0) buffer InSecondBuffer    { uint    inSecondBuffer[]; };
+layout(set =  3, binding = 0) buffer OutSecondBuffer   { uint   outSecondBuffer[]; };
+layout(set =  4, binding = 0) buffer InHistogramTable  { uint  inHistogramTable[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer BufferLength { uint bufferLength; };
+layout(set =  5, binding = 0) buffer BufferLength { uint bufferLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

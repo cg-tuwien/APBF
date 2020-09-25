@@ -9,16 +9,16 @@ struct neighbors
 };
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
-layout(set = 0, binding = 1) buffer InPosition   { ivec4       inPosition[]; };
-layout(set = 0, binding = 2) buffer InRange      { float          inRange[]; };
-layout(set = 0, binding = 3) buffer InCellStart  { uint       inCellStart[]; };
-layout(set = 0, binding = 4) buffer InCellEnd    { uint         inCellEnd[]; };
-layout(set = 0, binding = 5) buffer OutNeighbors { neighbors outNeighbors[]; };
+layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
+layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
+layout(set =  2, binding = 0) buffer InRange      { float          inRange[]; };
+layout(set =  3, binding = 0) buffer InCellStart  { uint       inCellStart[]; };
+layout(set =  4, binding = 0) buffer InCellEnd    { uint         inCellEnd[]; };
+layout(set =  5, binding = 0) buffer OutNeighbors { neighbors outNeighbors[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  6, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

@@ -4,23 +4,23 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0) buffer InIndexList      { uint         inIndexList[]; };
-layout(set = 0, binding = 1) buffer InPosition       { ivec4         inPosition[]; };
-layout(set = 0, binding = 2) buffer InRadius         { float           inRadius[]; };
-layout(set = 0, binding = 3) buffer InTargetRadius   { float     inTargetRadius[]; };
-layout(set = 0, binding = 4) buffer InOldKernelWidth { float   inOldKernelWidth[]; };
-layout(set = 0, binding = 5) buffer InOutKernelWidth { uint    inOutKernelWidth[]; }; // has to be initialized with 0
-layout(set = 0, binding = 6) buffer InNeighbors      { uvec2        inNeighbors[]; };
-layout(set = 0, binding = 7) buffer OutNeighbors     { uvec2       outNeighbors[]; };
+layout(set =  0, binding = 0) buffer InIndexList      { uint         inIndexList[]; };
+layout(set =  1, binding = 0) buffer InPosition       { ivec4         inPosition[]; };
+layout(set =  2, binding = 0) buffer InRadius         { float           inRadius[]; };
+layout(set =  3, binding = 0) buffer InTargetRadius   { float     inTargetRadius[]; };
+layout(set =  4, binding = 0) buffer InOldKernelWidth { float   inOldKernelWidth[]; };
+layout(set =  5, binding = 0) buffer InOutKernelWidth { uint    inOutKernelWidth[]; }; // has to be initialized with 0
+layout(set =  6, binding = 0) buffer InNeighbors      { uvec2        inNeighbors[]; };
+layout(set =  7, binding = 0) buffer OutNeighbors     { uvec2       outNeighbors[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InNeighborsLength    { uint inNeighborsLength; };
-layout(set = 1, binding = 1) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
+layout(set =  8, binding = 0) buffer InNeighborsLength    { uint inNeighborsLength; };
+layout(set =  9, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
 // ----------------------------------------------------
 
 // ------------------ apbf settings -------------------
-layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+layout(set = 10, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;

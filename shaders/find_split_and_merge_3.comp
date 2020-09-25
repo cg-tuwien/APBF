@@ -4,28 +4,28 @@
 #include "cpu_gpu_shared_config.h"
 
 // ---------------------- lists -----------------------
-layout(set = 0, binding = 0)  buffer InIndexList         { uint          inIndexList[]; };
-layout(set = 0, binding = 1)  buffer InPosition          { ivec4          inPosition[]; };
-layout(set = 0, binding = 2)  buffer InRadius            { float            inRadius[]; };
-layout(set = 0, binding = 3)  buffer InBoundariness      { float      inBoundariness[]; };
-layout(set = 0, binding = 4)  buffer InOutBoundaryDist   { uint    inOutBoundaryDist[]; };
-layout(set = 0, binding = 5)  buffer OutTargetRadius     { float     outTargetRadius[]; };
-layout(set = 0, binding = 6)  buffer InNearestNeighbor   { uint    inNearestNeighbor[]; };
-layout(set = 0, binding = 7)  buffer OutTransferSource   { uint    outTransferSource[]; };
-layout(set = 0, binding = 8)  buffer OutTransferTarget   { uint    outTransferTarget[]; };
-layout(set = 0, binding = 9)  buffer OutTransferTimeLeft { float outTransferTimeLeft[]; };
-layout(set = 0, binding = 10) buffer InOutTransferring   { uint    inOutTransferring[]; };
-layout(set = 0, binding = 11) buffer OutSplit            { uint             outSplit[]; };
+layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
+layout(set =  1, binding = 0) buffer InPosition          { ivec4          inPosition[]; };
+layout(set =  2, binding = 0) buffer InRadius            { float            inRadius[]; };
+layout(set =  3, binding = 0) buffer InBoundariness      { float      inBoundariness[]; };
+layout(set =  4, binding = 0) buffer InOutBoundaryDist   { uint    inOutBoundaryDist[]; };
+layout(set =  5, binding = 0) buffer OutTargetRadius     { float     outTargetRadius[]; };
+layout(set =  6, binding = 0) buffer InNearestNeighbor   { uint    inNearestNeighbor[]; };
+layout(set =  7, binding = 0) buffer OutTransferSource   { uint    outTransferSource[]; };
+layout(set =  8, binding = 0) buffer OutTransferTarget   { uint    outTransferTarget[]; };
+layout(set =  9, binding = 0) buffer OutTransferTimeLeft { float outTransferTimeLeft[]; };
+layout(set = 10, binding = 0) buffer InOutTransferring   { uint    inOutTransferring[]; };
+layout(set = 11, binding = 0) buffer OutSplit            { uint             outSplit[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set = 1, binding = 0) buffer InIndexListLength   { uint inIndexListLength; };
-layout(set = 1, binding = 1) buffer InOutTransferLength { uint inOutTransferLength; };
-layout(set = 1, binding = 2) buffer InOutSplitLength    { uint inOutSplitLength; };
+layout(set = 12, binding = 0) buffer InIndexListLength   { uint inIndexListLength; };
+layout(set = 13, binding = 0) buffer InOutTransferLength { uint inOutTransferLength; };
+layout(set = 14, binding = 0) buffer InOutSplitLength    { uint inOutSplitLength; };
 // ----------------------------------------------------
 
 // ------------------ apbf settings -------------------
-layout(set = 2, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+layout(set = 15, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
