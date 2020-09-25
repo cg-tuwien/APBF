@@ -106,6 +106,8 @@ void main()
 		uint tIdx = atomicAdd(inOutTransferLength, 1u);
 		if (tIdx >= mMaxTransferLength) {
 			inOutTransferLength = mMaxTransferLength;
+			inOutTransferring[sourceId] = 0u;
+			inOutTransferring[targetId] = 0u;
 			return;
 		}
 		outTransferSource  [tIdx] = sourceId;
@@ -115,6 +117,7 @@ void main()
 		uint sIdx = atomicAdd(inOutSplitLength, 1u);
 		if (sIdx >= mMaxSplitLength) {
 			inOutSplitLength = mMaxSplitLength;
+			inOutTransferring[sourceId] = 0u;
 			return;
 		}
 		outSplit[sIdx] = id;

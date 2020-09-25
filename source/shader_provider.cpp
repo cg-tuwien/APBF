@@ -960,6 +960,36 @@ void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, co
 	dispatch_indirect();
 }
 
+const avk::buffer& shader_provider::remove_impossible_splits(const avk::buffer& aInSplit, const avk::buffer& aOutTransferring, const avk::buffer& aInTransferLength, const avk::buffer& aInParticleLength, const avk::buffer& aInSplitLength, uint32_t aMaxTransferLength, uint32_t aMaxParticleLength)
+{
+	struct push_constants { uint32_t mMaxTransferLength, mMaxParticleLength; } pushConstants{ aMaxTransferLength, aMaxParticleLength };
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/remove_impossible_splits.comp",
+		avk::descriptor_binding(0, 0, aInSplit),
+		avk::descriptor_binding(1, 0, aOutTransferring),
+		avk::descriptor_binding(2, 0, aInTransferLength),
+		avk::descriptor_binding(3, 0, aInParticleLength),
+		avk::descriptor_binding(4, 0, aInSplitLength),
+		avk::descriptor_binding(5, 0, length_result_buffer()),
+		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer()),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	prepare_dispatch_indirect(aInSplitLength, 0, 1, 1);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInSplit),
+		avk::descriptor_binding(1, 0, aOutTransferring),
+		avk::descriptor_binding(2, 0, aInTransferLength),
+		avk::descriptor_binding(3, 0, aInParticleLength),
+		avk::descriptor_binding(4, 0, aInSplitLength),
+		avk::descriptor_binding(5, 0, length_result_buffer()),
+		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer())
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+	return length_result_buffer();
+}
+
 void shader_provider::initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(

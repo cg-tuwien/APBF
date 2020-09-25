@@ -102,6 +102,7 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(size_t aLength)
 template<size_t Stride>
 inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::set_length(const avk::buffer& aLength)
 {
+	// TODO limit to requested length? (prepare_for_edit() is always called with the requested length)
 	algorithms::copy_bytes(aLength, write().length(), 4);
 	return *this;
 }
@@ -206,6 +207,7 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::operator+=(const gpu_list& 
 
 	if (aRhs.mData == nullptr) return *this;
 
+	// TODO limit length to requested length instead of actual buffer length
 	set_length(shader_provider::append_list(write().buffer(), aRhs.mData->mBuffer, write().length(), aRhs.length(), Stride));
 	return *this;
 }

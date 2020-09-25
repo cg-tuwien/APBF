@@ -202,6 +202,9 @@
     <None Include="shaders\uint_to_float_but_gradual.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\remove_impossible_splits.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
