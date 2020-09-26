@@ -56,8 +56,8 @@ namespace pbd
 			void remove_owner(indexed_list* aOwner) { mOwners.remove(aOwner); }
 			void apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource) override
 			{
-				if (&mData != aEditSource) mData.apply_edit(aEditList, this);
 				for (auto aOwner : mOwners) if (aOwner != aEditSource) aOwner->apply_hidden_edit(aEditList);
+				if (&mData != aEditSource) mData.apply_edit(aEditList, this);
 			}
 
 			DataList mData;
@@ -274,6 +274,28 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 {
 	if (empty()) return;
 
+	auto newEditList         = gpu_list<4>().request_length(mIndexList.requested_length());
+	auto indexListEqualities = gpu_list<4>().request_length(mIndexList.requested_length());
+	auto hiddenIdToIdxListId = gpu_list<4>().request_length(mHiddenData->mData.requested_length());
+
+	// optimization in atomic_swap: no initialization necessary
+//	shader_provider::write_sequence(indexListEqualities.write().buffer(), mIndexList.length(), 0, 1);
+	shader_provider::write_sequence(hiddenIdToIdxListId.write().buffer(), mHiddenData->mData.length(), std::numeric_limits<uint32_t>().max(), 0);
+
+	shader_provider::atomic_swap(mIndexList.buffer(), indexListEqualities.write().buffer(), hiddenIdToIdxListId.write().buffer(), mIndexList.length());
+	mIndexList.set_length(0);
+	shader_provider::generate_new_index_and_edit_list(aEditList.buffer(), hiddenIdToIdxListId.buffer(), indexListEqualities.buffer(), mIndexList.write().buffer(), newEditList.write().buffer(), aEditList.length(), mIndexList.write().length(), requested_length());
+	if (mOwner == nullptr) return;
+	
+	newEditList.set_length(mIndexList.length());
+	mOwner->apply_edit(newEditList, this);
+}
+
+/*template<class DataList>
+inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEditList)
+{
+	if (empty()) return;
+
 	auto sortMapping = gpu_list<4ui64>();
 	auto indexListContentUpperBound = mHiddenData->mData.requested_length();
 
@@ -341,4 +363,4 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 	} else {
 		mOwner->apply_edit(newEditList, this);
 	}
-}
+}*/

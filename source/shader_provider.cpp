@@ -368,6 +368,55 @@ void shader_provider::generate_new_edit_list(const avk::buffer& aInIndexList, co
 	dispatch_indirect();
 }
 
+void shader_provider::atomic_swap(const avk::buffer& aInIndexList, const avk::buffer& aInOutSwapA, const avk::buffer& aInOutSwapB, const avk::buffer& aInIndexListLength)
+{
+	prepare_dispatch_indirect(aInIndexListLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/atomic_swap.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInOutSwapA),
+		avk::descriptor_binding(2, 0, aInOutSwapB),
+		avk::descriptor_binding(3, 0, aInIndexListLength)
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInOutSwapA),
+		avk::descriptor_binding(2, 0, aInOutSwapB),
+		avk::descriptor_binding(3, 0, aInIndexListLength)
+	}));
+	dispatch_indirect();
+}
+
+void shader_provider::generate_new_index_and_edit_list(const avk::buffer& aInEditList, const avk::buffer& aInHiddenIdToIdxListId, const avk::buffer& aInIndexListEqualities, const avk::buffer& aOutNewIndexList, const avk::buffer& aOutNewEditList, const avk::buffer& aInEditListLength, const avk::buffer& aInOutNewLength, uint32_t aMaxNewLength)
+{
+	struct push_constants { uint32_t mMaxNewLength; } pushConstants{ aMaxNewLength };
+	prepare_dispatch_indirect(aInEditListLength);
+	static auto pipeline = gvk::context().create_compute_pipeline_for(
+		"shaders/generate_new_index_and_edit_list.comp",
+		avk::descriptor_binding(0, 0, aInEditList),
+		avk::descriptor_binding(1, 0, aInHiddenIdToIdxListId),
+		avk::descriptor_binding(2, 0, aInIndexListEqualities),
+		avk::descriptor_binding(3, 0, aOutNewIndexList),
+		avk::descriptor_binding(4, 0, aOutNewEditList),
+		avk::descriptor_binding(5, 0, aInEditListLength),
+		avk::descriptor_binding(6, 0, aInOutNewLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	);
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInEditList),
+		avk::descriptor_binding(1, 0, aInHiddenIdToIdxListId),
+		avk::descriptor_binding(2, 0, aInIndexListEqualities),
+		avk::descriptor_binding(3, 0, aOutNewIndexList),
+		avk::descriptor_binding(4, 0, aOutNewEditList),
+		avk::descriptor_binding(5, 0, aInEditListLength),
+		avk::descriptor_binding(6, 0, aInOutNewLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::prefix_sum_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aOutGroupSumBuffer, const avk::buffer& aLengthsAndOffsets, uint32_t aLengthsAndOffsetsOffset, uint32_t aRecursionDepth)
 {
 	struct push_constants { uint32_t mLengthsAndOffsetsOffset, mRecursionDepth; } pushConstants{ aLengthsAndOffsetsOffset, aRecursionDepth };

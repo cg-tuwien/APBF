@@ -118,7 +118,7 @@ bool pbd::test::indexed_list_apply_hidden_edit_1()
 {
 	shader_provider::start_recording();
 	auto expectedResultA = std::vector<uint32_t>({ 0u, 1u, 2u, 3u });
-	auto expectedResultB = std::vector<uint32_t>({0u });
+	auto expectedResultB = std::vector<uint32_t>({ 0u });
 	auto editListData    = std::vector<uint32_t>({ 1u, 2u, 3u, 4u });
 	auto listA    = indexed_list<gpu_list<4ui64>>(5).request_length(5);
 	auto editList = to_gpu_list(editListData);
@@ -167,7 +167,7 @@ bool pbd::test::indexed_list_apply_hidden_edit_3()
 	auto editListData    = std::vector<uint32_t>({ 2u, 1u, 2u, 4u, 1u });
 	auto listBIdxData    = std::vector<uint32_t>({ 4u, 2u, 4u });
 	auto listA    = indexed_list<gpu_list<12ui64>>(5).request_length(5);
-	auto listB    = indexed_list<gpu_list<12ui64>>().set_length(listBIdxData.size());
+	auto listB    = indexed_list<gpu_list<12ui64>>().request_length(5).set_length(listBIdxData.size());
 	auto editList = to_gpu_list(editListData);
 	listB.share_hidden_data_from(listA);
 	listA.increase_length(5);

@@ -23,6 +23,7 @@
     <None Include="shaders\add_box.comp" />
     <None Include="shaders\apply_acceleration.comp" />
     <None Include="shaders\apply_velocity.comp" />
+    <None Include="shaders\atomic_swap.comp" />
     <None Include="shaders\box_collision.comp" />
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
@@ -34,6 +35,7 @@
     <None Include="shaders\find_value_ranges.comp" />
     <None Include="shaders\generate_acceleration_structure_instances.comp" />
     <None Include="shaders\generate_new_edit_list.comp" />
+    <None Include="shaders\generate_new_index_and_edit_list.comp" />
     <None Include="shaders\generate_new_index_list.comp" />
     <None Include="shaders\incompressibility_0.comp" />
     <None Include="shaders\incompressibility_1.comp" />

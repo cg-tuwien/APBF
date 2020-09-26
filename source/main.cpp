@@ -480,9 +480,21 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			mFreezeParticleAnimation = true;
 		}
 
-		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
-		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		pbd::gpu_list<4> floatForColor; // only corresponds to position and radius lists because the scene creates only fluid particles
+		// workaround to have position and radius match floatForColor: apply the particle resorting given by the index list in fluid
+		// deletes non-fluid particles from display!
+		auto& pos = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
+		auto& rad = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+		auto& idx = mPool->fluid().get<pbd::fluid::id::particle>();
+		auto position = pbd::gpu_list<16>().request_length(idx.requested_length()).set_length(idx.length());
+		auto radius   = pbd::gpu_list< 4>().request_length(idx.requested_length()).set_length(idx.length());
+		shader_provider::copy_scattered_read(pos.buffer(), position.write().buffer(), idx.index_buffer(), idx.length(), 16);
+		shader_provider::copy_scattered_read(rad.buffer(),   radius.write().buffer(), idx.index_buffer(), idx.length(),  4);
+
+		// use this instead if floatForColor doesn't have to match (or is not a fluid property):
+//		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
+//		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+
+		pbd::gpu_list<4> floatForColor;
 		auto color1 = glm::vec3(0, 0.2, 0);
 		auto color2 = glm::vec3(1, 0.2, 0);
 		auto color1Float = 0.0f;
