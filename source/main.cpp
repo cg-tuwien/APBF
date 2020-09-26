@@ -493,6 +493,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// use this instead if floatForColor doesn't have to match (or is not a fluid property):
 //		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
 //		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+		auto transferring = mPool->particles().hidden_list().get<pbd::hidden_particles::id::transferring>();
 
 		pbd::gpu_list<4> floatForColor;
 		auto color1 = glm::vec3(0, 0.2, 0);
@@ -500,13 +501,19 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto color1Float = 0.0f;
 		auto color2Float = 1.0f;
 		auto isUint = false;
+		auto isParticleProperty = false;
 		switch (pbd::settings::color) {
 			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();                                                    break;
 			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>(); color2Float = POS_RESOLUTION *  20; isUint = true; break;
-			case 2: floatForColor = mPool->fluid().get<pbd::fluid::id::transferring     >(); color1Float = 0; color2Float =   1; isUint = true; break;
+			case 2: floatForColor = transferring;                 isParticleProperty = true; color1Float = 0; color2Float =   1; isUint = true; break;
 			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >(); color1Float = 4; color2Float =   8;                break;
 			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >(); color1Float = 1; color2Float =   2;                break;
 			case 5: floatForColor = radius;                                                  color1Float = 1; color2Float = 1.3;                break;
+		}
+		if (isParticleProperty) {
+			auto old = floatForColor;
+			shader_provider::copy_scattered_read(old.buffer(), floatForColor.write().buffer(), idx.index_buffer(), idx.length(), 4);
+			floatForColor.set_length(mPool->fluid().length());
 		}
 		if (isUint) {
 			shader_provider::uint_to_float(floatForColor.write().buffer(), floatForColor.write().buffer(), floatForColor.write().length(), 1.0f);

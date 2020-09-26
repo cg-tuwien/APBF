@@ -6,7 +6,7 @@
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles(100000),
 	mTransfers(100),
-	mTimeMachine(mParticles, mParticles.hidden_list(), mFluid.get<pbd::fluid::id::particle>(), mFluid.get<pbd::fluid::id::boundariness>(), mFluid.get<pbd::fluid::id::boundary_distance>(), mFluid.get<pbd::fluid::id::kernel_width>(), mFluid.get<pbd::fluid::id::target_radius>(), mFluid.get<pbd::fluid::id::transferring>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::time_left>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>(), mDeltaTime)
+	mTimeMachine(mParticles, mParticles.hidden_list(), mFluid.get<pbd::fluid::id::particle>(), mFluid.get<pbd::fluid::id::boundariness>(), mFluid.get<pbd::fluid::id::boundary_distance>(), mFluid.get<pbd::fluid::id::kernel_width>(), mFluid.get<pbd::fluid::id::target_radius>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::time_left>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>(), mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>(), mDeltaTime)
 {
 	shader_provider::start_recording();
 	mParticles.request_length(100000);
@@ -20,7 +20,6 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), 4, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), 0, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
-	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::transferring>().write().buffer(), mFluid.length(), 0, 0);
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
 	mBoxCollision.set_data(&mParticles);

@@ -10,10 +10,10 @@ pbd::particle_transfer& pbd::particle_transfer::set_data(fluid* aFluid, transfer
 void pbd::particle_transfer::apply(float aDeltaTime)
 {
 	auto& particleList         = mFluid->get<fluid::id::particle>();
-	auto& transferringList     = mFluid->get<fluid::id::transferring>();
 	auto& transferSourceList   = mTransfers->hidden_list().get<hidden_transfers::id::source>();
 	auto& transferTargetList   = mTransfers->hidden_list().get<hidden_transfers::id::target>();
 	auto& transferTimeLeftList = mTransfers->hidden_list().get<hidden_transfers::id::time_left>();
+	auto& transferringList     = particleList.hidden_list().get<pbd::hidden_particles::id::transferring>();
 	auto& positionList         = particleList.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto& inverseMassList      = particleList.hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
 	auto& radiusList           = particleList.hidden_list().get<pbd::hidden_particles::id::radius>();

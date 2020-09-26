@@ -40,35 +40,33 @@ void main()
 	bool  merge          = ttl_and_type > 0;
 	uint  idS            = inTransferSource[id];
 	uint  idT            = inTransferTarget[id];
-	uint  idxS           = inIndexList[idS];
-	uint  idxT           = inIndexList[idT];
-	ivec3 posS           = inOutPosition[idxS].xyz;
-	ivec3 posT           = inOutPosition[idxT].xyz;
-	float radiusS        = inOutRadius[idxS];
-	float radiusT        = inOutRadius[idxT];
-	float invMassS       = inOutInverseMass[idxS];
-	float invMassT       = inOutInverseMass[idxT];
-	vec3  velocityS      = inOutVelocity[idxS].xyz;
-	vec3  velocityT      = inOutVelocity[idxT].xyz;
+	ivec3 posS           = inOutPosition[idS].xyz;
+	ivec3 posT           = inOutPosition[idT].xyz;
+	float radiusS        = inOutRadius[idS];
+	float radiusT        = inOutRadius[idT];
+	float invMassS       = inOutInverseMass[idS];
+	float invMassT       = inOutInverseMass[idT];
+	vec3  velocityS      = inOutVelocity[idS].xyz;
+	vec3  velocityT      = inOutVelocity[idT].xyz;
 	float volS           = pow(radiusS, DIMENSIONS);
 	float volT           = pow(radiusT, DIMENSIONS);
 	float factorS        = merge ? min(1, mDeltaTime / ttl) : mDeltaTime * (volS - volT) / (2 * ttl * volS);
 	float transfMass     = factorS / invMassS;
 	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
 
-	inOutInverseMass[idxS]    =                                    invMassS / (1 - invMassS * transfMass);
-	inOutInverseMass[idxT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
-//	inOutRadius[idxS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
-	inOutRadius[idxS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
-	inOutRadius[idxT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
-//	inOutPosition[idxT]       = 
+	inOutInverseMass[idS]    =                                    invMassS / (1 - invMassS * transfMass);
+	inOutInverseMass[idT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
+//	inOutRadius[idS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
+	inOutRadius[idS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
+	inOutRadius[idT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
+//	inOutPosition[idT]       = 
 	// TODO
 	inOutTransferTimeLeft[id] = (ttl - mDeltaTime) * (merge ? 1 : -1);
 
 	if (ttl == mDeltaTime) {
 		if (merge) {
 			uint dplIdx = atomicAdd(inOutDeleteParticleListLength, 1u);
-			outDeleteParticleList[dplIdx] = idxS;
+			outDeleteParticleList[dplIdx] = idS;
 		} else {
 			uint dtlIdx = atomicAdd(inOutDeleteTransferListLength, 1u);
 			outDeleteTransferList[dtlIdx] = id;

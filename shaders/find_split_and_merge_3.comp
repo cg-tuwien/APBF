@@ -94,32 +94,32 @@ void main()
 	bool merge = bool(apbfSettings.mMerge) && nearestNeighborDist < radius && pow(radius, DIMENSIONS) + pow(nearestNeighborRadius, DIMENSIONS) <= pow(targetRadius, DIMENSIONS);
 	if (!merge && !split) return;
 
-	uint sourceId = (merge && nearestNeighborLarger) ? nearestNeighborId : id;
-	uint targetId = (merge && nearestNeighborLarger) ? id : nearestNeighborId;
-	if (atomicExchange(inOutTransferring[sourceId], 1u) == 1u) return;
+	uint sourceIdx = (merge && nearestNeighborLarger) ? nearestNeighborIdx : idx;
+	uint targetIdx = (merge && nearestNeighborLarger) ? idx : nearestNeighborIdx;
+	if (atomicExchange(inOutTransferring[sourceIdx], 1u) == 1u) return;
 
 	if (merge) {
-		if (atomicExchange(inOutTransferring[targetId], 1u) == 1u) {
-			inOutTransferring[sourceId] = 0u;
+		if (atomicExchange(inOutTransferring[targetIdx], 1u) == 1u) {
+			inOutTransferring[sourceIdx] = 0u;
 			return;
 		}
 		uint tIdx = atomicAdd(inOutTransferLength, 1u);
 		if (tIdx >= mMaxTransferLength) {
 			inOutTransferLength = mMaxTransferLength;
-			inOutTransferring[sourceId] = 0u;
-			inOutTransferring[targetId] = 0u;
+			inOutTransferring[sourceIdx] = 0u;
+			inOutTransferring[targetIdx] = 0u;
 			return;
 		}
-		outTransferSource  [tIdx] = sourceId;
-		outTransferTarget  [tIdx] = targetId;
+		outTransferSource  [tIdx] = sourceIdx;
+		outTransferTarget  [tIdx] = targetIdx;
 		outTransferTimeLeft[tIdx] = MERGE_DURATION;
 	} else {
 		uint sIdx = atomicAdd(inOutSplitLength, 1u);
 		if (sIdx >= mMaxSplitLength) {
 			inOutSplitLength = mMaxSplitLength;
-			inOutTransferring[sourceId] = 0u;
+			inOutTransferring[sourceIdx] = 0u;
 			return;
 		}
-		outSplit[sIdx] = id;
+		outSplit[sIdx] = idx;
 	}
 }

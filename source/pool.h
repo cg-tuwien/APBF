@@ -36,7 +36,7 @@ private:
 	float mDeltaTime;
 	pbd::time_machine<pbd::particles, pbd::hidden_particles, pbd::particles,
 		pbd::gpu_list<4>, pbd::gpu_list<4>, pbd::gpu_list<4>, pbd::gpu_list<4>,
-		pbd::gpu_list<4>, pbd::gpu_list<4>, pbd::particles, pbd::particles, float> mTimeMachine;
+		pbd::gpu_list<4>, pbd::particles, pbd::particles, float> mTimeMachine;
 
 	pbd::velocity_handling mVelocityHandling;
 	pbd::box_collision mBoxCollision;

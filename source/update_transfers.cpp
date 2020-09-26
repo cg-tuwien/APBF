@@ -16,7 +16,7 @@ void pbd::update_transfers::apply()
 	auto& particleList            = mFluid->get<fluid::id::particle>();
 	auto& boundarinessList        = mFluid->get<fluid::id::boundariness>();
 	auto& boundaryDistanceList    = mFluid->get<fluid::id::boundary_distance>();
-	auto& transferringList        = mFluid->get<fluid::id::transferring>();
+	auto& transferringList        = particleList.hidden_list().get<pbd::hidden_particles::id::transferring>();
 	auto& positionList            = particleList.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto& radiusList              = particleList.hidden_list().get<pbd::hidden_particles::id::radius>();
 	auto& inverseMassList         = particleList.hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
