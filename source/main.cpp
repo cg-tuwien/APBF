@@ -246,7 +246,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 3
 			context().create_renderpass({
 					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
-					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::dont_care)
+					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::store)
 				},
 				[](renderpass_sync& aRpSync){
 					// Synchronize with everything that comes BEFORE:
@@ -380,6 +380,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
 #endif
+				ImGui::Checkbox("Render Boxes", &mPool->mRenderBoxes);
 				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius" };
 				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 
@@ -431,6 +432,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		if (input().key_pressed(key_code::escape)) {
 			// stop the current composition:
 			current_composition()->stop();
+		}
+
+		if (!mQuakeCam.is_enabled()) {
+			mPool->handle_input(input());
 		}
 	}
 
@@ -669,6 +674,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		default:
 			throw std::runtime_error(fmt::format("Invalid mRenderingMethod[{}]", mRenderingMethod));
 		}
+		mPool->render(mQuakeCam.projection_and_view_matrix()); // TODO won't work if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT is defined
 		
 		cmdBfr->end_recording();
 

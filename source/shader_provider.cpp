@@ -19,10 +19,10 @@ void shader_provider::start_recording()
 	cmd_bfr()->begin_recording();
 }
 
-void shader_provider::end_recording()
+void shader_provider::end_recording(std::optional<std::reference_wrapper<avk::semaphore_t>> aWaitSemaphore)
 {
 	cmd_bfr()->end_recording();
-	mQueue->submit(cmd_bfr(), std::optional<std::reference_wrapper<avk::semaphore_t>>{});
+	mQueue->submit(cmd_bfr(), aWaitSemaphore);
 	gvk::context().main_window()->handle_lifetime(std::move(mCmdBfr));
 }
 
@@ -1173,6 +1173,35 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
+void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances)
+{
+	struct push_constants { glm::mat4 mViewProjection; } pushConstants{ aViewProjection };
+	auto* mainWnd = gvk::context().main_window();
+
+	static auto pipeline = gvk::context().create_graphics_pipeline_for(
+		avk::vertex_shader("shaders/render_boxes.vert"),
+		avk::fragment_shader("shaders/render_boxes.frag"),
+		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
+		avk::from_buffer_binding(1)->stream_per_instance<glm::vec4>()->to_location(1),
+		avk::from_buffer_binding(2)->stream_per_instance<glm::vec4>()->to_location(2),
+		gvk::context().create_renderpass({
+			avk::attachment::declare(format_from_window_color_buffer(mainWnd), avk::on_load::load,   avk::color(0),         avk::on_store::store),
+			avk::attachment::declare(format_from_window_depth_buffer(mainWnd), avk::on_load::load,   avk::depth_stencil(),  avk::on_store::store)
+		}),
+		avk::cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)),
+		avk::cfg::depth_write::disabled(),
+		avk::cfg::color_blending_config::enable_alpha_blending_for_all_attachments(),
+		avk::push_constant_binding_data{ avk::shader_type::vertex, 0, sizeof(pushConstants) }
+	);
+	sync_after_draw(); // TODO remove
+	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), mainWnd->current_backbuffer());
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	cmd_bfr()->draw_indexed(*aIndexBuffer, aNumberOfInstances, 0u, 0u, 0u, *aVertexBuffer, *aBoxMin, *aBoxMax);
+	cmd_bfr()->end_render_pass();
+	sync_after_draw();
+}
+
 void shader_provider::sync_after_compute()
 {
 	cmd_bfr()->establish_global_memory_barrier(
@@ -1186,6 +1215,14 @@ void shader_provider::sync_after_transfer()
 	cmd_bfr()->establish_global_memory_barrier(
 		avk::pipeline_stage::transfer,           /* -> */ avk::pipeline_stage::compute_shader | avk::pipeline_stage::transfer,
 		avk::memory_access::transfer_any_access, /* -> */ avk::memory_access::shader_buffers_and_images_any_access | avk::memory_access::transfer_any_access
+	);
+}
+
+void shader_provider::sync_after_draw()
+{
+	cmd_bfr()->establish_global_memory_barrier(
+		avk::pipeline_stage::color_attachment_output,      /* -> */ avk::pipeline_stage::color_attachment_output,
+		avk::memory_access::color_attachment_write_access, /* -> */ avk::memory_access::color_attachment_write_access
 	);
 }
 

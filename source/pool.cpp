@@ -23,12 +23,14 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
 	mBoxCollision.set_data(&mParticles);
-	mBoxCollision.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
-	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
-	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
-	mBoxCollision.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
-	mBoxCollision.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
-	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
+	mBoxCollision.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z)); mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
+	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z)); mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
+	mBoxCollision.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
+	mBoxCollision.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);	mUcb.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
+#if DIMENSIONS > 2
+	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
+	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
+#endif
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
 	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
@@ -40,6 +42,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mNeighborhoodFluid.set_range_scale(1.5f);
 	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
+	mRenderBoxes = true;
 }
 
 void pool::update(float aDeltaTime)
@@ -81,4 +84,14 @@ pbd::fluid& pool::fluid()
 pbd::neighbors& pool::neighbors()
 {
 	return mNeighborsFluid;
+}
+
+void pool::handle_input(const gvk::input_buffer& aInput)
+{
+	mUcb.handle_input(aInput);
+}
+
+void pool::render(const glm::mat4& aViewProjection)
+{
+	if (mRenderBoxes) mUcb.render(aViewProjection);
 }

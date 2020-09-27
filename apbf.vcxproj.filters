@@ -211,6 +211,12 @@
     <None Include="shaders\generate_new_index_and_edit_list.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\render_boxes.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\render_boxes.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -269,6 +275,9 @@
     </ClCompile>
     <ClCompile Include="source\settings.cpp">
       <Filter>source\pbd</Filter>
+    </ClCompile>
+    <ClCompile Include="source\user_controlled_boxes.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -352,6 +361,9 @@
     </ClInclude>
     <ClInclude Include="source\time_machine.h">
       <Filter>source\pbd</Filter>
+    </ClInclude>
+    <ClInclude Include="source\user_controlled_boxes.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

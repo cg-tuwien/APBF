@@ -11,6 +11,7 @@
 #include "update_transfers.h"
 #include "particle_transfer.h"
 #include "time_machine.h"
+#include "user_controlled_boxes.h"
 
 #define NEIGHBORHOOD_TYPE 2 // 0 = brute force, 1 = Green, 2 = RTX
 
@@ -23,6 +24,10 @@ public:
 	pbd::fluid& fluid();
 	pbd::neighbors& neighbors();
 	auto& time_machine() { return mTimeMachine; };
+	void handle_input(const gvk::input_buffer& aInput);
+	void render(const glm::mat4& aViewProjection);
+
+	bool mRenderBoxes;
 
 private:
 	pbd::particles mParticles;
@@ -51,4 +56,5 @@ private:
 #else
 	pbd::neighborhood_rtx mNeighborhoodFluid;
 #endif
+	user_controlled_boxes mUcb;
 };

@@ -44,8 +44,9 @@ void compute_boundariness(uint id, float selfGradLength, float underpressure)
 {
 	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
 	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
-	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
-	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness
+	float boundariness = (selfGradLength + underpressure > 0.9) ? 1.0f : 0.0f;
+//	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+//	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness
 	outBoundariness[id] = boundariness;
 }
 

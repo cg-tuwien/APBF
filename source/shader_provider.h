@@ -8,7 +8,7 @@ public:
 	// TODO maybe add an init_all() function
 	static void set_queue(avk::queue& aQueue);
 	static void start_recording();
-	static void end_recording();
+	static void end_recording(std::optional<std::reference_wrapper<avk::semaphore_t>> aWaitSemaphore = {});
 	static avk::command_buffer& cmd_bfr();
 	static void roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount);
 	static void mask_neighborhood(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount);
@@ -60,8 +60,11 @@ public:
 	static void apply_velocity(const avk::buffer& aInIndexList, const avk::buffer& aInVelocity, const avk::buffer& aInOutPosition, const avk::buffer& aInIndexListLength, float aDeltaTime);
 	static void infer_velocity(const avk::buffer& aInIndexList, const avk::buffer& aInOldPosition, const avk::buffer& aInPosition, const avk::buffer& aOutVelocity, const avk::buffer& aInIndexListLength, float aDeltaTime);
 
+	static void render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances);
+
 	static void sync_after_compute();
 	static void sync_after_transfer();
+	static void sync_after_draw();
 private:
 	static avk::descriptor_cache& descriptor_cache();
 	static const avk::buffer& workgroup_count_buffer();
