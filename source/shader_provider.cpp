@@ -1173,9 +1173,9 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
-void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances)
+void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances, int aSelectedIdx)
 {
-	struct push_constants { glm::mat4 mViewProjection; } pushConstants{ aViewProjection };
+	struct push_constants { glm::mat4 mViewProjection; int mSelectedIdx; } pushConstants{ aViewProjection, aSelectedIdx };
 	auto* mainWnd = gvk::context().main_window();
 
 	static auto pipeline = gvk::context().create_graphics_pipeline_for(

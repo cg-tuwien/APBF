@@ -2,6 +2,7 @@
 
 pbd::neighborhood_rtx::neighborhood_rtx()
 {
+	mStepsUntilNextRebuild = 0u;
 	mBlas = gvk::context().create_bottom_level_acceleration_structure({ avk::acceleration_structure_size_requirements::from_aabbs(1u) }, false);
 	mBlas->build({ VkAabbPositionsKHR{ /* min: */ -1.f, -1.f, -1.f,  /* max: */ 1.f,  1.f,  1.f } });
 }
@@ -55,7 +56,12 @@ void pbd::neighborhood_rtx::build_acceleration_structure()
 		avk::memory_access::shader_buffers_and_images_write_access, /* -> */ avk::memory_access::acceleration_structure_any_access
 	);
 
-	mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+	if (mStepsUntilNextRebuild-- == 0u) {
+		mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+		mStepsUntilNextRebuild = 0u; // setting this to 60, so that a rebuild only happens every 60 frames, causes small explosions in the fluid
+	} else {
+		mTlas->update(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+	}
 
 	shader_provider::cmd_bfr()->establish_global_memory_barrier(
 		avk::pipeline_stage::acceleration_structure_build,       /* -> */ avk::pipeline_stage::compute_shader,

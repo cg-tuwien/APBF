@@ -86,9 +86,9 @@ pbd::neighbors& pool::neighbors()
 	return mNeighborsFluid;
 }
 
-void pool::handle_input(const gvk::input_buffer& aInput)
+void pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
-	mUcb.handle_input(aInput);
+	mUcb.handle_input(aInverseViewProjection, aCameraPos);
 }
 
 void pool::render(const glm::mat4& aViewProjection)

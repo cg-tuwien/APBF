@@ -24,7 +24,7 @@ public:
 	pbd::fluid& fluid();
 	pbd::neighbors& neighbors();
 	auto& time_machine() { return mTimeMachine; };
-	void handle_input(const gvk::input_buffer& aInput);
+	void handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos);
 	void render(const glm::mat4& aViewProjection);
 
 	bool mRenderBoxes;

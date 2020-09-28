@@ -24,5 +24,6 @@ namespace pbd
 		avk::top_level_acceleration_structure mTlas;
 		avk::bottom_level_acceleration_structure mBlas;
 		size_t mMaxInstanceCount;
+		uint32_t mStepsUntilNextRebuild;
 	};
 }

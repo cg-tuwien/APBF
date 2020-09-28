@@ -435,7 +435,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 
 		if (!mQuakeCam.is_enabled()) {
-			mPool->handle_input(input());
+			mPool->handle_input(glm::inverse(mQuakeCam.projection_and_view_matrix()), mQuakeCam.translation());
 		}
 	}
 

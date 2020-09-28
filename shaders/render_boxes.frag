@@ -1,8 +1,10 @@
 #version 460
 #extension GL_ARB_separate_shader_objects : enable
 
+layout(location = 0) flat in int inSelected;
+
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = vec4(0, 1, 1, 0.1);
+	outColor = inSelected == 1 ? vec4(1, 0.5, 0.5, 0.1) : vec4(0, 1, 1, 0.1);
 }
