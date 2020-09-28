@@ -13,6 +13,8 @@ public:
 
 private:
 	void update_buffer();
+	void update_cursor_data(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos);
+	glm::vec3 cursor_pos_on_plane(const glm::vec3& aPlanePoint, int aAxis);
 	bool in_box(const glm::vec3& aPos, const glm::vec3& aMin, const glm::vec3& aMax);
 
 	bool mBufferOutdated;
@@ -23,4 +25,9 @@ private:
 	pbd::gpu_list<16> mBoxMin;
 	pbd::gpu_list<16> mBoxMax;
 	int mSelectedIdx;
+	int mLockedAxis;
+	glm::vec3 mCursorPosVS;
+
+	glm::vec3 mCursorDirVS;
+	glm::vec3 mCameraPosVS;
 };
