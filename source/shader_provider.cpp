@@ -545,34 +545,17 @@ void shader_provider::initialize_box(const avk::buffer& aInIndexList, const avk:
 	dispatch(aParticleCount.x * aParticleCount.y * aParticleCount.z);
 }
 
-void shader_provider::add_box(const avk::buffer& aInIndexList, const avk::buffer& aOutBoxes, const glm::vec4& aMin, const glm::vec4& aMax)
-{
-	struct push_constants { glm::vec4 mMin, mMax; } pushConstants{ aMin, aMax };
-	static auto pipeline = gvk::context().create_compute_pipeline_for(
-		"shaders/particle manipulation/add_box.comp",
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aOutBoxes),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
-	);
-	cmd_bfr()->bind_pipeline(pipeline);
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aOutBoxes)
-	}));
-	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
-	dispatch(1u, 1u, 1u, 1u);
-}
-
-void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoxes, const avk::buffer& aInIndexListLength, const avk::buffer& aInBoxesLength)
+void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoxMin, const avk::buffer& aInBoxMax, const avk::buffer& aInIndexListLength, const avk::buffer& aInBoxesLength)
 {
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/box_collision.comp",
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInOutPosition),
 		avk::descriptor_binding(2, 0, aInRadius),
-		avk::descriptor_binding(3, 0, aInBoxes),
-		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, aInBoxesLength)
+		avk::descriptor_binding(3, 0, aInBoxMin),
+		avk::descriptor_binding(4, 0, aInBoxMax),
+		avk::descriptor_binding(5, 0, aInIndexListLength),
+		avk::descriptor_binding(6, 0, aInBoxesLength)
 	);
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(pipeline);
@@ -580,9 +563,10 @@ void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInOutPosition),
 		avk::descriptor_binding(2, 0, aInRadius),
-		avk::descriptor_binding(3, 0, aInBoxes),
-		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, aInBoxesLength)
+		avk::descriptor_binding(3, 0, aInBoxMin),
+		avk::descriptor_binding(4, 0, aInBoxMax),
+		avk::descriptor_binding(5, 0, aInIndexListLength),
+		avk::descriptor_binding(6, 0, aInBoxesLength)
 	}));
 	dispatch_indirect();
 }

@@ -20,7 +20,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\add_box.comp" />
     <None Include="shaders\apply_acceleration.comp" />
     <None Include="shaders\apply_velocity.comp" />
     <None Include="shaders\atomic_swap.comp" />

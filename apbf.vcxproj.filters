@@ -127,9 +127,6 @@
     <None Include="shaders\instanced2.vert">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\add_box.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
     <None Include="shaders\box_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>

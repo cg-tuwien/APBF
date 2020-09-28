@@ -7,15 +7,12 @@ namespace pbd
 	class box_collision
 	{
 	public:
-		using boxes = pbd::indexed_list<pbd::gpu_list<32ui64>>;
-
-		box_collision& set_data(particles* aParticles);
-		boxes add_box(const glm::vec3& aMin, const glm::vec3& aMax);
-		void delete_boxes(boxes& aBox);
+		box_collision& set_data(particles* aParticles, pbd::gpu_list<16>* aBoxMin, pbd::gpu_list<16>* aBoxMax);
 		void apply();
 
 	private:
 		particles* mParticles;
-		boxes mBoxes;
+		pbd::gpu_list<16>* mBoxMin;
+		pbd::gpu_list<16>* mBoxMax;
 	};
 }

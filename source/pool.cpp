@@ -22,14 +22,14 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
-	mBoxCollision.set_data(&mParticles);
-	mBoxCollision.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z)); mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
-	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z)); mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
-	mBoxCollision.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
-	mBoxCollision.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);	mUcb.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
+	mBoxCollision.set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
+	mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
+	mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
+	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
+	mUcb.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
 #if DIMENSIONS > 2
-	mBoxCollision.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
-	mBoxCollision.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
+	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
+	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
 #endif
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
@@ -88,7 +88,7 @@ pbd::neighbors& pool::neighbors()
 
 void pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
-	mUcb.handle_input(aInverseViewProjection, aCameraPos);
+	if (mRenderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
 }
 
 void pool::render(const glm::mat4& aViewProjection)

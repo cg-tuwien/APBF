@@ -3,22 +3,17 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
-struct box
-{
-	vec4 mMin;
-	vec4 mMax;
-};
-
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
 layout(set =  1, binding = 0) buffer InOutPosition { ivec4 inOutPosition[]; };
 layout(set =  2, binding = 0) buffer InRadius      { float      inRadius[]; };
-layout(set =  3, binding = 0) buffer InBoxes       { box         inBoxes[]; };
+layout(set =  3, binding = 0) buffer InBoxMin      { vec4       inBoxMin[]; };
+layout(set =  4, binding = 0) buffer InBoxMax      { vec4       inBoxMax[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  4, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
-layout(set =  5, binding = 0) buffer InBoxesLength     { uint inBoxesLength; };
+layout(set =  5, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  6, binding = 0) buffer InBoxesLength     { uint inBoxesLength; };
 // ----------------------------------------------------
 
 // From https://www.shadertoy.com/view/4djSRW (MIT License, see LICENSE in root directory)
@@ -48,8 +43,8 @@ void main()
 	float radius = inRadius[idx];
 	
 	for (uint i = 0; i < inBoxesLength; i++) {
-		vec3 bMin = inBoxes[i].mMin.xyz - radius - hash31(id * pos.x - pos.y - pos.z) * 0.05;
-		vec3 bMax = inBoxes[i].mMax.xyz + radius + hash31(id * pos.y + pos.x + pos.z) * 0.05;
+		vec3 bMin = inBoxMin[i].xyz - radius - hash31(id * pos.x - pos.y - pos.z) * 0.05;
+		vec3 bMax = inBoxMax[i].xyz + radius + hash31(id * pos.y + pos.x + pos.z) * 0.05;
 
 		vec3 toMin = bMin - pos;
 		vec3 toMax = bMax - pos;

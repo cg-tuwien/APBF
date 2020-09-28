@@ -61,11 +61,24 @@ void user_controlled_boxes::render(const glm::mat4& aViewProjection)
 	shader_provider::render_boxes(mVertexBuffer, mIndexBuffer, mBoxMin.buffer(), mBoxMax.buffer(), aViewProjection, mBoxMinData.size(), mSelectedIdx);
 }
 
+pbd::gpu_list<16>& user_controlled_boxes::box_min()
+{
+	update_buffer();
+	return mBoxMin;
+}
+
+pbd::gpu_list<16>& user_controlled_boxes::box_max()
+{
+	update_buffer();
+	return mBoxMax;
+}
+
 void user_controlled_boxes::update_buffer()
 {
 	if (!mBufferOutdated) return;
-	mBoxMin.request_length(std::max(1ui64, mBoxMinData.size()));
-	mBoxMax.request_length(std::max(1ui64, mBoxMaxData.size()));
+	mBoxMin.request_length(std::max(1ui64, mBoxMinData.size())).set_length(mBoxMinData.size());
+	mBoxMax.request_length(std::max(1ui64, mBoxMaxData.size())).set_length(mBoxMaxData.size());
+	auto test = mBoxMin.read<glm::vec4>();
 	pbd::algorithms::copy_bytes(mBoxMinData.data(), mBoxMin.write().buffer(), mBoxMinData.size() * sizeof(glm::vec4));
 	pbd::algorithms::copy_bytes(mBoxMaxData.data(), mBoxMax.write().buffer(), mBoxMaxData.size() * sizeof(glm::vec4));
 	mBufferOutdated = false;
