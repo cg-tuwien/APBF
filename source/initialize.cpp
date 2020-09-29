@@ -25,6 +25,7 @@ pbd::particles pbd::initialize::add_box_shape(pbd::particles& aParticles, const 
 	auto particleCount = glm::uvec3((maxPos - minPos) / (2.0f * aRadius));
 	auto amountToCreate = particleCount.x * particleCount.y * particleCount.z;
 	auto newParticles = aParticles.increase_length(amountToCreate);
+	if (amountToCreate == 0) return newParticles;
 	shader_provider::initialize_box(aParticles.index_buffer(), aParticles.length(), positionList.write().buffer(), velocityList.write().buffer(), inverseMassList.write().buffer(), radiusList.write().buffer(), minPos + aRadius, particleCount, aRadius, inverseMass, aVelocity);
 	posBackupList = positionList;
 	shader_provider::write_sequence(transferringList.write().buffer(), newParticles.length(), 0, 0);

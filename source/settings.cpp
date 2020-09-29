@@ -2,19 +2,22 @@
 #include <imgui.h>
 #include "../shaders/cpu_gpu_shared_config.h"
 
-int   pbd::settings::heightKernelId                = 1;
-int   pbd::settings::gradientKernelId              = 1;
-bool  pbd::settings::matchGradientToHeightKernel   = true;
-bool  pbd::settings::merge                         = false;
-bool  pbd::settings::split                         = false;
-bool  pbd::settings::baseKernelWidthOnTargetRadius = false;
-bool  pbd::settings::updateTargetRadius            = true;
-bool  pbd::settings::updateBoundariness            = true;
-bool  pbd::settings::groundTruthBoundaryDistance   = true;
-float pbd::settings::boundarinessAdaptionSpeed     = 1.0f;
-float pbd::settings::kernelWidthAdaptionSpeed      = 1.0f;
-int   pbd::settings::color                         = 0;
-int   pbd::settings::solverIterations              = 3;
+int   pbd::settings::heightKernelId                   = 1;
+int   pbd::settings::gradientKernelId                 = 1;
+bool  pbd::settings::matchGradientToHeightKernel      = true;
+bool  pbd::settings::merge                            = false;
+bool  pbd::settings::split                            = false;
+bool  pbd::settings::baseKernelWidthOnTargetRadius    = false;
+bool  pbd::settings::updateTargetRadius               = true;
+bool  pbd::settings::updateBoundariness               = true;
+bool  pbd::settings::groundTruthBoundaryDistance      = true;
+float pbd::settings::boundarinessAdaptionSpeed        = 1.0f; // TODO delete?
+float pbd::settings::kernelWidthAdaptionSpeed         = 0.1f;
+float pbd::settings::boundarinessSelfGradLengthFactor = 8.0f;
+float pbd::settings::boundarinessUnderpressureFactor  = 4.0f;
+float pbd::settings::neighborBoundarinessThreshold    = 0.24f;
+int   pbd::settings::color                            = 0;
+int   pbd::settings::solverIterations                 = 3;
 
 void pbd::settings::add_apbf_settings_im_gui_entries()
 {
@@ -32,6 +35,10 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Checkbox("Ground Truth for Boundary Distance", &pbd::settings::groundTruthBoundaryDistance);
 	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", 2.0f);
 	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", 2.0f);
+
+	ImGui::SliderFloat("Self Gradient Length Factor", &pbd::settings::boundarinessSelfGradLengthFactor , 0.0f, 16.0f, "%.1f");
+	ImGui::SliderFloat("Underpressure Factor", &pbd::settings::boundarinessUnderpressureFactor , 0.0f, 16.0f, "%.1f");
+	ImGui::SliderFloat("Neighbor Boundariness Threshold", &pbd::settings::neighborBoundarinessThreshold , 0.0f, 1.0f, "%.2f");
 }
 
 void pbd::settings::update_apbf_settings_buffer()
@@ -39,16 +46,19 @@ void pbd::settings::update_apbf_settings_buffer()
 	if (matchGradientToHeightKernel) gradientKernelId = heightKernelId;
 
 	apbf_settings apbfSettings;
-	apbfSettings.mHeightKernelId                = heightKernelId;
-	apbfSettings.mGradientKernelId              = gradientKernelId;
-	apbfSettings.mMerge                         = merge;
-	apbfSettings.mSplit                         = split;
-	apbfSettings.mBaseKernelWidthOnTargetRadius = baseKernelWidthOnTargetRadius;
-	apbfSettings.mUpdateTargetRadius            = updateTargetRadius;
-	apbfSettings.mUpdateBoundariness            = updateBoundariness;
-	apbfSettings.mGroundTruthBoundaryDistance   = groundTruthBoundaryDistance;
-	apbfSettings.mBoundarinessAdaptionSpeed     = boundarinessAdaptionSpeed;
-	apbfSettings.mKernelWidthAdaptionSpeed      = kernelWidthAdaptionSpeed;
+	apbfSettings.mHeightKernelId                   = heightKernelId;
+	apbfSettings.mGradientKernelId                 = gradientKernelId;
+	apbfSettings.mMerge                            = merge;
+	apbfSettings.mSplit                            = split;
+	apbfSettings.mBaseKernelWidthOnTargetRadius    = baseKernelWidthOnTargetRadius;
+	apbfSettings.mUpdateTargetRadius               = updateTargetRadius;
+	apbfSettings.mUpdateBoundariness               = updateBoundariness;
+	apbfSettings.mGroundTruthBoundaryDistance      = groundTruthBoundaryDistance;
+	apbfSettings.mBoundarinessAdaptionSpeed        = boundarinessAdaptionSpeed;
+	apbfSettings.mKernelWidthAdaptionSpeed         = kernelWidthAdaptionSpeed;
+	apbfSettings.mBoundarinessSelfGradLengthFactor = boundarinessSelfGradLengthFactor;
+	apbfSettings.mBoundarinessUnderpressureFactor  = boundarinessUnderpressureFactor;
+	apbfSettings.mNeighborBoundarinessThreshold    = neighborBoundarinessThreshold;
 	apbf_settings_buffer()->fill(&apbfSettings, 0, avk::sync::not_required());
 }
 

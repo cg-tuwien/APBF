@@ -25,8 +25,9 @@
 // ----------------------- PBD ------------------------
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
-#define INCOMPRESSIBILITY_DATA_RESOLUTION 67108864.0
-#define NEIGHBOR_LIST_MAX_LENGTH 2048
+#define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0
+#define BOUNDARINESS_RESOLUTION 262144.0
+#define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
 #define DIMENSIONS 2
 #define PARTICLE_RENDER_SCALE 0.25
 
@@ -62,6 +63,9 @@ struct apbf_settings
 	int mGroundTruthBoundaryDistance;
 	float mBoundarinessAdaptionSpeed;
 	float mKernelWidthAdaptionSpeed;
+	float mBoundarinessSelfGradLengthFactor;
+	float mBoundarinessUnderpressureFactor;
+	float mNeighborBoundarinessThreshold;
 };
 #endif
 // ----------------------------------------------------

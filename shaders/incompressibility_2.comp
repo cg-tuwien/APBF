@@ -4,8 +4,6 @@
 #include "cpu_gpu_shared_config.h"
 
 #define EPSILON 0.01
-#define SELF_GRAD_LENGTH_FACTOR 8.0
-#define UNDERPRESSURE_FACTOR 4.0
 
 struct incomp_data {
 	ivec3 mWeightedGradSum;
@@ -42,9 +40,9 @@ float move_towards(float oldValue, float newValue, float maxStep)
 
 void compute_boundariness(uint id, float selfGradLength, float underpressure)
 {
-	selfGradLength *= SELF_GRAD_LENGTH_FACTOR;
-	underpressure = max(0, underpressure) * UNDERPRESSURE_FACTOR;
-	float boundariness = (selfGradLength + underpressure > 0.9) ? 1.0f : 0.0f;
+	selfGradLength *= apbfSettings.mBoundarinessSelfGradLengthFactor;
+	underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
+	float boundariness = selfGradLength + underpressure;
 //	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
 //	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness
 	outBoundariness[id] = boundariness;
