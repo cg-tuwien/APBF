@@ -77,9 +77,13 @@ void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection
 		}
 	}
 
-	if (gvk::input().key_pressed(gvk::key_code::x)) mLockedAxis = 0;
-	if (gvk::input().key_pressed(gvk::key_code::y)) mLockedAxis = 1;
-	if (gvk::input().key_pressed(gvk::key_code::z)) mLockedAxis = 2;
+	// x, y and z keys for locking x, y or z axis
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(),  88u) != gvk::input().entered_characters().end()) mLockedAxis = 0; // X
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(), 120u) != gvk::input().entered_characters().end()) mLockedAxis = 0; // x
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(),  89u) != gvk::input().entered_characters().end()) mLockedAxis = 1; // Y
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(), 121u) != gvk::input().entered_characters().end()) mLockedAxis = 1; // y
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(),  90u) != gvk::input().entered_characters().end()) mLockedAxis = 2; // Z
+	if (std::find(gvk::input().entered_characters().begin(), gvk::input().entered_characters().end(), 122u) != gvk::input().entered_characters().end()) mLockedAxis = 2; // z
 
 #if DIMENSIONS < 3
 	mLockedAxis = 2;
