@@ -400,7 +400,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	{
 		using namespace gvk;
 
-		if (input().key_pressed(key_code::f1)) {
+		if (input().key_pressed(key_code::f1) || input().mouse_button_pressed(2) || input().mouse_button_released(2)) {
 			auto imguiManager = current_composition()->element_by_type<imgui_manager>();
 			if (mQuakeCam.is_enabled()) {
 				mQuakeCam.disable();

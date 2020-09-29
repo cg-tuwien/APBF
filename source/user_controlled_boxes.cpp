@@ -17,7 +17,7 @@ user_controlled_boxes::user_controlled_boxes()
 void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
 	if (gvk::input().mouse_button_pressed(0) || gvk::input().mouse_button_pressed(1)) {
-		auto selectedIdx = index_of_clicked_box(aInverseViewProjection, aCameraPos);
+		auto selectedIdx = index_of_clicked_box(aInverseViewProjection, aCameraPos, !gvk::input().key_down(gvk::key_code::left_alt));
 		if (gvk::input().key_down(gvk::key_code::left_shift) || gvk::input().key_down(gvk::key_code::left_shift)) {
 			if (selectedIdx >= 0) mSelected[selectedIdx] = !mSelected[selectedIdx];
 			mBufferOutdated = true;
@@ -32,7 +32,6 @@ void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection
 			}
 		}
 		else {
-//			for (auto i = 0; i < mSelected.size(); i++) mSelected[i] = false;
 			std::fill(mSelected.begin(), mSelected.end(), false);
 			if (selectedIdx >= 0) mSelected[selectedIdx] = true;
 			mBufferOutdated = true;
@@ -141,21 +140,21 @@ void user_controlled_boxes::update_cursor_data(const glm::mat4& aInverseViewProj
 	mCameraPosVS = aCameraPos;
 }
 
-int user_controlled_boxes::index_of_clicked_box(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
+int user_controlled_boxes::index_of_clicked_box(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos, bool aFrontmost)
 {
 	mLockedAxis = 0;
 	mDragging = false;
 	update_cursor_data(aInverseViewProjection, aCameraPos);
-	auto vsClickDist = std::numeric_limits<float>().infinity();
+	auto vsClickDist = aFrontmost ? std::numeric_limits<float>().infinity() : 0.0f;
 	auto selectedIdx = -1;
 	for (auto i = 0; i < mBoxMinData.size(); i++) {
 		float d;
-		d = (mBoxMinData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
-		d = (mBoxMinData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
-		d = (mBoxMinData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
-		d = (mBoxMaxData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
-		d = (mBoxMaxData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
-		d = (mBoxMaxData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
+		d = (mBoxMinData[i].x - aCameraPos.x) / mCursorDirVS.x; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
+		d = (mBoxMinData[i].y - aCameraPos.y) / mCursorDirVS.y; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
+		d = (mBoxMinData[i].z - aCameraPos.z) / mCursorDirVS.z; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
+		d = (mBoxMaxData[i].x - aCameraPos.x) / mCursorDirVS.x; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
+		d = (mBoxMaxData[i].y - aCameraPos.y) / mCursorDirVS.y; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
+		d = (mBoxMaxData[i].z - aCameraPos.z) / mCursorDirVS.z; if ((d < vsClickDist == aFrontmost) && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
 	}
 	mCursorPosVS = aCameraPos + mCursorDirVS * vsClickDist;
 	return selectedIdx;

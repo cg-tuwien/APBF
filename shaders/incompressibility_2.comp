@@ -5,7 +5,7 @@
 
 #define EPSILON 0.01
 #define SELF_GRAD_LENGTH_FACTOR 8.0
-#define UNDERPRESSURE_FACTOR 2.0
+#define UNDERPRESSURE_FACTOR 4.0
 
 struct incomp_data {
 	ivec3 mWeightedGradSum;
