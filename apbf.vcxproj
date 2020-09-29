@@ -49,6 +49,7 @@
     <None Include="shaders\instanced2.vert" />
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\kernel_width.comp" />
+    <None Include="shaders\kernel_width_init.comp" />
     <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\neighborhood_green.comp" />
