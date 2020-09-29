@@ -39,6 +39,7 @@
 
 #define MERGE_DURATION 2.0f
 #define SPLIT_DURATION 2.0f
+#define MAX_TRANSFERS 100
 // ----------------------------------------------------
 
 

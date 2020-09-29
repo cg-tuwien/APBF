@@ -1045,44 +1045,42 @@ void shader_provider::initialize_split_particles(const avk::buffer& aInIndexList
 	dispatch_indirect();
 }
 
-void shader_provider::particle_transfer(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInOutRadius, const avk::buffer& aInOutInverseMass, const avk::buffer& aInOutVelocity, const avk::buffer& aInOutTransferSource, const avk::buffer& aInOutTransferTarget, const avk::buffer& aInOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutDeleteParticleList, const avk::buffer& aOutDeleteTransferList, const avk::buffer& aInTransferLength, const avk::buffer& aInOutDeleteParticleListLength, const avk::buffer& aInOutDeleteTransferListLength, float aDeltaTime)
+void shader_provider::particle_transfer(const avk::buffer& aInOutPosition, const avk::buffer& aInOutRadius, const avk::buffer& aInOutInverseMass, const avk::buffer& aInOutVelocity, const avk::buffer& aInOutTransferSource, const avk::buffer& aInOutTransferTarget, const avk::buffer& aInOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutDeleteParticleList, const avk::buffer& aOutDeleteTransferList, const avk::buffer& aInTransferLength, const avk::buffer& aInOutDeleteParticleListLength, const avk::buffer& aInOutDeleteTransferListLength, float aDeltaTime)
 {
 	struct push_constants { float mDeltaTime; } pushConstants{ aDeltaTime };
 	static auto pipeline = gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/particle_transfer.comp",
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInOutPosition),
-		avk::descriptor_binding(2, 0, aInOutRadius),
-		avk::descriptor_binding(3, 0, aInOutInverseMass),
-		avk::descriptor_binding(4, 0, aInOutVelocity),
-		avk::descriptor_binding(5, 0, aInOutTransferSource),
-		avk::descriptor_binding(6, 0, aInOutTransferTarget),
-		avk::descriptor_binding(7, 0, aInOutTransferTimeLeft),
-		avk::descriptor_binding(8, 0, aInOutTransferring),
-		avk::descriptor_binding(9, 0, aOutDeleteParticleList),
-		avk::descriptor_binding(10, 0, aOutDeleteTransferList),
-		avk::descriptor_binding(11, 0, aInTransferLength),
-		avk::descriptor_binding(12, 0, aInOutDeleteParticleListLength),
-		avk::descriptor_binding(13, 0, aInOutDeleteTransferListLength),
+		avk::descriptor_binding(0, 0, aInOutPosition),
+		avk::descriptor_binding(1, 0, aInOutRadius),
+		avk::descriptor_binding(2, 0, aInOutInverseMass),
+		avk::descriptor_binding(3, 0, aInOutVelocity),
+		avk::descriptor_binding(4, 0, aInOutTransferSource),
+		avk::descriptor_binding(5, 0, aInOutTransferTarget),
+		avk::descriptor_binding(6, 0, aInOutTransferTimeLeft),
+		avk::descriptor_binding(7, 0, aInOutTransferring),
+		avk::descriptor_binding(8, 0, aOutDeleteParticleList),
+		avk::descriptor_binding(9, 0, aOutDeleteTransferList),
+		avk::descriptor_binding(10, 0, aInTransferLength),
+		avk::descriptor_binding(11, 0, aInOutDeleteParticleListLength),
+		avk::descriptor_binding(12, 0, aInOutDeleteTransferListLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	);
 	prepare_dispatch_indirect(aInTransferLength);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInOutPosition),
-		avk::descriptor_binding(2, 0, aInOutRadius),
-		avk::descriptor_binding(3, 0, aInOutInverseMass),
-		avk::descriptor_binding(4, 0, aInOutVelocity),
-		avk::descriptor_binding(5, 0, aInOutTransferSource),
-		avk::descriptor_binding(6, 0, aInOutTransferTarget),
-		avk::descriptor_binding(7, 0, aInOutTransferTimeLeft),
-		avk::descriptor_binding(8, 0, aInOutTransferring),
-		avk::descriptor_binding(9, 0, aOutDeleteParticleList),
-		avk::descriptor_binding(10, 0, aOutDeleteTransferList),
-		avk::descriptor_binding(11, 0, aInTransferLength),
-		avk::descriptor_binding(12, 0, aInOutDeleteParticleListLength),
-		avk::descriptor_binding(13, 0, aInOutDeleteTransferListLength)
+		avk::descriptor_binding(0, 0, aInOutPosition),
+		avk::descriptor_binding(1, 0, aInOutRadius),
+		avk::descriptor_binding(2, 0, aInOutInverseMass),
+		avk::descriptor_binding(3, 0, aInOutVelocity),
+		avk::descriptor_binding(4, 0, aInOutTransferSource),
+		avk::descriptor_binding(5, 0, aInOutTransferTarget),
+		avk::descriptor_binding(6, 0, aInOutTransferTimeLeft),
+		avk::descriptor_binding(7, 0, aInOutTransferring),
+		avk::descriptor_binding(8, 0, aOutDeleteParticleList),
+		avk::descriptor_binding(9, 0, aOutDeleteTransferList),
+		avk::descriptor_binding(10, 0, aInTransferLength),
+		avk::descriptor_binding(11, 0, aInOutDeleteParticleListLength),
+		avk::descriptor_binding(12, 0, aInOutDeleteTransferListLength)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();

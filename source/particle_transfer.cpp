@@ -21,7 +21,7 @@ void pbd::particle_transfer::apply(float aDeltaTime)
 	auto  deleteParticleList   = particles().share_hidden_data_from(particleList).request_length(mTransfers->hidden_list().requested_length());
 	auto  deleteTransferList   = transfers().share_hidden_data_from(*mTransfers).request_length(mTransfers->hidden_list().requested_length());
 
-	shader_provider::particle_transfer(particleList.index_buffer(), positionList.write().buffer(), radiusList.write().buffer(), inverseMassList.write().buffer(), velocityList.write().buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), deleteParticleList.write().index_buffer(), deleteTransferList.write().index_buffer(), mTransfers->hidden_list().write().length(), deleteParticleList.write().length(), deleteTransferList.write().length(), aDeltaTime);
+	shader_provider::particle_transfer(positionList.write().buffer(), radiusList.write().buffer(), inverseMassList.write().buffer(), velocityList.write().buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), deleteParticleList.write().index_buffer(), deleteTransferList.write().index_buffer(), mTransfers->hidden_list().write().length(), deleteParticleList.write().length(), deleteTransferList.write().length(), aDeltaTime);
 
 	deleteTransferList.delete_these();
 	deleteParticleList.delete_these();
