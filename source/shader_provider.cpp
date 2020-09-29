@@ -1157,9 +1157,9 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
-void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances, int aSelectedIdx)
+void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const avk::buffer& aBoxSelected, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances)
 {
-	struct push_constants { glm::mat4 mViewProjection; int mSelectedIdx; } pushConstants{ aViewProjection, aSelectedIdx };
+	struct push_constants { glm::mat4 mViewProjection; } pushConstants{ aViewProjection };
 	auto* mainWnd = gvk::context().main_window();
 
 	static auto pipeline = gvk::context().create_graphics_pipeline_for(
@@ -1168,6 +1168,7 @@ void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::
 		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
 		avk::from_buffer_binding(1)->stream_per_instance<glm::vec4>()->to_location(1),
 		avk::from_buffer_binding(2)->stream_per_instance<glm::vec4>()->to_location(2),
+		avk::from_buffer_binding(3)->stream_per_instance<vk::Bool32>()->to_location(3),
 		gvk::context().create_renderpass({
 			avk::attachment::declare(format_from_window_color_buffer(mainWnd), avk::on_load::load,   avk::color(0),         avk::on_store::store),
 			avk::attachment::declare(format_from_window_depth_buffer(mainWnd), avk::on_load::load,   avk::depth_stencil(),  avk::on_store::store)
@@ -1181,7 +1182,7 @@ void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::
 	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), mainWnd->current_backbuffer());
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
-	cmd_bfr()->draw_indexed(*aIndexBuffer, aNumberOfInstances, 0u, 0u, 0u, *aVertexBuffer, *aBoxMin, *aBoxMax);
+	cmd_bfr()->draw_indexed(*aIndexBuffer, aNumberOfInstances, 0u, 0u, 0u, *aVertexBuffer, *aBoxMin, *aBoxMax, *aBoxSelected);
 	cmd_bfr()->end_render_pass();
 	sync_after_draw();
 }

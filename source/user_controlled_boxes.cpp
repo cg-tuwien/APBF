@@ -11,54 +11,93 @@ user_controlled_boxes::user_controlled_boxes()
 	mIndexBuffer  = gvk::context().create_buffer(avk::memory_usage::device, vk::BufferUsageFlagBits:: eIndexBuffer, avk:: index_buffer_meta::create_from_data(indices));
 	mVertexBuffer->fill(vertices.data(), 0, avk::sync::wait_idle(true));
 	mIndexBuffer ->fill(indices .data(), 0, avk::sync::wait_idle(true));
-	mSelectedIdx = 0;
+	mDragging = false;
 }
 
 void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
-	if (gvk::input().mouse_button_pressed(0)) {
-		update_cursor_data(aInverseViewProjection, aCameraPos);
-		auto vsClickDist = std::numeric_limits<float>().infinity();
-		mLockedAxis = 0;
-		mSelectedIdx = -1;
-		for (auto i = 0; i < mBoxMinData.size(); i++) {
-			float d;
-			d = (mBoxMinData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; mSelectedIdx = i; }
-			d = (mBoxMinData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; mSelectedIdx = i; }
-			d = (mBoxMinData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; mSelectedIdx = i; }
-			d = (mBoxMaxData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; mSelectedIdx = i; }
-			d = (mBoxMaxData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; mSelectedIdx = i; }
-			d = (mBoxMaxData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; mSelectedIdx = i; }
+	if (gvk::input().mouse_button_pressed(0) || gvk::input().mouse_button_pressed(1)) {
+		auto selectedIdx = index_of_clicked_box(aInverseViewProjection, aCameraPos);
+		if (gvk::input().key_down(gvk::key_code::left_shift) || gvk::input().key_down(gvk::key_code::left_shift)) {
+			if (selectedIdx >= 0) mSelected[selectedIdx] = !mSelected[selectedIdx];
+			mBufferOutdated = true;
 		}
-		mCursorPosVS = aCameraPos + mCursorDirVS * vsClickDist;
-#if DIMENSIONS < 3
-		mLockedAxis = 2;
-#endif
+		else if (selectedIdx >= 0 && mSelected[selectedIdx]) {
+			mDragging = true;
+			if (gvk::input().mouse_button_pressed(1)) {
+				for (auto i = 0; i < mSelected.size(); i++) if (mSelected[i]) {
+					mBoxMinDataFloating.push_back(mBoxMinData[i]);
+					mBoxMaxDataFloating.push_back(mBoxMaxData[i]);
+				}
+			}
+		}
+		else {
+//			for (auto i = 0; i < mSelected.size(); i++) mSelected[i] = false;
+			std::fill(mSelected.begin(), mSelected.end(), false);
+			if (selectedIdx >= 0) mSelected[selectedIdx] = true;
+			mBufferOutdated = true;
+		}
 	}
 
-	else if (gvk::input().mouse_button_down(0) && mSelectedIdx >= 0) {
+	else if ((gvk::input().mouse_button_down(0) || gvk::input().mouse_button_down(1)) && mDragging) {
 		update_cursor_data(aInverseViewProjection, aCameraPos);
 		auto newPos = cursor_pos_on_plane(mCursorPosVS, mLockedAxis);
 		auto shift = glm::vec4(newPos - mCursorPosVS, 0.0f);
-		auto test = glm::length(shift) > 1;
-		mBoxMinData[mSelectedIdx] += shift;
-		mBoxMaxData[mSelectedIdx] += shift;
+		if (gvk::input().mouse_button_down(0)) {
+			for (auto i = 0; i < mSelected.size(); i++) if (mSelected[i]) {
+				mBoxMinData[i] += shift;
+				mBoxMaxData[i] += shift;
+			}
+		}
+		if (gvk::input().mouse_button_down(1)) {
+			for (auto i = 0; i < mBoxMinDataFloating.size(); i++) {
+				mBoxMinDataFloating[i] += shift;
+				mBoxMaxDataFloating[i] += shift;
+			}
+		}
 		mCursorPosVS = newPos;
 		mBufferOutdated = true;
 	}
+
+	if (gvk::input().mouse_button_released(1) && mDragging) {
+		mBoxMinData.insert(mBoxMinData.end(), mBoxMinDataFloating.begin(), mBoxMinDataFloating.end());
+		mBoxMaxData.insert(mBoxMaxData.end(), mBoxMaxDataFloating.begin(), mBoxMaxDataFloating.end());
+		mSelected.insert(mSelected.end(), mBoxMinDataFloating.size(), false);
+		mBoxMinDataFloating.clear();
+		mBoxMaxDataFloating.clear();
+		mBufferOutdated = true;
+	}
+
+	if (gvk::input().key_pressed(gvk::key_code::del)) {
+		for (int i = mSelected.size() - 1; i >= 0; i--) if (mSelected[i]) {
+			mBoxMinData.erase(mBoxMinData.begin() + i);
+			mBoxMaxData.erase(mBoxMaxData.begin() + i);
+			mSelected.erase(mSelected.begin() + i);
+			mBufferOutdated = true;
+		}
+	}
+
+	if (gvk::input().key_pressed(gvk::key_code::x)) mLockedAxis = 0;
+	if (gvk::input().key_pressed(gvk::key_code::y)) mLockedAxis = 1;
+	if (gvk::input().key_pressed(gvk::key_code::z)) mLockedAxis = 2;
+
+#if DIMENSIONS < 3
+	mLockedAxis = 2;
+#endif
 }
 
 void user_controlled_boxes::add_box(const glm::vec3& aMin, const glm::vec3& aMax)
 {
 	mBoxMinData.push_back(glm::vec4(aMin, 1.0f));
 	mBoxMaxData.push_back(glm::vec4(aMax, 1.0f));
+	mSelected.push_back(false);
 	mBufferOutdated = true;
 }
 
 void user_controlled_boxes::render(const glm::mat4& aViewProjection)
 {
 	update_buffer();
-	shader_provider::render_boxes(mVertexBuffer, mIndexBuffer, mBoxMin.buffer(), mBoxMax.buffer(), aViewProjection, mBoxMinData.size(), mSelectedIdx);
+	shader_provider::render_boxes(mVertexBuffer, mIndexBuffer, mBoxMin.buffer(), mBoxMax.buffer(), mBoxSelected.buffer(), aViewProjection, mBoxMinData.size() + mBoxMinDataFloating.size());
 }
 
 pbd::gpu_list<16>& user_controlled_boxes::box_min()
@@ -76,11 +115,16 @@ pbd::gpu_list<16>& user_controlled_boxes::box_max()
 void user_controlled_boxes::update_buffer()
 {
 	if (!mBufferOutdated) return;
-	mBoxMin.request_length(std::max(1ui64, mBoxMinData.size())).set_length(mBoxMinData.size());
-	mBoxMax.request_length(std::max(1ui64, mBoxMaxData.size())).set_length(mBoxMaxData.size());
-	auto test = mBoxMin.read<glm::vec4>();
+	auto mSelectedData = std::vector<vk::Bool32>(mSelected.begin(), mSelected.end());
+	auto totalBoxCount = mBoxMinData.size() + mBoxMinDataFloating.size();
+	mBoxMin.request_length(std::max(1ui64, totalBoxCount)).set_length(mBoxMinData.size()); // exploiting the fact that the box collision constraint uses the length value,
+	mBoxMax.request_length(std::max(1ui64, totalBoxCount)).set_length(mBoxMaxData.size()); // therefore the floating boxes won't have a collision
+	mBoxSelected.request_length(std::max(1ui64, totalBoxCount));
+	pbd::algorithms::copy_bytes(mSelectedData.data(), mBoxSelected.write().buffer(), mSelected.size() * sizeof(vk::Bool32));
 	pbd::algorithms::copy_bytes(mBoxMinData.data(), mBoxMin.write().buffer(), mBoxMinData.size() * sizeof(glm::vec4));
 	pbd::algorithms::copy_bytes(mBoxMaxData.data(), mBoxMax.write().buffer(), mBoxMaxData.size() * sizeof(glm::vec4));
+	pbd::algorithms::copy_bytes(mBoxMinDataFloating.data(), mBoxMin.write().buffer(), mBoxMinDataFloating.size() * sizeof(glm::vec4), 0, mBoxMinData.size() * sizeof(glm::vec4));
+	pbd::algorithms::copy_bytes(mBoxMaxDataFloating.data(), mBoxMax.write().buffer(), mBoxMaxDataFloating.size() * sizeof(glm::vec4), 0, mBoxMaxData.size() * sizeof(glm::vec4));
 	mBufferOutdated = false;
 }
 
@@ -91,6 +135,26 @@ void user_controlled_boxes::update_cursor_data(const glm::mat4& aInverseViewProj
 	auto vsCursorPoint = glm::vec3(vsP) / vsP.w;
 	mCursorDirVS = glm::normalize(vsCursorPoint - aCameraPos);
 	mCameraPosVS = aCameraPos;
+}
+
+int user_controlled_boxes::index_of_clicked_box(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
+{
+	mLockedAxis = 0;
+	mDragging = false;
+	update_cursor_data(aInverseViewProjection, aCameraPos);
+	auto vsClickDist = std::numeric_limits<float>().infinity();
+	auto selectedIdx = -1;
+	for (auto i = 0; i < mBoxMinData.size(); i++) {
+		float d;
+		d = (mBoxMinData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
+		d = (mBoxMinData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
+		d = (mBoxMinData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
+		d = (mBoxMaxData[i].x - aCameraPos.x) / mCursorDirVS.x; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 0; selectedIdx = i; }
+		d = (mBoxMaxData[i].y - aCameraPos.y) / mCursorDirVS.y; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 1; selectedIdx = i; }
+		d = (mBoxMaxData[i].z - aCameraPos.z) / mCursorDirVS.z; if (d < vsClickDist && in_box(aCameraPos + mCursorDirVS * d * 1.0001f, mBoxMinData[i], mBoxMaxData[i])) { vsClickDist = d; mLockedAxis = 2; selectedIdx = i; }
+	}
+	mCursorPosVS = aCameraPos + mCursorDirVS * vsClickDist;
+	return selectedIdx;
 }
 
 glm::vec3 user_controlled_boxes::cursor_pos_on_plane(const glm::vec3& aPlanePoint, int aAxis)
