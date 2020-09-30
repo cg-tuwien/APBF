@@ -26,4 +26,3 @@ void main()
 	uint idx = inIndexList[id];
 	inOutVelocity[idx].xyz += mAcceleration;
 }
-

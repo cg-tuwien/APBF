@@ -69,7 +69,7 @@ void main()
 
 	float underpressure = 1 - density * invRestDensity;
 	if (bool(apbfSettings.mUpdateBoundariness)) {
-		compute_boundariness(id, sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
+		compute_boundariness(id, radius * sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
 	}
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);
