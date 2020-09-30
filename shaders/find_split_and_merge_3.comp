@@ -79,7 +79,7 @@ void main()
 
 	float targetRadius;
 	if (bool(apbfSettings.mUpdateTargetRadius)) {
-		targetRadius = SMALLEST_TARGET_RADIUS + max(0, (boundaryDistance - TARGET_RADIUS_OFFSET) * TARGET_RADIUS_SCALE_FACTOR);
+		targetRadius = apbfSettings.mSmallestTargetRadius + max(0, (boundaryDistance - apbfSettings.mTargetRadiusOffset) * apbfSettings.mTargetRadiusScaleFactor);
 		outTargetRadius[id] = targetRadius;
 	} else {
 		targetRadius = outTargetRadius[id]; // TODO inOut
@@ -115,7 +115,7 @@ void main()
 		}
 		outTransferSource  [tIdx] = sourceIdx;
 		outTransferTarget  [tIdx] = targetIdx;
-		outTransferTimeLeft[tIdx] = MERGE_DURATION;
+		outTransferTimeLeft[tIdx] = apbfSettings.mMergeDuration;
 	} else {
 		uint sIdx = atomicAdd(inOutSplitLength, 1u);
 		if (sIdx >= mMaxSplitLength) {

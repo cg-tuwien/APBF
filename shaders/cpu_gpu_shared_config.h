@@ -23,23 +23,18 @@
 
 
 // ----------------------- PBD ------------------------
+#define DIMENSIONS 2
+
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
 #define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0
 #define BOUNDARINESS_RESOLUTION 262144.0
 #define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
-#define DIMENSIONS 2
 #define PARTICLE_RENDER_SCALE 0.25
 
 #define KERNEL_SCALE 4.0
 #define KERNEL_SPREADING_FACTOR 0.5
 
-#define SMALLEST_TARGET_RADIUS 1.0
-#define TARGET_RADIUS_OFFSET 10.0
-#define TARGET_RADIUS_SCALE_FACTOR 0.1
-
-#define MERGE_DURATION 2.0f
-#define SPLIT_DURATION 2.0f
 #define MAX_TRANSFERS 100
 // ----------------------------------------------------
 
@@ -66,6 +61,10 @@ struct apbf_settings
 	float mBoundarinessSelfGradLengthFactor;
 	float mBoundarinessUnderpressureFactor;
 	float mNeighborBoundarinessThreshold;
+	float mMergeDuration;
+	float mSmallestTargetRadius;
+	float mTargetRadiusOffset;
+	float mTargetRadiusScaleFactor;
 };
 #endif
 // ----------------------------------------------------

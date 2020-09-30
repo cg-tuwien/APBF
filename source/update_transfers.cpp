@@ -46,7 +46,7 @@ void pbd::update_transfers::apply()
 	if (settings::split) {
 		splitList.set_length(shader_provider::remove_impossible_splits(splitList.index_buffer(), transferringList.write().buffer(), mTransfers->hidden_list().length(), particleList.hidden_list().length(), splitList.length(), mTransfers->hidden_list().requested_length(), particleList.hidden_list().requested_length()));
 		timeLeftList.set_length(splitList.length());
-		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -SPLIT_DURATION, 0);
+		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -settings::splitDuration, 0);
 		auto duplicates = splitList.duplicate_these();
 		shader_provider::initialize_split_particles(duplicates.index_buffer(), positionList.write().buffer(), inverseMassList.write().buffer(), radiusList.write().buffer(), duplicates.length());
 
