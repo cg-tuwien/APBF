@@ -68,6 +68,7 @@ public:
 	static void sync_after_transfer();
 	static void sync_after_draw();
 private:
+	static avk::compute_pipeline&& with_hot_reload(avk::compute_pipeline&& aPipeline);
 	static avk::descriptor_cache& descriptor_cache();
 	static const avk::buffer& workgroup_count_buffer();
 	static const avk::buffer& length_result_buffer();

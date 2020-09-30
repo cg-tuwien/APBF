@@ -1179,14 +1179,14 @@ void shader_provider::apply_acceleration(const avk::buffer& aInIndexList, const 
 void shader_provider::apply_velocity(const avk::buffer& aInIndexList, const avk::buffer& aInVelocity, const avk::buffer& aInOutPosition, const avk::buffer& aInIndexListLength, float aDeltaTime)
 {
 	struct push_constants { float mDeltaTime; } pushConstants{ aDeltaTime };
-	static auto pipeline = gvk::context().create_compute_pipeline_for(
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/apply_velocity.comp",
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInVelocity),
 		avk::descriptor_binding(2, 0, aInOutPosition),
 		avk::descriptor_binding(3, 0, aInIndexListLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
-	);
+	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
@@ -1276,6 +1276,19 @@ void shader_provider::sync_after_draw()
 		avk::pipeline_stage::color_attachment_output,      /* -> */ avk::pipeline_stage::color_attachment_output,
 		avk::memory_access::color_attachment_write_access, /* -> */ avk::memory_access::color_attachment_write_access
 	);
+}
+
+avk::compute_pipeline&& shader_provider::with_hot_reload(avk::compute_pipeline&& aPipeline)
+{
+	static auto updaterAdded = false;
+	static auto updater = gvk::updater();
+	if (!updaterAdded) {
+		gvk::current_composition()->add_element(updater);
+		updaterAdded = true;
+	}
+	aPipeline.enable_shared_ownership();
+	updater.on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
+	return std::move(aPipeline);
 }
 
 avk::descriptor_cache& shader_provider::descriptor_cache()
