@@ -62,6 +62,7 @@ public:
 	static void apply_velocity(const avk::buffer& aInIndexList, const avk::buffer& aInVelocity, const avk::buffer& aInOutPosition, const avk::buffer& aInIndexListLength, float aDeltaTime);
 	static void infer_velocity(const avk::buffer& aInIndexList, const avk::buffer& aInOldPosition, const avk::buffer& aInPosition, const avk::buffer& aOutVelocity, const avk::buffer& aInIndexListLength, float aDeltaTime);
 
+	static void render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float);
 	static void render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const avk::buffer& aBoxSelected, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances);
 
 	static void sync_after_compute();
@@ -69,10 +70,14 @@ public:
 	static void sync_after_draw();
 private:
 	static avk::compute_pipeline&& with_hot_reload(avk::compute_pipeline&& aPipeline);
+	static avk::graphics_pipeline&& with_hot_reload(avk::graphics_pipeline&& aPipeline);
+	static gvk::updater& updater();
 	static avk::descriptor_cache& descriptor_cache();
+	static const avk::buffer& draw_indexed_indirect_command_buffer();
 	static const avk::buffer& workgroup_count_buffer();
 	static const avk::buffer& length_result_buffer();
 	static void dispatch(uint32_t aX = 1u, uint32_t aY = 1u, uint32_t aZ = 1u, uint32_t aLocalSizeX = 256u, uint32_t aLocalSizeY = 1u, uint32_t aLocalSizeZ = 1u);
+	static void prepare_draw_indexed_indirect(const avk::buffer& aInstanceCount, uint32_t aIndexCount);
 	static void prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aOffset = 0u, uint32_t aScalingFactor = 1u, uint32_t aMinThreadCount = 0u, uint32_t aLocalSizeX = 256u, uint32_t aLocalSizeY = 1u, uint32_t aLocalSizeZ = 1u);
 	static void dispatch_indirect();
 

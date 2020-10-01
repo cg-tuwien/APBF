@@ -36,15 +36,6 @@ class apbf : public gvk::invokee
 		glm::vec2 _align;
 	};
 
-	struct draw_indexed_indirect_command
-	{
-		uint32_t mIndexCount;
-		uint32_t mInstanceCount;
-		uint32_t mFirstIndex;
-		int32_t  mVertexOffset;
-		uint32_t mFirstInstance;
-	};
-
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	apbf(avk::queue& aQueue)
 		: mQueue{ &aQueue }
@@ -182,19 +173,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto sphere = model_t::load_from_file("assets/icosahedron.obj");
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
 
-		// Create the buffer containing parameters for the indirect fluid draw call:
-		auto drawIndexedIndirectCommand = draw_indexed_indirect_command{};
-		drawIndexedIndirectCommand.mIndexCount = mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements();
-		//drawIndexedIndirectCommand.mInstanceCount = ?;
-		drawIndexedIndirectCommand.mFirstIndex = 0;
-		drawIndexedIndirectCommand.mVertexOffset = 0;
-		drawIndexedIndirectCommand.mFirstInstance = 0;
-		mDrawIndexedIndirectCommand = context().create_buffer(
-			memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
-			storage_buffer_meta::create_from_data(drawIndexedIndirectCommand)
-		);
-		mDrawIndexedIndirectCommand->fill(&drawIndexedIndirectCommand, 0, sync::wait_idle(true));
-
 #if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 		
 		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
@@ -231,47 +209,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
 			descriptor_binding(0, 0, mCameraDataBuffer[0])
 		);
-
-#endif
-
-		// Create a graphics pipeline for drawing the particles that uses instanced rendering:
-		mGraphicsPipelineInstanced2 = context().create_graphics_pipeline_for(
-			// Shaders to be used with this pipeline:
-			vertex_shader("shaders/instanced2.vert"), 
-			fragment_shader("shaders/color.frag"),
-			// Declare the vertex input to the shaders:
-			from_buffer_binding(0) -> stream_per_vertex<glm::vec3>()    -> to_location(0),	// Declare that positions shall be read from the attached vertex buffer at binding 0, and that we are going to access it in shaders via layout (location = 0)
-			from_buffer_binding(1) -> stream_per_instance<glm::ivec4>() -> to_location(1),	// Stream instance data from the buffer at binding 1
-			from_buffer_binding(2) -> stream_per_instance<float>()      -> to_location(2),	// Stream instance data from the buffer at binding 2
-			from_buffer_binding(3) -> stream_per_instance<float>()      -> to_location(3),	// Stream instance data from the buffer at binding 3
-			context().create_renderpass({
-					attachment::declare(format_from_window_color_buffer(mainWnd), on_load::clear,   color(0),         on_store::store),
-					attachment::declare(format_from_window_depth_buffer(mainWnd), on_load::clear,   depth_stencil(),  on_store::store)
-				},
-				[](renderpass_sync& aRpSync){
-					// Synchronize with everything that comes BEFORE:
-					if (aRpSync.is_external_pre_sync()) {
-						aRpSync.mSourceStage                    = pipeline_stage::compute_shader;
-						aRpSync.mSourceMemoryDependency         = memory_access::shader_buffers_and_images_write_access;
-						aRpSync.mDestinationStage               = pipeline_stage::vertex_input;
-						aRpSync.mDestinationMemoryDependency    = memory_access::any_vertex_input_read_access;
-					}
-					// Synchronize with everything that comes AFTER:
-					if (aRpSync.is_external_post_sync()) {
-						aRpSync.mSourceStage                    = pipeline_stage::color_attachment_output;
-						aRpSync.mDestinationStage               = pipeline_stage::color_attachment_output;
-						aRpSync.mSourceMemoryDependency         = memory_access::color_attachment_write_access;
-						aRpSync.mDestinationMemoryDependency    = memory_access::color_attachment_write_access;
-					}
-				}
-			),
-			// Further config for the pipeline:
-			cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)), // Set to the dimensions of the main window
-			descriptor_binding(0, 0, mCameraDataBuffer[0]),
-			avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 32 }
-		);
-
-#if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
 
 		//std::vector<glm::vec4> four = { glm::vec4{0, 0, 0, 0}, glm::vec4{0, 3, 0, 0}, glm::vec4{3, 0, 0, 0}, glm::vec4{0, 0, 3, 0} };
 		//mTest = context().create_buffer(memory_usage::device, {}, vertex_buffer_meta::create_from_data(four));
@@ -523,7 +460,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		if (isUint) {
 			shader_provider::uint_to_float(floatForColor.write().buffer(), floatForColor.write().buffer(), floatForColor.write().length(), 1.0f);
 		}
-		pbd::algorithms::copy_bytes(position.length(), mDrawIndexedIndirectCommand, 4, 0, 4);
 
 		measurements::record_timing_interval_end("PBD");
 
@@ -589,25 +525,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		switch(mRenderingMethod) {
 		case 3: // "Fluid"
 
-			cmdBfr->establish_global_memory_barrier(
-				avk::pipeline_stage::transfer,             /* -> */ avk::pipeline_stage::draw_indirect,
-				avk::memory_access::transfer_write_access, /* -> */ avk::memory_access::indirect_command_data_read_access
-			);
-
-			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced2->get_renderpass(), mainWnd->current_backbuffer());
-			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced2);
-			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced2->layout(), mDescriptorCache.get_or_create_descriptor_sets({
-				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
-			}));
-			{
-				struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; } pushConstants{ color1, color1Float, color2, color2Float };
-				cmdBfr->push_constants(mGraphicsPipelineInstanced2->layout(), pushConstants);
-			}
-			
-			cmdBfr->handle().bindVertexBuffers(0u, { mSphereVertexBuffer->buffer_handle(), position.buffer()->buffer_handle(), radius.buffer()->buffer_handle(), floatForColor.buffer()->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
-			cmdBfr->handle().bindIndexBuffer(mSphereIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
-			cmdBfr->handle().drawIndexedIndirect(mDrawIndexedIndirectCommand->buffer_handle(), 0, 1u, 0u);
-			cmdBfr->end_render_pass();
+			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), color1, color2, color1Float, color2Float);
 
 			break;
 		case 0: // "Instanced Spheres"
@@ -717,7 +635,6 @@ private: // v== Member variables ==v
 #endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
-	avk::buffer mDrawIndexedIndirectCommand;
 
 #if BLAS_CENTRIC
 	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;

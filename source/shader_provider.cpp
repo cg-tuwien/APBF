@@ -1,5 +1,6 @@
 #include "shader_provider.h"
 #include "settings.h"
+#include "algorithms.h"
 
 avk::command_buffer shader_provider::mCmdBfr;
 avk::queue* shader_provider::mQueue = nullptr;
@@ -1224,12 +1225,46 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
+void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float)
+{
+	struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; } pushConstants{ aColor1, aColor1Float, aColor2, aColor2Float };
+	auto* mainWnd = gvk::context().main_window();
+
+	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
+		avk::vertex_shader("shaders/instanced2.vert"),
+		avk::fragment_shader("shaders/color.frag"),
+		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
+		avk::from_buffer_binding(1)->stream_per_instance<glm::ivec4>()->to_location(1),
+		avk::from_buffer_binding(2)->stream_per_instance<float>()->to_location(2),
+		avk::from_buffer_binding(3)->stream_per_instance<float>()->to_location(3),
+		gvk::context().create_renderpass({
+			avk::attachment::declare(gvk::format_from_window_color_buffer(mainWnd), avk::on_load::clear,   avk::color(0),         avk::on_store::store),
+			avk::attachment::declare(gvk::format_from_window_depth_buffer(mainWnd), avk::on_load::clear,   avk::depth_stencil(),  avk::on_store::store)
+		}),
+		avk::cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)),
+		avk::descriptor_binding(0, 0, aInCameraDataBuffer),
+		avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 32 }
+	));
+	prepare_draw_indexed_indirect(aInParticleCount, aIndexCount);
+	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), mainWnd->current_backbuffer());
+	cmd_bfr()->bind_pipeline(pipeline);
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInCameraDataBuffer)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	cmd_bfr()->handle().bindVertexBuffers(0u, { aInVertexBuffer->buffer_handle(), aInPosition->buffer_handle(), aInRadius->buffer_handle(), aInFloatForColor->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+	cmd_bfr()->handle().bindIndexBuffer(aInIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
+	cmd_bfr()->handle().drawIndexedIndirect(draw_indexed_indirect_command_buffer()->buffer_handle(), 0, 1u, 0u);
+	cmd_bfr()->end_render_pass();
+	sync_after_draw();
+}
+
 void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::buffer& aIndexBuffer, const avk::buffer& aBoxMin, const avk::buffer& aBoxMax, const avk::buffer& aBoxSelected, const glm::mat4& aViewProjection, uint32_t aNumberOfInstances)
 {
 	struct push_constants { glm::mat4 mViewProjection; } pushConstants{ aViewProjection };
 	auto* mainWnd = gvk::context().main_window();
 
-	static auto pipeline = gvk::context().create_graphics_pipeline_for(
+	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
 		avk::vertex_shader("shaders/render_boxes.vert"),
 		avk::fragment_shader("shaders/render_boxes.frag"),
 		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
@@ -1244,8 +1279,7 @@ void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::
 		avk::cfg::depth_write::disabled(),
 		avk::cfg::color_blending_config::enable_alpha_blending_for_all_attachments(),
 		avk::push_constant_binding_data{ avk::shader_type::vertex, 0, sizeof(pushConstants) }
-	);
-	sync_after_draw(); // TODO remove
+	));
 	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), mainWnd->current_backbuffer());
 	cmd_bfr()->bind_pipeline(pipeline);
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
@@ -1280,15 +1314,27 @@ void shader_provider::sync_after_draw()
 
 avk::compute_pipeline&& shader_provider::with_hot_reload(avk::compute_pipeline&& aPipeline)
 {
+	aPipeline.enable_shared_ownership();
+	updater().on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
+	return std::move(aPipeline);
+}
+
+avk::graphics_pipeline&& shader_provider::with_hot_reload(avk::graphics_pipeline&& aPipeline)
+{
+	aPipeline.enable_shared_ownership();
+	updater().on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
+	return std::move(aPipeline);
+}
+
+gvk::updater& shader_provider::updater()
+{
 	static auto updaterAdded = false;
 	static auto updater = gvk::updater();
 	if (!updaterAdded) {
 		gvk::current_composition()->add_element(updater);
 		updaterAdded = true;
 	}
-	aPipeline.enable_shared_ownership();
-	updater.on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
-	return std::move(aPipeline);
+	return updater;
 }
 
 avk::descriptor_cache& shader_provider::descriptor_cache()
@@ -1297,9 +1343,18 @@ avk::descriptor_cache& shader_provider::descriptor_cache()
 	return descriptorCache;
 }
 
+const avk::buffer& shader_provider::draw_indexed_indirect_command_buffer()
+{
+	static auto buffer = gvk::context().create_buffer(
+		avk::memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
+		avk::storage_buffer_meta::create_from_size(20)
+	);
+	return buffer;
+}
+
 const avk::buffer& shader_provider::workgroup_count_buffer()
 {
-	static avk::buffer workgroupCount = gvk::context().create_buffer(
+	static auto workgroupCount = gvk::context().create_buffer(
 		avk::memory_usage::device, vk::BufferUsageFlagBits::eIndirectBuffer,
 		avk::storage_buffer_meta::create_from_size(12)
 	);
@@ -1319,6 +1374,20 @@ void shader_provider::dispatch(uint32_t aX, uint32_t aY, uint32_t aZ, uint32_t a
 {
 	cmd_bfr()->handle().dispatch((aX + aLocalSizeX - 1u) / aLocalSizeX, (aY + aLocalSizeY - 1u) / aLocalSizeY, (aZ + aLocalSizeZ - 1u) / aLocalSizeZ);
 	sync_after_compute();
+}
+
+void shader_provider::prepare_draw_indexed_indirect(const avk::buffer& aInstanceCount, uint32_t aIndexCount)
+{
+	static auto drawIndexedIndirectCommand = vk::DrawIndexedIndirectCommand{ aIndexCount + 1u, 0u, 0u, 0, 0u };
+	auto change = drawIndexedIndirectCommand.indexCount != aIndexCount;
+	drawIndexedIndirectCommand.setIndexCount(aIndexCount);
+	if (change) pbd::algorithms::copy_bytes(&drawIndexedIndirectCommand, draw_indexed_indirect_command_buffer(), 20); 
+	pbd::algorithms::copy_bytes(aInstanceCount, draw_indexed_indirect_command_buffer(), 4, 0, 4);
+
+	cmd_bfr()->establish_global_memory_barrier(
+		avk::pipeline_stage::transfer,             /* -> */ avk::pipeline_stage::draw_indirect,
+		avk::memory_access::transfer_write_access, /* -> */ avk::memory_access::indirect_command_data_read_access
+	);
 }
 
 void shader_provider::prepare_dispatch_indirect(const avk::buffer& aXyz, uint32_t aOffset, uint32_t aScalingFactor, uint32_t aMinThreadCount, uint32_t aLocalSizeX, uint32_t aLocalSizeY, uint32_t aLocalSizeZ)
