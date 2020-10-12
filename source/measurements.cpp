@@ -19,7 +19,7 @@ uint32_t measurements::async_read_uint(const std::string& aName, const avk::buff
 		.setDstOffset(0)
 		.setSize(4);
 	shader_provider::start_recording();
-	shader_provider::cmd_bfr()->handle().copyBuffer(aBuffer->buffer_handle(), iter->second->buffer_handle(), { copyRegion });
+	shader_provider::cmd_bfr()->handle().copyBuffer(aBuffer->handle(), iter->second->handle(), { copyRegion });
 	shader_provider::end_recording();
 	return iter->second->read<uint32_t>(0, avk::sync::not_required()); // read old value from buffer
 }

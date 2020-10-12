@@ -1252,9 +1252,9 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 		avk::descriptor_binding(0, 0, aInCameraDataBuffer)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
-	cmd_bfr()->handle().bindVertexBuffers(0u, { aInVertexBuffer->buffer_handle(), aInPosition->buffer_handle(), aInRadius->buffer_handle(), aInFloatForColor->buffer_handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
-	cmd_bfr()->handle().bindIndexBuffer(aInIndexBuffer->buffer_handle(), 0u, vk::IndexType::eUint32);
-	cmd_bfr()->handle().drawIndexedIndirect(draw_indexed_indirect_command_buffer()->buffer_handle(), 0, 1u, 0u);
+	cmd_bfr()->handle().bindVertexBuffers(0u, { aInVertexBuffer->handle(), aInPosition->handle(), aInRadius->handle(), aInFloatForColor->handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+	cmd_bfr()->handle().bindIndexBuffer(aInIndexBuffer->handle(), 0u, vk::IndexType::eUint32);
+	cmd_bfr()->handle().drawIndexedIndirect(draw_indexed_indirect_command_buffer()->handle(), 0, 1u, 0u);
 	cmd_bfr()->end_render_pass();
 	sync_after_draw();
 }
@@ -1414,6 +1414,6 @@ void shader_provider::dispatch_indirect()
 		avk::pipeline_stage::compute_shader,                      /* -> */ avk::pipeline_stage::draw_indirect,
 		avk::memory_access::shader_buffers_and_images_any_access, /* -> */ avk::memory_access::indirect_command_data_read_access
 	);
-	cmd_bfr()->handle().dispatchIndirect(workgroup_count_buffer()->buffer_handle(), 0);
+	cmd_bfr()->handle().dispatchIndirect(workgroup_count_buffer()->handle(), 0);
 	sync_after_compute();
 }

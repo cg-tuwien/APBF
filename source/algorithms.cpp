@@ -11,7 +11,7 @@ void pbd::algorithms::copy_bytes(const avk::buffer& aSource, const avk::buffer& 
 		.setSrcOffset(aSourceOffset)
 		.setDstOffset(aTargetOffset)
 		.setSize(aCopiedLength);
-	shader_provider::cmd_bfr()->handle().copyBuffer(aSource->buffer_handle(), aTarget->buffer_handle(), { copyRegion });
+	shader_provider::cmd_bfr()->handle().copyBuffer(aSource->handle(), aTarget->handle(), { copyRegion });
 	shader_provider::sync_after_transfer();
 }
 
