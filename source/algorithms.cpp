@@ -121,7 +121,7 @@ const avk::buffer& pbd::algorithms::zero()
 		avk::storage_buffer_meta::create_from_size(4)
 	);
 	if (value == 0u) {
-		buffer->fill(&value, 0, avk::sync::with_barriers_into_existing_command_buffer(shader_provider::cmd_bfr(), {}, {}));
+		buffer->fill(&value, 0, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
 		shader_provider::sync_after_transfer();
 		value = 1u;
 	}

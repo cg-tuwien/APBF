@@ -531,28 +531,28 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		case 0: // "Instanced Spheres"
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
-			cmdBfr->bind_pipeline(mGraphicsPipelineInstanced);
+			cmdBfr->bind_pipeline(avk::const_referenced(mGraphicsPipelineInstanced));
 			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
-			cmdBfr->draw_indexed(*mSphereIndexBuffer, mNumParticles, 0u, 0u, 0u, *mSphereVertexBuffer, *mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
+			cmdBfr->draw_indexed(avk::const_referenced(mSphereIndexBuffer), mNumParticles, 0u, 0u, 0u, avk::const_referenced(mSphereVertexBuffer), avk::const_referenced(mParticlesBuffer[ifi]), avk::const_referenced(mGeometryInstanceBuffers[ifi]));
 			cmdBfr->end_render_pass();
 
 			break;
 		case 1: // "Points"
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelinePoint->get_renderpass(), mainWnd->current_backbuffer());
-			cmdBfr->bind_pipeline(mGraphicsPipelinePoint);
+			cmdBfr->bind_pipeline(avk::const_referenced(mGraphicsPipelinePoint));
 			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
-			cmdBfr->draw_vertices(*mParticlesBuffer[ifi], *mGeometryInstanceBuffers[ifi]);
+			cmdBfr->draw_vertices(avk::const_referenced(mParticlesBuffer[ifi]), avk::const_referenced(mGeometryInstanceBuffers[ifi]));
 			cmdBfr->end_render_pass();
 
 			break;
 		case 2: // "Ray Tracing"
 
-			cmdBfr->bind_pipeline(mRayTracingPipeline);
+			cmdBfr->bind_pipeline(avk::const_referenced(mRayTracingPipeline));
 			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi]),
 				descriptor_binding(1, 0, mParticlesBuffer[ifi]),
@@ -580,7 +580,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				memory_access::shader_buffers_and_images_write_access,    memory_access::transfer_read_access
 			);
 			
-			copy_image_to_another(mOffscreenImageViews[ifi]->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(cmdBfr, {}, {}));
+			copy_image_to_another(mOffscreenImageViews[ifi]->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
 			
 			// Make sure to properly sync with ImGui manager which comes afterwards (it uses a graphics pipeline):
 			cmdBfr->establish_global_memory_barrier(
@@ -598,7 +598,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// The swap chain provides us with an "image available semaphore" for the current frame.
 		// Only after the swapchain image has become available, we may start rendering into it.
-		auto& imageAvailableSemaphore = mainWnd->consume_current_image_available_semaphore();
+		auto imageAvailableSemaphore = mainWnd->consume_current_image_available_semaphore();
 		
 		// Submit the draw call and take care of the command buffer's lifetime:
 		mQueue->submit(cmdBfr, imageAvailableSemaphore);
