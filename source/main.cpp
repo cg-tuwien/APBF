@@ -79,7 +79,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
-			auto imColor     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
+			auto imColor     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment | avk::image_usage::shader_storage);
 			auto imNormal    = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
 			auto imDepth     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y, format_from_window_depth_buffer(mainWnd), 1, avk::memory_usage::device, avk::image_usage::general_depth_stencil_attachment | avk::image_usage::input_attachment);
 			auto imOcclusion = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,                   vk::Format::eR16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
