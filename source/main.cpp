@@ -36,6 +36,15 @@ class apbf : public gvk::invokee
 		glm::vec2 _align;
 	};
 
+	struct images
+	{
+		avk::image_view mColor;
+		avk::image_view mNormal;
+		avk::image_view mDepth;
+		avk::image_view mOcclusion;
+		avk::image_view mResult;
+	};
+
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	apbf(avk::queue& aQueue)
 		: mQueue{ &aQueue }
@@ -67,6 +76,25 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				memory_usage::host_coherent, {},
 				uniform_buffer_meta::create_from_data(application_data{})
 			));
+		}
+
+		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
+			auto imColor     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
+			auto imNormal    = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
+			auto imDepth     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y, format_from_window_depth_buffer(mainWnd), 1, avk::memory_usage::device, avk::image_usage::general_depth_stencil_attachment | avk::image_usage::input_attachment);
+			auto imOcclusion = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,                   vk::Format::eR16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
+			auto imResult    = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,               vk::Format::eR8G8B8A8Unorm, 1, avk::memory_usage::device, avk::image_usage::general_storage_image);
+			imColor    ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+			imNormal   ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+			imDepth    ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+			imOcclusion->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+//			imResult   ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+			imColor    ->transition_to_layout();
+			imNormal   ->transition_to_layout();
+			imDepth    ->transition_to_layout();
+			imOcclusion->transition_to_layout();
+			imResult   ->transition_to_layout();
+			mImages.emplace_back(context().create_image_view(avk::owned(imColor)), context().create_image_view(avk::owned(imNormal)), context().create_image_view(avk::owned(imDepth)), context().create_image_view(avk::owned(imOcclusion)), context().create_image_view(avk::owned(imResult)));
 		}
 
 #if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT
@@ -318,6 +346,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
 #endif
 				ImGui::Checkbox("Render Boxes", &mPool->mRenderBoxes);
+				ImGui::Checkbox("Ambient Occlusion", &mAddAmbientOcclusion);
 				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius" };
 				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 
@@ -522,17 +551,29 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// GRAPHICS
 
-		switch(mRenderingMethod) {
+		switch (mRenderingMethod) {
 		case 3: // "Fluid"
+		{
+			auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
+			auto result = &mImages[ifi].mColor;
 
-			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), color1, color2, color1Float, color2Float);
+			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), color1, color2, color1Float, color2Float);
+			if (mAddAmbientOcclusion) {
+				shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), fragToVS);
+				shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7);
+				result = &mImages[ifi].mResult;
+			}
+			blit_image           (          (*result)->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
+			copy_image_to_another(mImages[ifi].mDepth->get_image(), mainWnd->current_backbuffer()->image_view_at(1)->get_image(), sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
+			shader_provider::sync_after_transfer();
 
 			break;
+		}
 		case 0: // "Instanced Spheres"
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelineInstanced->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(avk::const_referenced(mGraphicsPipelineInstanced));
-			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+			cmdBfr->bind_descriptors(mGraphicsPipelineInstanced->layout(), mDescriptorCache.get_or_create_descriptor_sets({
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_indexed(avk::const_referenced(mSphereIndexBuffer), mNumParticles, 0u, 0u, 0u, avk::const_referenced(mSphereVertexBuffer), avk::const_referenced(mParticlesBuffer[ifi]), avk::const_referenced(mGeometryInstanceBuffers[ifi]));
@@ -543,7 +584,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 			cmdBfr->begin_render_pass_for_framebuffer(mGraphicsPipelinePoint->get_renderpass(), mainWnd->current_backbuffer());
 			cmdBfr->bind_pipeline(avk::const_referenced(mGraphicsPipelinePoint));
-			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+			cmdBfr->bind_descriptors(mGraphicsPipelinePoint->layout(), mDescriptorCache.get_or_create_descriptor_sets({
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi])
 			}));
 			cmdBfr->draw_vertices(avk::const_referenced(mParticlesBuffer[ifi]), avk::const_referenced(mGeometryInstanceBuffers[ifi]));
@@ -553,7 +594,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		case 2: // "Ray Tracing"
 
 			cmdBfr->bind_pipeline(avk::const_referenced(mRayTracingPipeline));
-			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({ 
+			cmdBfr->bind_descriptors(mRayTracingPipeline->layout(), mDescriptorCache.get_or_create_descriptor_sets({
 				descriptor_binding(0, 0, mCameraDataBuffer[ifi]),
 				descriptor_binding(1, 0, mParticlesBuffer[ifi]),
 #if BLAS_CENTRIC
@@ -562,7 +603,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				descriptor_binding(1, 1, mGeometryInstanceBuffers[ifi]->as_storage_buffer()),
 #endif
 				descriptor_binding(2, 0, mOffscreenImageViews[ifi]->as_storage_image()),
-				descriptor_binding(3, 0, mTopLevelAS[ifi])                              
+				descriptor_binding(3, 0, mTopLevelAS[ifi])
 			}));
 
 			// Do it:
@@ -573,21 +614,21 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				using_miss_group_at_index(0),
 				using_hit_group_at_index(0)
 			);
-			
+
 			// Sync ray tracing with transfer:
 			cmdBfr->establish_global_memory_barrier(
 				pipeline_stage::ray_tracing_shaders,                      pipeline_stage::transfer,
 				memory_access::shader_buffers_and_images_write_access,    memory_access::transfer_read_access
 			);
-			
+
 			copy_image_to_another(mOffscreenImageViews[ifi]->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
-			
+
 			// Make sure to properly sync with ImGui manager which comes afterwards (it uses a graphics pipeline):
 			cmdBfr->establish_global_memory_barrier(
 				pipeline_stage::transfer,                                  pipeline_stage::color_attachment_output,
 				memory_access::transfer_write_access,                      memory_access::color_attachment_write_access
 			);
-			
+
 			break;
 		default:
 			throw std::runtime_error(fmt::format("Invalid mRenderingMethod[{}]", mRenderingMethod));
@@ -652,6 +693,7 @@ private: // v== Member variables ==v
 	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
 	std::vector<avk::image_view> mOffscreenImageViews;
+	std::vector<images> mImages;
 
 	//avk::buffer mTest;
 	
@@ -660,6 +702,7 @@ private: // v== Member variables ==v
 	int mRenderNeighbors = 1;
 	int mNeighborhoodOriginParticleId = 0;
 	bool mFreezeParticleAnimation = true;
+	bool mAddAmbientOcclusion = true;
 	bool mResetParticlePositions = false;
 	bool mSetUniformParticleRadius = false;
 	bool mPerformSingleSimulationStep = false;

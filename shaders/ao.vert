@@ -6,10 +6,9 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in ivec4 inParticlePosition;
 layout(location = 2) in float inParticleRadius;
-layout(location = 3) in float inFloatForColor;
 
-layout(location = 0) out vec3 outColor;
-layout(location = 1) out vec3 outNormalVS;
+layout(location = 0) out vec3 outSpherePosVS;
+layout(location = 1) out float outSphereRadiusVS;
 
 layout(set = 0, binding = 0) uniform camera_data
 {
@@ -23,23 +22,15 @@ layout(set = 0, binding = 0) uniform camera_data
 	uvec4 mUserInput;
 } camData;
 
-// ------------------ push constants ------------------
-layout(push_constant) uniform PushConstants {
-	vec3  mColor1;
-	float mColor1Float;
-	vec3  mColor2;
-	float mColor2Float;
-};
-// ----------------------------------------------------
-
 void main() {
 	vec3 translation = vec3(inParticlePosition) / POS_RESOLUTION;
-	float scale = inParticleRadius * PARTICLE_RENDER_SCALE;
+	float radius = inParticleRadius * PARTICLE_RENDER_SCALE;
+	float scale  = radius * 5.0;
 
 	vec3 posWS  = inPosition * scale + translation;
-	gl_Position = camData.mProjMatrix * camData.mViewMatrix * vec4(posWS, 1.0);
-	float a     = (inFloatForColor - mColor1Float) / (mColor2Float - mColor1Float);
-	a           = min(1, max(0, a));
-	outColor    = mix(mColor1, mColor2, a);
-	outNormalVS = mat3(camData.mViewMatrix) * inPosition;
+	vec4 posVS  = camData.mViewMatrix * vec4(posWS, 1.0);
+	gl_Position = camData.mProjMatrix * posVS;
+	
+	outSpherePosVS    = (camData.mViewMatrix * vec4(translation, 1.0)).xyz;
+	outSphereRadiusVS = radius;
 }

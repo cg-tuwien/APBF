@@ -23,14 +23,14 @@
 
 
 // ----------------------- PBD ------------------------
-#define DIMENSIONS 2
+#define DIMENSIONS 3
 
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
 #define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0
 #define BOUNDARINESS_RESOLUTION 262144.0
 #define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
-#define PARTICLE_RENDER_SCALE 0.25
+#define PARTICLE_RENDER_SCALE 0.7
 
 #define KERNEL_SCALE 4.0
 #define KERNEL_SPREADING_FACTOR 0.5

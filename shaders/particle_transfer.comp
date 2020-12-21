@@ -54,7 +54,8 @@ void main()
 	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
 
 	inOutInverseMass[idS]    =                                    invMassS / (1 - invMassS * transfMass);
-	inOutInverseMass[idT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
+//	inOutInverseMass[idT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
+	inOutInverseMass[idT]    =                                           1 / (1 / invMassT + transfMass);
 //	inOutRadius[idS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
 	inOutRadius[idS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
 	inOutRadius[idT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);

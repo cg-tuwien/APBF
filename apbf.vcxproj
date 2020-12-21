@@ -20,6 +20,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\ao.frag" />
+    <None Include="shaders\ao.vert" />
     <None Include="shaders\apply_acceleration.comp" />
     <None Include="shaders\apply_velocity.comp" />
     <None Include="shaders\atomic_swap.comp" />
@@ -27,6 +29,7 @@
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
+    <None Include="shaders\darken_image.comp" />
     <None Include="shaders\find_split_and_merge_0.comp" />
     <None Include="shaders\find_split_and_merge_1.comp" />
     <None Include="shaders\find_split_and_merge_2.comp" />

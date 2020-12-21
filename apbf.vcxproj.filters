@@ -223,6 +223,15 @@
     <None Include="shaders\kernel_width_init.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\ao.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\ao.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\darken_image.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

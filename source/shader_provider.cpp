@@ -1225,11 +1225,23 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
-void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float)
+void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, avk::image_view& aOutNormal, avk::image_view& aOutDepth, avk::image_view& aOutColor, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float)
 {
 	struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; } pushConstants{ aColor1, aColor1Float, aColor2, aColor2Float };
-	auto* mainWnd = gvk::context().main_window();
 
+	static auto renderpass = gvk::context().create_renderpass({
+		avk::attachment::declare_for(aOutColor , avk::on_load::clear,   avk::color(0),         avk::on_store::store),
+		avk::attachment::declare_for(aOutNormal, avk::on_load::clear,   avk::color(1),         avk::on_store::store),
+		avk::attachment::declare_for(aOutDepth , avk::on_load::clear,   avk::depth_stencil(),  avk::on_store::store)
+	});
+	static auto framebuffers = std::vector<std::tuple<avk::image_view*, avk::image_view*, avk::image_view*, avk::framebuffer>>();
+	auto framebuffer = std::find_if(framebuffers.begin(), framebuffers.end(), [&aOutColor, &aOutNormal, &aOutDepth](const auto& f) { return std::get<0>(f) == &aOutColor && std::get<1>(f) == &aOutNormal && std::get<2>(f) == &aOutDepth; });
+	if (framebuffer == framebuffers.end()) {
+		auto newFramebuffer = gvk::context().create_framebuffer(avk::shared(renderpass), avk::shared(aOutColor), avk::shared(aOutNormal), avk::shared(aOutDepth));
+		framebuffers.emplace_back(&aOutColor, &aOutNormal, &aOutDepth, std::move(newFramebuffer));
+		framebuffer = --framebuffers.end();
+	}
+	assert(framebuffers.size() <= gvk::context().main_window()->number_of_frames_in_flight()); // TODO remove
 	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
 		avk::vertex_shader("shaders/instanced2.vert"),
 		avk::fragment_shader("shaders/color.frag"),
@@ -1237,22 +1249,66 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 		avk::from_buffer_binding(1)->stream_per_instance<glm::ivec4>()->to_location(1),
 		avk::from_buffer_binding(2)->stream_per_instance<float>()->to_location(2),
 		avk::from_buffer_binding(3)->stream_per_instance<float>()->to_location(3),
-		gvk::context().create_renderpass({
-			avk::attachment::declare(gvk::format_from_window_color_buffer(mainWnd), avk::on_load::clear,   avk::color(0),         avk::on_store::store),
-			avk::attachment::declare(gvk::format_from_window_depth_buffer(mainWnd), avk::on_load::clear,   avk::depth_stencil(),  avk::on_store::store)
-		}),
-		avk::cfg::viewport_depth_scissors_config::from_framebuffer(mainWnd->backbuffer_at_index(0)),
+		renderpass,
+		avk::cfg::viewport_depth_scissors_config::from_framebuffer(std::get<3>(*framebuffer)),
 		avk::descriptor_binding(0, 0, aInCameraDataBuffer),
-		avk::push_constant_binding_data{ avk::shader_type::vertex, 0, 32 }
+		avk::push_constant_binding_data{ avk::shader_type::vertex, 0, sizeof(pushConstants) }
 	));
 	prepare_draw_indexed_indirect(aInParticleCount, aIndexCount);
-	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), mainWnd->current_backbuffer());
+	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), std::get<3>(*framebuffer));
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInCameraDataBuffer)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	cmd_bfr()->handle().bindVertexBuffers(0u, { aInVertexBuffer->handle(), aInPosition->handle(), aInRadius->handle(), aInFloatForColor->handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
+	cmd_bfr()->handle().bindIndexBuffer(aInIndexBuffer->handle(), 0u, vk::IndexType::eUint32);
+	cmd_bfr()->handle().drawIndexedIndirect(draw_indexed_indirect_command_buffer()->handle(), 0, 1u, 0u);
+	cmd_bfr()->end_render_pass();
+	sync_after_draw();
+}
+
+void shader_provider::render_ambient_occlusion(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInParticleCount, avk::image_view& aInNormal, avk::image_view& aInDepth, avk::image_view& aOutOcclusion, uint32_t aIndexCount, const glm::mat4& aFragToVS)
+{
+	struct push_constants { glm::mat4 mFragToVS; } pushConstants{ aFragToVS };
+
+	static auto renderpass = gvk::context().create_renderpass({
+		avk::attachment::declare_for(aOutOcclusion, avk::on_load::clear, avk::color(0), avk::on_store::store)
+	});
+	static auto framebuffers = std::vector<std::tuple<avk::image_view*, avk::framebuffer>>();
+	auto framebuffer = std::find_if(framebuffers.begin(), framebuffers.end(), [&aOutOcclusion](const auto& f) { return std::get<0>(f) == &aOutOcclusion; });
+	if (framebuffer == framebuffers.end()) {
+		auto newFramebuffer = gvk::context().create_framebuffer(avk::shared(renderpass), avk::shared(aOutOcclusion));
+		framebuffers.emplace_back(&aOutOcclusion, std::move(newFramebuffer));
+		framebuffer = --framebuffers.end();
+	}
+	assert(framebuffers.size() <= gvk::context().main_window()->number_of_frames_in_flight()); // TODO remove
+	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
+		avk::vertex_shader("shaders/ao.vert"),
+		avk::fragment_shader("shaders/ao.frag"),
+		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
+		avk::from_buffer_binding(1)->stream_per_instance<glm::ivec4>()->to_location(1),
+		avk::from_buffer_binding(2)->stream_per_instance<float>()->to_location(2),
+		renderpass,
+		avk::cfg::viewport_depth_scissors_config::from_framebuffer(std::get<1>(*framebuffer)),
+		avk::cfg::depth_test::enabled(),
+		avk::cfg::depth_write::disabled(),
+		avk::cfg::color_blending_config::enable_additive_for_all_attachments(),
+		avk::descriptor_binding(0, 0, aInCameraDataBuffer),
+		avk::descriptor_binding(1, 0, aInNormal),
+		avk::descriptor_binding(1, 1, aInDepth),
+		avk::push_constant_binding_data{ avk::shader_type::fragment, 0, sizeof(pushConstants) }
+	));
+	prepare_draw_indexed_indirect(aInParticleCount, aIndexCount);
+	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), std::get<1>(*framebuffer));
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInCameraDataBuffer),
+		avk::descriptor_binding(1, 0, aInNormal),
+		avk::descriptor_binding(1, 1, aInDepth)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	cmd_bfr()->handle().bindVertexBuffers(0u, { aInVertexBuffer->handle(), aInPosition->handle(), aInRadius->handle() }, { vk::DeviceSize{0}, vk::DeviceSize{0}, vk::DeviceSize{0} });
 	cmd_bfr()->handle().bindIndexBuffer(aInIndexBuffer->handle(), 0u, vk::IndexType::eUint32);
 	cmd_bfr()->handle().drawIndexedIndirect(draw_indexed_indirect_command_buffer()->handle(), 0, 1u, 0u);
 	cmd_bfr()->end_render_pass();
@@ -1286,6 +1342,26 @@ void shader_provider::render_boxes(const avk::buffer& aVertexBuffer, const avk::
 	cmd_bfr()->draw_indexed(avk::const_referenced(aIndexBuffer), aNumberOfInstances, 0u, 0u, 0u, avk::const_referenced(aVertexBuffer), avk::const_referenced(aBoxMin), avk::const_referenced(aBoxMax), avk::const_referenced(aBoxSelected));
 	cmd_bfr()->end_render_pass();
 	sync_after_draw();
+}
+
+void shader_provider::darken_image(avk::image_view& aInDarkness, avk::image_view& aInColor, avk::image_view& aOutColor, float aDarknessScaling)
+{
+	struct push_constants { float mDarknessScaling; } pushConstants{ aDarknessScaling };
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/darken_image.comp",
+		avk::descriptor_binding(0, 0, aInDarkness),
+		avk::descriptor_binding(0, 1, aInColor),
+		avk::descriptor_binding(0, 2, aOutColor->as_storage_image()),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInDarkness),
+		avk::descriptor_binding(0, 1, aInColor),
+		avk::descriptor_binding(0, 2, aOutColor->as_storage_image())
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch(aOutColor->get_image().width(), aOutColor->get_image().height(), 1, 16, 16, 1);
 }
 
 void shader_provider::sync_after_compute()
