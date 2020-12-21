@@ -1362,7 +1362,7 @@ void shader_provider::darken_image(avk::image_view& aInDarkness, avk::image_view
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 //	aInColor->get_image().set_current_layout(vk::ImageLayout::eGeneral);
-	dispatch(aOutColor->get_image().width(), aOutColor->get_image().height(), 1, 16, 16, 1);
+	dispatch(aOutColor->get_image().width(), aOutColor->get_image().height(), 1, 16, 16, 1); // error occurs here!
 }
 
 void shader_provider::sync_after_compute()

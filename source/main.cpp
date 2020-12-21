@@ -84,7 +84,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			auto imDepth     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y, format_from_window_depth_buffer(mainWnd), 1, avk::memory_usage::device, avk::image_usage::general_depth_stencil_attachment | avk::image_usage::input_attachment);
 			auto imOcclusion = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,                   vk::Format::eR16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment);
 			auto imResult    = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,               vk::Format::eR8G8B8A8Unorm, 1, avk::memory_usage::device, avk::image_usage::general_storage_image);
-			imColor    ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
+//			imColor    ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 			imNormal   ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 			imDepth    ->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
 			imOcclusion->set_target_layout(vk::ImageLayout::eShaderReadOnlyOptimal);
