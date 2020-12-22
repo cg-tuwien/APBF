@@ -1225,9 +1225,9 @@ void shader_provider::infer_velocity(const avk::buffer& aInIndexList, const avk:
 	dispatch_indirect();
 }
 
-void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, avk::image_view& aOutNormal, avk::image_view& aOutDepth, avk::image_view& aOutColor, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float)
+void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInFloatForColor, const avk::buffer& aInParticleCount, avk::image_view& aOutNormal, avk::image_view& aOutDepth, avk::image_view& aOutColor, uint32_t aIndexCount, const glm::vec3& aColor1, const glm::vec3& aColor2, float aColor1Float, float aColor2Float, float aParticleRenderScale)
 {
-	struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; } pushConstants{ aColor1, aColor1Float, aColor2, aColor2Float };
+	struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; float mParticleRenderScale; } pushConstants{ aColor1, aColor1Float, aColor2, aColor2Float, aParticleRenderScale };
 
 	static auto renderpass = gvk::context().create_renderpass({
 		avk::attachment::declare_for(aOutColor , avk::on_load::clear,   avk::color(0),         avk::on_store::store).set_image_usage_hint(avk::image_usage::shader_storage),
@@ -1268,9 +1268,9 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 	sync_after_draw();
 }
 
-void shader_provider::render_ambient_occlusion(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInParticleCount, avk::image_view& aInNormal, avk::image_view& aInDepth, avk::image_view& aOutOcclusion, uint32_t aIndexCount, const glm::mat4& aFragToVS)
+void shader_provider::render_ambient_occlusion(const avk::buffer& aInCameraDataBuffer, const avk::buffer& aInVertexBuffer, const avk::buffer& aInIndexBuffer, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInParticleCount, avk::image_view& aInNormal, avk::image_view& aInDepth, avk::image_view& aOutOcclusion, uint32_t aIndexCount, const glm::mat4& aFragToVS, float aParticleRenderScale)
 {
-	struct push_constants { glm::mat4 mFragToVS; } pushConstants{ aFragToVS };
+	struct push_constants { glm::mat4 mFragToVS; float mParticleRenderScale; } pushConstants{ aFragToVS, aParticleRenderScale };
 
 	static auto renderpass = gvk::context().create_renderpass({
 		avk::attachment::declare_for(aOutOcclusion, avk::on_load::clear, avk::color(0), avk::on_store::store)
@@ -1297,7 +1297,7 @@ void shader_provider::render_ambient_occlusion(const avk::buffer& aInCameraDataB
 		avk::descriptor_binding(0, 0, aInCameraDataBuffer),
 		avk::descriptor_binding(1, 0, aInNormal),
 		avk::descriptor_binding(1, 1, aInDepth),
-		avk::push_constant_binding_data{ avk::shader_type::fragment, 0, sizeof(pushConstants) }
+		avk::push_constant_binding_data{ avk::shader_type::vertex | avk::shader_type::fragment, 0, sizeof(pushConstants) }
 	));
 	prepare_draw_indexed_indirect(aInParticleCount, aIndexCount);
 	cmd_bfr()->begin_render_pass_for_framebuffer(pipeline->get_renderpass(), std::get<1>(*framebuffer));

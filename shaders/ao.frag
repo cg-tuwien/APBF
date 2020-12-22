@@ -19,7 +19,8 @@ layout(location = 0) out vec4 outColor;
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	mat4 mFragToVS;
+	mat4  mFragToVS;
+	float mParticleRenderScale;
 };
 // ----------------------------------------------------
 

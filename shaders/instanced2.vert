@@ -29,12 +29,13 @@ layout(push_constant) uniform PushConstants {
 	float mColor1Float;
 	vec3  mColor2;
 	float mColor2Float;
+	float mParticleRenderScale;
 };
 // ----------------------------------------------------
 
 void main() {
 	vec3 translation = vec3(inParticlePosition) / POS_RESOLUTION;
-	float scale = inParticleRadius * PARTICLE_RENDER_SCALE;
+	float scale = inParticleRadius * mParticleRenderScale;
 
 	vec3 posWS  = inPosition * scale + translation;
 	gl_Position = camData.mProjMatrix * camData.mViewMatrix * vec4(posWS, 1.0);

@@ -22,9 +22,16 @@ layout(set = 0, binding = 0) uniform camera_data
 	uvec4 mUserInput;
 } camData;
 
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	mat4  mFragToVS;
+	float mParticleRenderScale;
+};
+// ----------------------------------------------------
+
 void main() {
 	vec3 translation = vec3(inParticlePosition) / POS_RESOLUTION;
-	float radius = inParticleRadius * PARTICLE_RENDER_SCALE;
+	float radius = inParticleRadius * mParticleRenderScale;
 	float scale  = radius * 5.0;
 
 	vec3 posWS  = inPosition * scale + translation;

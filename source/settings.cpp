@@ -21,6 +21,7 @@ float pbd::settings::splitDuration                    = 2.0f;
 float pbd::settings::smallestTargetRadius             = 1.0f;
 float pbd::settings::targetRadiusOffset               = 10.0f;
 float pbd::settings::targetRadiusScaleFactor          = 0.1f;
+float pbd::settings::particleRenderScale              = 0.7f;
 int   pbd::settings::color                            = 0;
 int   pbd::settings::solverIterations                 = 3;
 
