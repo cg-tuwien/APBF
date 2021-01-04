@@ -32,7 +32,7 @@ namespace pbd
 		static float targetRadiusOffset;
 		static float targetRadiusScaleFactor;
 		static float particleRenderScale;
-		static int   color; // 0 = boundariness, 1 = boundary distance, 2 = transferring, 3 = kernel width, 4 = target radius, 5 = radius
+		static int   color; // 0 = boundariness, 1 = boundary distance, 2 = transferring, 3 = kernel width, 4 = target radius, 5 = radius, 6 = velocity
 		static int   solverIterations;
 	};
 }

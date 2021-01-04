@@ -232,6 +232,9 @@
     <None Include="shaders\darken_image.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\vec3_to_length.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

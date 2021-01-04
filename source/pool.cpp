@@ -98,3 +98,10 @@ void pool::render(const glm::mat4& aViewProjection)
 {
 	if (mRenderBoxes) mUcb.render(aViewProjection);
 }
+
+pbd::gpu_list<4> pool::scalar_particle_velocities()
+{
+	auto result = pbd::gpu_list<4>().request_length(mParticles.requested_length()).set_length(mParticles.length());
+	shader_provider::vec3_to_length(mParticles.hidden_list().get<pbd::hidden_particles::id::velocity>().buffer(), result.write().buffer(), mParticles.hidden_list().length());
+	return result;
+}
