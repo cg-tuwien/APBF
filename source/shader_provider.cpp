@@ -352,6 +352,24 @@ void shader_provider::uint_to_float_but_gradual(const avk::buffer& aInUintBuffer
 	dispatch_indirect();
 }
 
+void shader_provider::vec3_to_length(const avk::buffer& aInVec4Buffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInVec4BufferLength)
+{
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/vec3_to_length.comp",
+		avk::descriptor_binding(0, 0, aInVec4Buffer),
+		avk::descriptor_binding(1, 0, aOutFloatBuffer),
+		avk::descriptor_binding(2, 0, aInVec4BufferLength)
+	));
+	prepare_dispatch_indirect(aInVec4BufferLength);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInVec4Buffer),
+		avk::descriptor_binding(1, 0, aOutFloatBuffer),
+		avk::descriptor_binding(2, 0, aInVec4BufferLength)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::generate_new_index_list(const avk::buffer& aInRangeEnd, const avk::buffer& aOutBuffer, const avk::buffer& aInRangeEndLength, const avk::buffer& aOutBufferLength)
 {
 	prepare_dispatch_indirect(aInRangeEndLength);

@@ -27,6 +27,8 @@ public:
 	void handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos);
 	void render(const glm::mat4& aViewProjection);
 
+	pbd::gpu_list<4> scalar_particle_velocities();
+
 	bool mRenderBoxes;
 
 private:
