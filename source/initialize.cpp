@@ -21,7 +21,7 @@ pbd::particles pbd::initialize::add_box_shape(pbd::particles& aParticles, const 
 	maxPos.y = (aMinPos.y + aMaxPos.y) / 2 + aRadius * 1.5; // * 1.5 to address rounding errors
 #endif
 
-	auto inverseMass = aInverseDensity / std::pow(2.0f * aRadius, DIMENSIONS);
+	auto inverseMass = aInverseDensity / static_cast<float>(std::pow(2.0f * aRadius, DIMENSIONS));
 	auto particleCount = glm::uvec3((maxPos - minPos) / (2.0f * aRadius));
 	auto amountToCreate = particleCount.x * particleCount.y * particleCount.z;
 	auto newParticles = aParticles.increase_length(amountToCreate);

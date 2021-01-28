@@ -68,7 +68,7 @@ void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection
 	}
 
 	if (gvk::input().key_pressed(gvk::key_code::del)) {
-		for (int i = mSelected.size() - 1; i >= 0; i--) if (mSelected[i]) {
+		for (auto i = mSelected.size() - 1; i >= 0; i--) if (mSelected[i]) {
 			mBoxMinData.erase(mBoxMinData.begin() + i);
 			mBoxMaxData.erase(mBoxMaxData.begin() + i);
 			mSelected.erase(mSelected.begin() + i);
@@ -100,7 +100,7 @@ void user_controlled_boxes::add_box(const glm::vec3& aMin, const glm::vec3& aMax
 void user_controlled_boxes::render(const glm::mat4& aViewProjection)
 {
 	update_buffer();
-	shader_provider::render_boxes(mVertexBuffer, mIndexBuffer, mBoxMin.buffer(), mBoxMax.buffer(), mBoxSelected.buffer(), aViewProjection, mBoxMinData.size() + mBoxMinDataFloating.size());
+	shader_provider::render_boxes(mVertexBuffer, mIndexBuffer, mBoxMin.buffer(), mBoxMax.buffer(), mBoxSelected.buffer(), aViewProjection, static_cast<uint32_t>(mBoxMinData.size() + mBoxMinDataFloating.size()));
 }
 
 pbd::gpu_list<16>& user_controlled_boxes::box_min()

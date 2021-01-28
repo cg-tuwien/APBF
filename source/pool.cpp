@@ -60,7 +60,7 @@ void pool::update(float aDeltaTime)
 		measurements::record_timing_interval_end("Neighborhood");
 		mSpreadKernelWidth.apply();
 
-		for (uint32_t i = 0u; i < pbd::settings::solverIterations; i++) {
+		for (auto i = 0; i < pbd::settings::solverIterations; i++) {
 			mBoxCollision.apply();
 			mIncompressibility.apply();
 		}

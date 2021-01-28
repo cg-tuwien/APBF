@@ -56,6 +56,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	{
 		using namespace avk;
 		using namespace gvk;
+		shader_provider::set_updater(&mUpdater.emplace());
 
 #ifdef _DEBUG
 		pbd::test::test_all();
@@ -324,7 +325,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				if (values.size() > 90) {
 					values.erase(values.begin());
 				}
-				ImGui::PlotLines("ms/frame", values.data(), values.size(), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
+				ImGui::PlotLines("ms/frame", values.data(), static_cast<int>(values.size()), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
 				ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
 				ImGui::Text("%d Neighbor Pairs", mPool->neighbors().empty() ? 0 : measurements::async_read_uint("neighbor count", mPool->neighbors().length()));
 
@@ -558,10 +559,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
 			auto result = &mImages[ifi].mColor;
 
-			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
+			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 			if (mAddAmbientOcclusion) {
-				shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements(), fragToVS, pbd::settings::particleRenderScale);
-				shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7);
+				shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
+				shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7f);
 				result = &mImages[ifi].mResult;
 			}
 			blit_image           (          (*result)->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
@@ -737,7 +738,8 @@ int main() // <== Starting point ==
 		start(
 			application_name("APBF"),
 			required_device_extensions()
-				.add_extension(VK_KHR_RAY_TRACING_EXTENSION_NAME)
+				.add_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME)
+				.add_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME)
 				.add_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME)
 				.add_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)
 				.add_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME)
@@ -746,11 +748,17 @@ int main() // <== Starting point ==
 			[](vk::PhysicalDeviceFeatures& deviceFeatures) {
 				deviceFeatures.setShaderInt64(VK_TRUE);
 			},
-			[](vk::PhysicalDeviceVulkan12Features& vulkan12Features){
+			[](vk::PhysicalDeviceVulkan12Features& vulkan12Features) {
 				vulkan12Features.setBufferDeviceAddress(VK_TRUE);
 			},
-			[](vk::PhysicalDeviceRayTracingFeaturesKHR& rayTracingFeatures){
-				rayTracingFeatures.setRayTracing(VK_TRUE).setRayQuery(VK_TRUE);
+			[](vk::PhysicalDeviceRayTracingPipelineFeaturesKHR& aRayTracingFeatures) {
+				aRayTracingFeatures.setRayTracingPipeline(VK_TRUE);
+			},
+			[](vk::PhysicalDeviceRayQueryFeaturesKHR& aRayQueryFeatures) {
+				aRayQueryFeatures.setRayQuery(VK_TRUE);
+			},
+			[](vk::PhysicalDeviceAccelerationStructureFeaturesKHR& aAccelerationStructureFeatures) {
+				aAccelerationStructureFeatures.setAccelerationStructure(VK_TRUE);
 			},
 			mainWnd,
 			app,

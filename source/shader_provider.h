@@ -7,6 +7,7 @@ class shader_provider
 public:
 	// TODO maybe add an init_all() function
 	static void set_queue(avk::queue& aQueue);
+	static void set_updater(gvk::updater* aUpdater);
 	static void start_recording();
 	static void end_recording(std::optional<avk::resource_reference<avk::semaphore_t>> aWaitSemaphore = {});
 	static avk::command_buffer& cmd_bfr();
@@ -73,7 +74,6 @@ public:
 private:
 	static avk::compute_pipeline&& with_hot_reload(avk::compute_pipeline&& aPipeline);
 	static avk::graphics_pipeline&& with_hot_reload(avk::graphics_pipeline&& aPipeline);
-	static gvk::updater& updater();
 	static avk::descriptor_cache& descriptor_cache();
 	static const avk::buffer& draw_indexed_indirect_command_buffer();
 	static const avk::buffer& workgroup_count_buffer();
@@ -85,4 +85,5 @@ private:
 
 	static avk::command_buffer mCmdBfr;
 	static avk::queue* mQueue;
+	static gvk::updater* mUpdater;
 };

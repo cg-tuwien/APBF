@@ -3,11 +3,17 @@
 #include "algorithms.h"
 
 avk::command_buffer shader_provider::mCmdBfr;
-avk::queue* shader_provider::mQueue = nullptr;
+avk::queue*   shader_provider::mQueue   = nullptr;
+gvk::updater* shader_provider::mUpdater = nullptr;
 
 void shader_provider::set_queue(avk::queue& aQueue)
 {
 	mQueue = &aQueue;
+}
+
+void shader_provider::set_updater(gvk::updater* aUpdater)
+{
+	mUpdater = aUpdater;
 }
 
 void shader_provider::start_recording()
@@ -1241,7 +1247,7 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 		framebuffers.emplace_back(&aOutColor, &aOutNormal, &aOutDepth, std::move(newFramebuffer));
 		framebuffer = --framebuffers.end();
 	}
-	assert(framebuffers.size() <= gvk::context().main_window()->number_of_frames_in_flight()); // TODO remove
+	assert(framebuffers.size() <= static_cast<size_t>(gvk::context().main_window()->number_of_frames_in_flight())); // TODO remove
 	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
 		avk::vertex_shader("shaders/instanced2.vert"),
 		avk::fragment_shader("shaders/color.frag"),
@@ -1282,7 +1288,7 @@ void shader_provider::render_ambient_occlusion(const avk::buffer& aInCameraDataB
 		framebuffers.emplace_back(&aOutOcclusion, std::move(newFramebuffer));
 		framebuffer = --framebuffers.end();
 	}
-	assert(framebuffers.size() <= gvk::context().main_window()->number_of_frames_in_flight()); // TODO remove
+	assert(framebuffers.size() <= static_cast<size_t>(gvk::context().main_window()->number_of_frames_in_flight())); // TODO remove
 	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
 		avk::vertex_shader("shaders/ao.vert"),
 		avk::fragment_shader("shaders/ao.frag"),
@@ -1391,26 +1397,15 @@ void shader_provider::sync_after_draw()
 avk::compute_pipeline&& shader_provider::with_hot_reload(avk::compute_pipeline&& aPipeline)
 {
 	aPipeline.enable_shared_ownership();
-	updater().on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
+	mUpdater->on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
 	return std::move(aPipeline);
 }
 
 avk::graphics_pipeline&& shader_provider::with_hot_reload(avk::graphics_pipeline&& aPipeline)
 {
 	aPipeline.enable_shared_ownership();
-	updater().on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
+	mUpdater->on(gvk::shader_files_changed_event(aPipeline)).update(aPipeline);
 	return std::move(aPipeline);
-}
-
-gvk::updater& shader_provider::updater()
-{
-	static auto updaterAdded = false;
-	static auto updater = gvk::updater();
-	if (!updaterAdded) {
-		gvk::current_composition()->add_element(updater);
-		updaterAdded = true;
-	}
-	return updater;
 }
 
 avk::descriptor_cache& shader_provider::descriptor_cache()

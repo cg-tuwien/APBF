@@ -34,7 +34,7 @@ void pbd::update_transfers::apply()
 	shader_provider::find_split_and_merge_0(boundarinessList.buffer(), uintBoundarinessList.write().buffer(), mFluid->length());
 	shader_provider::find_split_and_merge_1(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), minNeighborDistList.write().buffer(), mNeighbors->length());
 	shader_provider::find_split_and_merge_2(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), minNeighborDistList.buffer(), nearestNeighborList.write().buffer(), boundarinessList.buffer(), uintBoundarinessList.write().buffer(), mNeighbors->length());
-	shader_provider::find_split_and_merge_3(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), uintBoundarinessList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), nearestNeighborList.buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), mTransfers->hidden_list().requested_length(), splitList.requested_length());
+	shader_provider::find_split_and_merge_3(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), uintBoundarinessList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), nearestNeighborList.buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), static_cast<uint32_t>(mTransfers->hidden_list().requested_length()), static_cast<uint32_t>(splitList.requested_length()));
 
 	// the new length of the transfers list was written into mTransfers->hidden_list().length(), which is the length buffer
 	// of the first list in the uninterleaved_list bundle (the transfer source). It's important that at least the transfer
@@ -44,7 +44,7 @@ void pbd::update_transfers::apply()
 	// perform split
 
 	if (settings::split) {
-		splitList.set_length(shader_provider::remove_impossible_splits(splitList.index_buffer(), transferringList.write().buffer(), mTransfers->hidden_list().length(), particleList.hidden_list().length(), splitList.length(), mTransfers->hidden_list().requested_length(), particleList.hidden_list().requested_length()));
+		splitList.set_length(shader_provider::remove_impossible_splits(splitList.index_buffer(), transferringList.write().buffer(), mTransfers->hidden_list().length(), particleList.hidden_list().length(), splitList.length(), static_cast<uint32_t>(mTransfers->hidden_list().requested_length()), static_cast<uint32_t>(particleList.hidden_list().requested_length())));
 		timeLeftList.set_length(splitList.length());
 		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -settings::splitDuration, 0);
 		auto duplicates = splitList.duplicate_these();

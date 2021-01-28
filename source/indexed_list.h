@@ -192,7 +192,7 @@ inline pbd::indexed_list<DataList> pbd::indexed_list<DataList>::increase_length(
 {
 	auto result = indexed_list().share_hidden_data_from(*this).request_length(mIndexList.requested_length());
 	if (aAddedLength == 0) return result.write();
-	mHiddenData->mData.write().set_length(shader_provider::write_increasing_sequence(result.write().index_buffer(), result.write().length(), mHiddenData->mData.write().length(), mHiddenData->mData.requested_length(), aAddedLength));
+	mHiddenData->mData.write().set_length(shader_provider::write_increasing_sequence(result.write().index_buffer(), result.write().length(), mHiddenData->mData.write().length(), static_cast<uint32_t>(mHiddenData->mData.requested_length()), static_cast<uint32_t>(aAddedLength)));
 	result.mSorted = true;
 	*this += result;
 	return result;
@@ -284,7 +284,7 @@ inline void pbd::indexed_list<DataList>::apply_hidden_edit(gpu_list<4ui64>& aEdi
 
 	shader_provider::atomic_swap(mIndexList.buffer(), indexListEqualities.write().buffer(), hiddenIdToIdxListId.write().buffer(), mIndexList.length());
 	mIndexList.set_length(0);
-	shader_provider::generate_new_index_and_edit_list(aEditList.buffer(), hiddenIdToIdxListId.buffer(), indexListEqualities.buffer(), mIndexList.write().buffer(), newEditList.write().buffer(), aEditList.length(), mIndexList.write().length(), requested_length());
+	shader_provider::generate_new_index_and_edit_list(aEditList.buffer(), hiddenIdToIdxListId.buffer(), indexListEqualities.buffer(), mIndexList.write().buffer(), newEditList.write().buffer(), aEditList.length(), mIndexList.write().length(), static_cast<uint32_t>(requested_length()));
 	if (mOwner == nullptr) return;
 	
 	newEditList.set_length(mIndexList.length());

@@ -27,7 +27,7 @@ uint32_t measurements::async_read_uint(const std::string& aName, const avk::buff
 void measurements::record_timing_interval_start(const std::string& aName)
 {
 	auto& queryPool = add_timing_interval_and_get_query_pool(aName);
-	auto query = gvk::context().main_window()->current_in_flight_index() * 2u;
+	auto query = static_cast<uint32_t>(gvk::context().main_window()->current_in_flight_index()) * 2u;
 	shader_provider::cmd_bfr()->handle().resetQueryPool(queryPool, query, 2u);
 	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllGraphics, queryPool, query);
 }
@@ -35,7 +35,7 @@ void measurements::record_timing_interval_start(const std::string& aName)
 void measurements::record_timing_interval_end(const std::string& aName)
 {
 	auto& queryPool = add_timing_interval_and_get_query_pool(aName);
-	auto query = gvk::context().main_window()->current_in_flight_index() * 2u + 1u;
+	auto query = static_cast<uint32_t>(gvk::context().main_window()->current_in_flight_index()) * 2u + 1u;
 	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllGraphics, queryPool, query);
 }
 
@@ -48,7 +48,7 @@ float measurements::get_timing_interval_in_ms(const std::string& aName)
 	auto& [queryPool, timestamps, avgRendertime, queryUsed] = iter->second;
 	auto mainWindow = gvk::context().main_window();
 	auto oldestFrame = std::max(0i64, mainWindow->current_frame() - mainWindow->number_of_frames_in_flight() + 1i64);
-	auto oldestInFlight = mainWindow->in_flight_index_for_frame(oldestFrame);
+	auto oldestInFlight = static_cast<uint32_t>(mainWindow->in_flight_index_for_frame(oldestFrame));
 	if (!((queryUsed >> oldestInFlight) & 1u)) {
 		return 0.0f;
 	}
@@ -70,7 +70,7 @@ vk::QueryPool& measurements::add_timing_interval_and_get_query_pool(const std::s
 	auto iter = mIntervals.find(aName);
 	if (iter == mIntervals.end()) {
 		vk::QueryPoolCreateInfo queryPoolCreateInfo;
-		queryPoolCreateInfo.setQueryCount(gvk::context().main_window()->number_of_frames_in_flight() * 2u);
+		queryPoolCreateInfo.setQueryCount(static_cast<uint32_t>(gvk::context().main_window()->number_of_frames_in_flight()) * 2u);
 		queryPoolCreateInfo.setQueryType(vk::QueryType::eTimestamp);
 
 		iter = mIntervals.try_emplace(aName, gvk::context().mLogicalDevice.createQueryPoolUnique(queryPoolCreateInfo), std::array<uint32_t, 2>(), 0.0f, 0u).first;
