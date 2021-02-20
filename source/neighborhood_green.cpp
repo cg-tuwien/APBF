@@ -1,6 +1,6 @@
 #include "neighborhood_green.h"
 
-pbd::neighborhood_green& pbd::neighborhood_green::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>* aNeighbors)
+pbd::neighborhood_green& pbd::neighborhood_green::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, pbd::neighbors* aNeighbors)
 {
 	mParticles = aParticles;
 	mRange = aRange;
@@ -32,7 +32,7 @@ void pbd::neighborhood_green::apply()
 	auto  sortedIndexList   = pbd::gpu_list<sizeof(uint32_t)>().request_length(positionList.requested_length());
 	auto  sortHelper        = pbd::gpu_list<sizeof(uint32_t)>().request_length(algorithms::sort_calculate_needed_helper_list_length(unsortedHashList.requested_length()));
 	auto& cellStartList     = unsortedHashList;  // re-use lists
-	auto  cellEndList       = unsortedIndexList;
+	auto& cellEndList       = unsortedIndexList;
 
 	sortedIndexList.set_length(positionList.length());
 
@@ -42,11 +42,11 @@ void pbd::neighborhood_green::apply()
 	algorithms::sort(unsortedHashList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), positionList.length(), unsortedHashList.requested_length(), sortedHashList.write().buffer(), sortedIndexList.write().buffer(), maxHash);
 	mParticles->hidden_list().apply_edit(sortedIndexList, nullptr); // sort particles according to hash (z-curve)
 
-	cellStartList.set_length(maxHash);
-	cellEndList.set_length(maxHash);
-
-	shader_provider::write_sequence(cellStartList.write().buffer(), cellStartList.write().length(), 0u, 0u);
-	shader_provider::write_sequence(cellEndList.write().buffer(), cellEndList.write().length(), 0u, 0u);
-	shader_provider::find_value_ranges(sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), positionList.length());
-	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
+//	cellStartList.set_length(maxHash);
+//	cellEndList.set_length(maxHash);
+//
+//	shader_provider::write_sequence(cellStartList.write().buffer(), cellStartList.write().length(), 0u, 0u);
+//	shader_provider::write_sequence(cellEndList.write().buffer(), cellEndList.write().length(), 0u, 0u);
+//	shader_provider::find_value_ranges(sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), positionList.length());
+//	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
 }

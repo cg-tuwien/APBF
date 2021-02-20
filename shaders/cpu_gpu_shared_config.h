@@ -31,6 +31,8 @@
 #define BOUNDARINESS_RESOLUTION 262144.0
 #define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
 
+#define FIXED_TIME_STEP (1.0f / 60.0f) // 0 for variable timestep
+
 #define KERNEL_SCALE 4.0
 #define KERNEL_SPREADING_FACTOR 0.5
 

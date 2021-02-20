@@ -40,6 +40,9 @@ namespace pbd
 		/// <summary><para>Request write access to the list. The intended use is: gpu_list.write().buffer() and gpu_list.write().length().</para></summary>
 		gpu_list& write();
 
+		// only defined for gpu_list<4>; interprets the values as uint and sorts them into ascending order
+		void sort(size_t aValueUpperBound = MAXUINT32);
+
 		static void cleanup();
 
 	private:
@@ -136,6 +139,7 @@ template<size_t Stride>
 inline void pbd::gpu_list<Stride>::apply_edit(gpu_list<4ui64>& aEditList, list_interface<gpu_list<4ui64>>* aEditSource)
 {
 	if (mOwner != aEditSource && mOwner != nullptr) mOwner->apply_edit(aEditList, this);
+	if (this == aEditSource) return;
 
 	auto oldData = mData;
 	prepare_for_edit(mRequestedLength);
@@ -186,6 +190,22 @@ template<size_t Stride>
 inline void pbd::gpu_list<Stride>::cleanup()
 {
 	mReservedLists.clear();
+}
+
+template<>
+inline void pbd::gpu_list<4>::sort(size_t aValueUpperBound)
+{
+	auto  unsortedList      = *this;
+	auto& sortedList        = *this;
+	auto  unsortedIndexList = pbd::gpu_list<4>().request_length(requested_length());
+	auto  sortedIndexList   = pbd::gpu_list<4>().request_length(requested_length());
+	auto  sortHelper        = pbd::gpu_list<4>().request_length(pbd::algorithms::sort_calculate_needed_helper_list_length(requested_length()));
+
+	sortedIndexList.set_length(length());
+
+	shader_provider::write_sequence(unsortedIndexList.write().buffer(), length(), 0u, 1u);
+	pbd::algorithms::sort(unsortedList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), length(), unsortedList.requested_length(), sortedList.write().buffer(), sortedIndexList.write().buffer(), aValueUpperBound);
+	apply_edit(sortedIndexList, this);
 }
 
 template<size_t Stride>
