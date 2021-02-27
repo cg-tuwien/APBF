@@ -46,9 +46,9 @@ void main()
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= inIndexListLength) return;
 
-	float range = inRange[id] * mRangeScale;
-	uint idx = inIndexList[id];
-	vec3 pos = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
+	float range   = inRange[id] * mRangeScale;
+	uint  idx     = inIndexList[id];
+	vec3  pos     = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
 	uvec3 gridMin = map_pos_to_grid(pos - range);
 	uvec3 gridMax = map_pos_to_grid(pos + range);
 	
@@ -60,9 +60,9 @@ void main()
 
 	for (;; idN++) {
 		while (idN >= cellEnd) {
-			if (                                              ++cell.x >= gridMax.x) cell.x = gridMin.x;
-			if (                       cell.x == gridMin.x && ++cell.y >= gridMax.y) cell.y = gridMin.y;
-			if (cell.y == gridMin.y && cell.x == gridMin.x && ++cell.z >= gridMax.z) return;
+			if (                                              ++cell.x > gridMax.x) cell.x = gridMin.x;
+			if (                       cell.x == gridMin.x && ++cell.y > gridMax.y) cell.y = gridMin.y;
+			if (cell.y == gridMin.y && cell.x == gridMin.x && ++cell.z > gridMax.z) return;
 			
 			h         = hash(cell);
 			cellStart = inCellStart[h];
@@ -76,7 +76,7 @@ void main()
 
 		uint i = atomicAdd(inOutNeighborsLength, 1u);
 		if (i < outNeighbors.length()) {
-			outNeighbors[i] = uvec2(idN, id);
+			outNeighbors[i] = uvec2(id, idN);
 		} else {
 			inOutNeighborsLength = outNeighbors.length();
 		}

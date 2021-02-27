@@ -43,7 +43,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 #endif
 	mNeighborhoodFluid.set_range_scale(1.5f);
 //	mParticleSort.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
-//	mParticleSort.set_position_range(aMin, aMax, 6u);
+//	mParticleSort.set_position_range(aMin, aMax, 4u).set_range_scale(1.5f);
 	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
