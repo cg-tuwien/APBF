@@ -3,22 +3,18 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
-struct neighbors
-{
-	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
-};
-
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
 layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
 layout(set =  2, binding = 0) buffer InRange      { float          inRange[]; };
 layout(set =  3, binding = 0) buffer InCellStart  { uint       inCellStart[]; };
 layout(set =  4, binding = 0) buffer InCellEnd    { uint         inCellEnd[]; };
-layout(set =  5, binding = 0) buffer OutNeighbors { neighbors outNeighbors[]; };
+layout(set =  5, binding = 0) buffer OutNeighbors { uvec2     outNeighbors[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  6, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  6, binding = 0) buffer InIndexListLength    { uint inIndexListLength; };
+layout(set =  7, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
@@ -55,20 +51,34 @@ void main()
 	vec3 pos = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
 	uvec3 gridMin = map_pos_to_grid(pos - range);
 	uvec3 gridMax = map_pos_to_grid(pos + range);
-	uvec3 cell;
+	
+	uvec3 cell      = gridMin;
+	uint  h         = hash(cell);
+	uint  cellStart = inCellStart[h];
+	uint  cellEnd   = inCellEnd  [h];
+	uint  idN       = cellStart;
 
-	uint neighborCount = 0;
-	for (cell.x = gridMin.x; cell.x <= gridMax.x; cell.x++) for (cell.y = gridMin.y; cell.y <= gridMax.y; cell.y++) for (cell.z = gridMin.z; cell.z <= gridMax.z; cell.z++) {
-		uint h         = hash(cell);
-		uint cellStart = inCellStart[h];
-		uint cellEnd   = inCellEnd[h];
-//		cellEnd = cellStart + min(NEIGHBOR_LIST_MAX_LENGTH - neighborCount - 1u, cellEnd - cellStart);
-		for (uint i = cellStart; i < cellEnd; i++) {
-			vec3 posN = vec3(inPosition[i].xyz) / POS_RESOLUTION;
-			if (distance(pos, posN) > range) continue;
-			outNeighbors[id].mNeighbor[++neighborCount] = i;
+	for (;; idN++) {
+		while (idN >= cellEnd) {
+			if (                                              ++cell.x >= gridMax.x) cell.x = gridMin.x;
+			if (                       cell.x == gridMin.x && ++cell.y >= gridMax.y) cell.y = gridMin.y;
+			if (cell.y == gridMin.y && cell.x == gridMin.x && ++cell.z >= gridMax.z) return;
+			
+			h         = hash(cell);
+			cellStart = inCellStart[h];
+			cellEnd   = inCellEnd  [h];
+			idN       = cellStart;
 		}
-		if (neighborCount >= NEIGHBOR_LIST_MAX_LENGTH - 1u) break;
+		
+		uint idxN = inIndexList[idN];
+		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
+		if (id == idN || distance(pos, posN) > range) continue;
+
+		uint i = atomicAdd(inOutNeighborsLength, 1u);
+		if (i < outNeighbors.length()) {
+			outNeighbors[i] = uvec2(idN, id);
+		} else {
+			inOutNeighborsLength = outNeighbors.length();
+		}
 	}
-	outNeighbors[id].mNeighbor[0] = neighborCount;
 }

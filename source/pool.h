@@ -13,7 +13,7 @@
 #include "time_machine.h"
 #include "user_controlled_boxes.h"
 
-#define NEIGHBORHOOD_TYPE 2 // 0 = brute force, 1 = Green, 2 = RTX
+#define NEIGHBORHOOD_TYPE 1 // 0 = brute force, 1 = Green, 2 = RTX
 
 class pool
 {
@@ -58,6 +58,6 @@ private:
 #else
 	pbd::neighborhood_rtx mNeighborhoodFluid;
 #endif
-	pbd::neighborhood_green mParticleSort;
+//	pbd::neighborhood_green mParticleSort;
 	user_controlled_boxes mUcb;
 };

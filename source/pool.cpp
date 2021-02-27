@@ -39,11 +39,11 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticleTransfer.set_data(&mFluid, &mTransfers);
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
-	mNeighborhoodFluid.set_position_range(aMin, aMax, 6u);
+	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
 #endif
 	mNeighborhoodFluid.set_range_scale(1.5f);
-	mParticleSort.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
-	mParticleSort.set_position_range(aMin, aMax, 6u);
+//	mParticleSort.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
+//	mParticleSort.set_position_range(aMin, aMax, 6u);
 	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
@@ -57,8 +57,8 @@ void pool::update(float aDeltaTime)
 		if (pbd::settings::merge || pbd::settings::split) {
 			mParticleTransfer.apply(mDeltaTime);
 		}
-		mParticleSort.apply();
-		mFluid.get<pbd::fluid::id::particle>().sort();
+//		mParticleSort.apply();
+//		mFluid.get<pbd::fluid::id::particle>().sort();
 		measurements::record_timing_interval_start("Neighborhood");
 		mNeighborhoodFluid.apply();
 		measurements::record_timing_interval_end("Neighborhood");

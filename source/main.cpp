@@ -351,6 +351,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius", "Velocity" };
 				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
 				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");
+				ImGui::SliderInt("Render Limit", &pbd::settings::particleRenderLimit, 0, 1000);
 
 				ImGui::Separator();
 
@@ -559,8 +560,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		{
 			auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
 			auto result = &mImages[ifi].mColor;
+			static auto debug = pbd::gpu_list<4>().request_length(1);
+			debug.set_length(pbd::settings::particleRenderLimit);
 
-			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
+			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), debug.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 			if (mAddAmbientOcclusion) {
 				shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
 				shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7f);

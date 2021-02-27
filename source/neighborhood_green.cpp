@@ -35,6 +35,7 @@ void pbd::neighborhood_green::apply()
 	auto& cellEndList       = unsortedIndexList;
 
 	sortedIndexList.set_length(positionList.length());
+	mNeighbors    ->set_length(0);
 
 	// TODO only hash particles selected by index list!
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), positionList.length(), 0u, 1u);
@@ -42,11 +43,18 @@ void pbd::neighborhood_green::apply()
 	algorithms::sort(unsortedHashList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), positionList.length(), unsortedHashList.requested_length(), sortedHashList.write().buffer(), sortedIndexList.write().buffer(), maxHash);
 	mParticles->hidden_list().apply_edit(sortedIndexList, nullptr); // sort particles according to hash (z-curve)
 
-//	cellStartList.set_length(maxHash);
-//	cellEndList.set_length(maxHash);
-//
-//	shader_provider::write_sequence(cellStartList.write().buffer(), cellStartList.write().length(), 0u, 0u);
-//	shader_provider::write_sequence(cellEndList.write().buffer(), cellEndList.write().length(), 0u, 0u);
-//	shader_provider::find_value_ranges(sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), positionList.length());
-//	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
+	mParticles->sort();
+
+	cellStartList.set_length(maxHash);
+	cellEndList  .set_length(maxHash);
+
+	shader_provider::write_sequence(cellStartList.write().buffer(), cellStartList.write().length(), 0u, 0u);
+	shader_provider::write_sequence(  cellEndList.write().buffer(),   cellEndList.write().length(), 0u, 0u);
+	shader_provider::find_value_ranges(mParticles->index_buffer(), sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), mParticles->length());
+	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
+
+//	auto bedug = cellStartList.read<uint32_t>();
+//	auto degub =   cellEndList.read<uint32_t>();
+//	auto debug = mNeighbors->read<std::pair<uint32_t, uint32_t>>();
+//	auto test = true;
 }

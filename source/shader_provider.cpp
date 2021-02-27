@@ -227,22 +227,24 @@ const avk::buffer& shader_provider::write_increasing_sequence(const avk::buffer&
 	return length_result_buffer();
 }
 
-void shader_provider::find_value_ranges(const avk::buffer& aInBuffer, const avk::buffer& aOutRangeStart, const avk::buffer& aOutRangeEnd, const avk::buffer& aInBufferLength)
+void shader_provider::find_value_ranges(const avk::buffer& aInIndexBuffer, const avk::buffer& aInBuffer, const avk::buffer& aOutRangeStart, const avk::buffer& aOutRangeEnd, const avk::buffer& aInBufferLength)
 {
 	prepare_dispatch_indirect(aInBufferLength);
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/find_value_ranges.comp",
-		avk::descriptor_binding(0, 0, aInBuffer),
-		avk::descriptor_binding(1, 0, aOutRangeStart),
-		avk::descriptor_binding(2, 0, aOutRangeEnd),
-		avk::descriptor_binding(3, 0, aInBufferLength)
+		avk::descriptor_binding(0, 0, aInIndexBuffer),
+		avk::descriptor_binding(1, 0, aInBuffer),
+		avk::descriptor_binding(2, 0, aOutRangeStart),
+		avk::descriptor_binding(3, 0, aOutRangeEnd),
+		avk::descriptor_binding(4, 0, aInBufferLength)
 	));
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInBuffer),
-		avk::descriptor_binding(1, 0, aOutRangeStart),
-		avk::descriptor_binding(2, 0, aOutRangeEnd),
-		avk::descriptor_binding(3, 0, aInBufferLength)
+		avk::descriptor_binding(0, 0, aInIndexBuffer),
+		avk::descriptor_binding(1, 0, aInBuffer),
+		avk::descriptor_binding(2, 0, aOutRangeStart),
+		avk::descriptor_binding(3, 0, aOutRangeEnd),
+		avk::descriptor_binding(4, 0, aInBufferLength)
 	}));
 	dispatch_indirect();
 }
@@ -642,7 +644,7 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
-void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aInCellStart, const avk::buffer& aInCellEnd, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, float aRangeScale, const glm::vec3& aMinPos, const glm::vec3& aMaxPos, uint32_t aResolutionLog2)
+void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aInCellStart, const avk::buffer& aInCellEnd, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutNeighborsLength, float aRangeScale, const glm::vec3& aMinPos, const glm::vec3& aMaxPos, uint32_t aResolutionLog2)
 {
 	struct push_constants { glm::vec3 mMinPos; uint32_t mResolutionLog2; glm::vec3 mMaxPos; float mRangeScale; } pushConstants{ aMinPos, aResolutionLog2, aMaxPos, aRangeScale };
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
@@ -654,6 +656,7 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(4, 0, aInCellEnd),
 		avk::descriptor_binding(5, 0, aOutNeighbors),
 		avk::descriptor_binding(6, 0, aInIndexListLength),
+		avk::descriptor_binding(7, 0, aInOutNeighborsLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -665,7 +668,8 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(3, 0, aInCellStart),
 		avk::descriptor_binding(4, 0, aInCellEnd),
 		avk::descriptor_binding(5, 0, aOutNeighbors),
-		avk::descriptor_binding(6, 0, aInIndexListLength)
+		avk::descriptor_binding(6, 0, aInIndexListLength),
+		avk::descriptor_binding(7, 0, aInOutNeighborsLength)
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();

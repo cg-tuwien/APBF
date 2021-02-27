@@ -204,7 +204,7 @@ inline void pbd::gpu_list<4>::sort(size_t aValueUpperBound)
 	sortedIndexList.set_length(length());
 
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), length(), 0u, 1u);
-	pbd::algorithms::sort(unsortedList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), length(), unsortedList.requested_length(), sortedList.write().buffer(), sortedIndexList.write().buffer(), aValueUpperBound);
+	pbd::algorithms::sort(unsortedList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), length(), unsortedList.requested_length(), sortedList.write().buffer(), sortedIndexList.write().buffer(), static_cast<uint32_t>(aValueUpperBound));
 	apply_edit(sortedIndexList, this);
 }
 
