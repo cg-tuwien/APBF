@@ -1,4 +1,5 @@
 #include "neighborhood_rtx.h"
+#include "../shaders/cpu_gpu_shared_config.h"
 
 pbd::neighborhood_rtx::neighborhood_rtx()
 {
@@ -62,7 +63,7 @@ void pbd::neighborhood_rtx::build_acceleration_structure()
 
 	if (mStepsUntilNextRebuild-- == 0u) {
 		mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
-		mStepsUntilNextRebuild = 0u; // setting this to 60, so that a rebuild only happens every 60 frames, causes small explosions in the fluid
+		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u; // occasional rebuilds cause huge variations in required time && fluctuations in time steps not handled well => bad behavior (fluid explosions)
 	} else {
 		mTlas->update(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
 	}

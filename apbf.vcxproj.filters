@@ -235,6 +235,12 @@
     <None Include="shaders\vec3_to_length.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\neighborhood_binary_search.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\calculate_position_code.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -296,6 +302,9 @@
     </ClCompile>
     <ClCompile Include="source\user_controlled_boxes.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\neighborhood_binary_search.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -382,6 +391,9 @@
     </ClInclude>
     <ClInclude Include="source\user_controlled_boxes.h">
       <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\neighborhood_binary_search.h">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

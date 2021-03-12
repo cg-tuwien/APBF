@@ -26,6 +26,7 @@
     <None Include="shaders\apply_velocity.comp" />
     <None Include="shaders\atomic_swap.comp" />
     <None Include="shaders\box_collision.comp" />
+    <None Include="shaders\calculate_position_code.comp" />
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
@@ -53,6 +54,7 @@
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\kernel_width.comp" />
     <None Include="shaders\kernel_width_init.comp" />
+    <None Include="shaders\neighborhood_binary_search.comp" />
     <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\mask_neighborhood.comp" />
     <None Include="shaders\neighborhood_green.comp" />
@@ -92,6 +94,7 @@
     <ClCompile Include="source\initialize.cpp" />
     <ClCompile Include="source\inter_particle_collision.cpp" />
     <ClCompile Include="source\measurements.cpp" />
+    <ClCompile Include="source\neighborhood_binary_search.cpp" />
     <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\neighborhood_green.cpp" />
     <ClCompile Include="source\neighborhood_rtx.cpp" />
@@ -120,6 +123,7 @@
     <ClInclude Include="source\initialize.h" />
     <ClInclude Include="source\inter_particle_collision.h" />
     <ClInclude Include="source\measurements.h" />
+    <ClInclude Include="source\neighborhood_binary_search.h" />
     <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\neighborhood_green.h" />
     <ClInclude Include="source\neighborhood_rtx.h" />

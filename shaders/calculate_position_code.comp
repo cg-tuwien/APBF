@@ -1,0 +1,72 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
+layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
+layout(set =  2, binding = 0) buffer OutPosCode   { uint        outPosCode[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set =  3, binding = 0) buffer InIndexListLength    { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint codeSection;
+};
+// ----------------------------------------------------
+
+// z-curve
+uint encode(ivec3 pos) {
+	uvec3 uPos = pos;
+//	uPos -= 1u << 31u; // shifting (0,0,0) into the center
+	uvec3 result = uvec3(0, 0, 0);
+
+	if ((uPos[0] &          1u) != 0u) result[0] +=          1u;    if ((uPos[1] &          1u) != 0u) result[0] +=          2u;    if ((uPos[2] &          1u) != 0u) result[0] +=          4u;
+	if ((uPos[0] &          2u) != 0u) result[0] +=          8u;    if ((uPos[1] &          2u) != 0u) result[0] +=         16u;    if ((uPos[2] &          2u) != 0u) result[0] +=         32u;
+	if ((uPos[0] &          4u) != 0u) result[0] +=         64u;    if ((uPos[1] &          4u) != 0u) result[0] +=        128u;    if ((uPos[2] &          4u) != 0u) result[0] +=        256u;
+	if ((uPos[0] &          8u) != 0u) result[0] +=        512u;    if ((uPos[1] &          8u) != 0u) result[0] +=       1024u;    if ((uPos[2] &          8u) != 0u) result[0] +=       2048u;
+	if ((uPos[0] &         16u) != 0u) result[0] +=       4096u;    if ((uPos[1] &         16u) != 0u) result[0] +=       8192u;    if ((uPos[2] &         16u) != 0u) result[0] +=      16384u;
+	if ((uPos[0] &         32u) != 0u) result[0] +=      32768u;    if ((uPos[1] &         32u) != 0u) result[0] +=      65536u;    if ((uPos[2] &         32u) != 0u) result[0] +=     131072u;
+	if ((uPos[0] &         64u) != 0u) result[0] +=     262144u;    if ((uPos[1] &         64u) != 0u) result[0] +=     524288u;    if ((uPos[2] &         64u) != 0u) result[0] +=    1048576u;
+	if ((uPos[0] &        128u) != 0u) result[0] +=    2097152u;    if ((uPos[1] &        128u) != 0u) result[0] +=    4194304u;    if ((uPos[2] &        128u) != 0u) result[0] +=    8388608u;
+	if ((uPos[0] &        256u) != 0u) result[0] +=   16777216u;    if ((uPos[1] &        256u) != 0u) result[0] +=   33554432u;    if ((uPos[2] &        256u) != 0u) result[0] +=   67108864u;
+	if ((uPos[0] &        512u) != 0u) result[0] +=  134217728u;    if ((uPos[1] &        512u) != 0u) result[0] +=  268435456u;    if ((uPos[2] &        512u) != 0u) result[0] +=  536870912u;
+	if ((uPos[0] &       1024u) != 0u) result[0] += 1073741824u;    if ((uPos[1] &       1024u) != 0u) result[0] += 2147483648u;    if ((uPos[2] &       1024u) != 0u) result[1] +=          1u;
+	if ((uPos[0] &       2048u) != 0u) result[1] +=          2u;    if ((uPos[1] &       2048u) != 0u) result[1] +=          4u;    if ((uPos[2] &       2048u) != 0u) result[1] +=          8u;
+	if ((uPos[0] &       4096u) != 0u) result[1] +=         16u;    if ((uPos[1] &       4096u) != 0u) result[1] +=         32u;    if ((uPos[2] &       4096u) != 0u) result[1] +=         64u;
+	if ((uPos[0] &       8192u) != 0u) result[1] +=        128u;    if ((uPos[1] &       8192u) != 0u) result[1] +=        256u;    if ((uPos[2] &       8192u) != 0u) result[1] +=        512u;
+	if ((uPos[0] &      16384u) != 0u) result[1] +=       1024u;    if ((uPos[1] &      16384u) != 0u) result[1] +=       2048u;    if ((uPos[2] &      16384u) != 0u) result[1] +=       4096u;
+	if ((uPos[0] &      32768u) != 0u) result[1] +=       8192u;    if ((uPos[1] &      32768u) != 0u) result[1] +=      16384u;    if ((uPos[2] &      32768u) != 0u) result[1] +=      32768u;
+	if ((uPos[0] &      65536u) != 0u) result[1] +=      65536u;    if ((uPos[1] &      65536u) != 0u) result[1] +=     131072u;    if ((uPos[2] &      65536u) != 0u) result[1] +=     262144u;
+	if ((uPos[0] &     131072u) != 0u) result[1] +=     524288u;    if ((uPos[1] &     131072u) != 0u) result[1] +=    1048576u;    if ((uPos[2] &     131072u) != 0u) result[1] +=    2097152u;
+	if ((uPos[0] &     262144u) != 0u) result[1] +=    4194304u;    if ((uPos[1] &     262144u) != 0u) result[1] +=    8388608u;    if ((uPos[2] &     262144u) != 0u) result[1] +=   16777216u;
+	if ((uPos[0] &     524288u) != 0u) result[1] +=   33554432u;    if ((uPos[1] &     524288u) != 0u) result[1] +=   67108864u;    if ((uPos[2] &     524288u) != 0u) result[1] +=  134217728u;
+	if ((uPos[0] &    1048576u) != 0u) result[1] +=  268435456u;    if ((uPos[1] &    1048576u) != 0u) result[1] +=  536870912u;    if ((uPos[2] &    1048576u) != 0u) result[1] += 1073741824u;
+	if ((uPos[0] &    2097152u) != 0u) result[1] += 2147483648u;    if ((uPos[1] &    2097152u) != 0u) result[2] +=          1u;    if ((uPos[2] &    2097152u) != 0u) result[2] +=          2u;
+	if ((uPos[0] &    4194304u) != 0u) result[2] +=          4u;    if ((uPos[1] &    4194304u) != 0u) result[2] +=          8u;    if ((uPos[2] &    4194304u) != 0u) result[2] +=         16u;
+	if ((uPos[0] &    8388608u) != 0u) result[2] +=         32u;    if ((uPos[1] &    8388608u) != 0u) result[2] +=         64u;    if ((uPos[2] &    8388608u) != 0u) result[2] +=        128u;
+	if ((uPos[0] &   16777216u) != 0u) result[2] +=        256u;    if ((uPos[1] &   16777216u) != 0u) result[2] +=        512u;    if ((uPos[2] &   16777216u) != 0u) result[2] +=       1024u;
+	if ((uPos[0] &   33554432u) != 0u) result[2] +=       2048u;    if ((uPos[1] &   33554432u) != 0u) result[2] +=       4096u;    if ((uPos[2] &   33554432u) != 0u) result[2] +=       8192u;
+	if ((uPos[0] &   67108864u) != 0u) result[2] +=      16384u;    if ((uPos[1] &   67108864u) != 0u) result[2] +=      32768u;    if ((uPos[2] &   67108864u) != 0u) result[2] +=      65536u;
+	if ((uPos[0] &  134217728u) != 0u) result[2] +=     131072u;    if ((uPos[1] &  134217728u) != 0u) result[2] +=     262144u;    if ((uPos[2] &  134217728u) != 0u) result[2] +=     524288u;
+	if ((uPos[0] &  268435456u) != 0u) result[2] +=    1048576u;    if ((uPos[1] &  268435456u) != 0u) result[2] +=    2097152u;    if ((uPos[2] &  268435456u) != 0u) result[2] +=    4194304u;
+	if ((uPos[0] &  536870912u) != 0u) result[2] +=    8388608u;    if ((uPos[1] &  536870912u) != 0u) result[2] +=   16777216u;    if ((uPos[2] &  536870912u) != 0u) result[2] +=   33554432u;
+	if ((uPos[0] & 1073741824u) != 0u) result[2] +=   67108864u;    if ((uPos[1] & 1073741824u) != 0u) result[2] +=  134217728u;    if ((uPos[2] & 1073741824u) != 0u) result[2] +=  268435456u;
+	if ((uPos[0] & 2147483648u) != 0u) result[2] +=  536870912u;    if ((uPos[1] & 2147483648u) != 0u) result[2] += 1073741824u;    if ((uPos[2] & 2147483648u) != 0u) result[2] += 2147483648u;
+
+	return result[codeSection];
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint idx = inIndexList[id];
+	outPosCode[id] = encode(inPosition[idx].xyz);
+}

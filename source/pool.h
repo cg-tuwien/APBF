@@ -5,6 +5,7 @@
 #include "neighborhood_brute_force.h"
 #include "neighborhood_green.h"
 #include "neighborhood_rtx.h"
+#include "neighborhood_binary_search.h"
 #include "inter_particle_collision.h"
 #include "spread_kernel_width.h"
 #include "incompressibility.h"
@@ -13,7 +14,7 @@
 #include "time_machine.h"
 #include "user_controlled_boxes.h"
 
-#define NEIGHBORHOOD_TYPE 1 // 0 = brute force, 1 = Green, 2 = RTX
+#define NEIGHBORHOOD_TYPE 3 // 0 = brute force, 1 = Green, 2 = RTX, 3 = binary search
 
 class pool
 {
@@ -55,8 +56,10 @@ private:
 	pbd::neighborhood_brute_force mNeighborhoodFluid;
 #elif NEIGHBORHOOD_TYPE == 1
 	pbd::neighborhood_green mNeighborhoodFluid;
-#else
+#elif NEIGHBORHOOD_TYPE == 2
 	pbd::neighborhood_rtx mNeighborhoodFluid;
+#else
+	pbd::neighborhood_binary_search mNeighborhoodFluid;
 #endif
 //	pbd::neighborhood_green mParticleSort;
 	user_controlled_boxes mUcb;

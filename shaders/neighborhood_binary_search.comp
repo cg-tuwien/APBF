@@ -1,0 +1,269 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
+layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
+layout(set =  2, binding = 0) buffer InPosCode0   { uint        inPosCode0[]; };
+layout(set =  3, binding = 0) buffer InPosCode1   { uint        inPosCode1[]; };
+layout(set =  4, binding = 0) buffer InPosCode2   { uint        inPosCode2[]; };
+layout(set =  5, binding = 0) buffer InRange      { float          inRange[]; };
+layout(set =  6, binding = 0) buffer OutNeighbors { uvec2     outNeighbors[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set =  7, binding = 0) buffer InIndexListLength    { uint inIndexListLength; };
+layout(set =  8, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	float mRangeScale;
+};
+// ----------------------------------------------------
+
+// z-curve
+uvec3 encode(ivec3 pos) {
+	uvec3 uPos = pos;
+//	uPos -= 1u << 31u; // shifting (0,0,0) into the center
+	uvec3 result = uvec3(0, 0, 0);
+//	uint dim    = 0u;
+//	uint digit  = 0u;
+//	uint r      = 0u;
+//	uint offset = 0u;
+//
+//	for (uint i = 0u; i < 32u * DIMENSIONS; i++) {
+//		result[r] += ((uPos[dim] >> digit) & 1u) << (i - 32u * r);
+//		if (++dim >= DIMENSIONS) {
+//			dim = 0u;
+//			digit++;
+//		}
+//		if (i >= limit) {
+//			limit += 32u;
+//			r++;
+//		}
+//	}
+//	return result;
+
+	if ((uPos[0] &          1u) != 0u) result[0] +=          1u;    if ((uPos[1] &          1u) != 0u) result[0] +=          2u;    if ((uPos[2] &          1u) != 0u) result[0] +=          4u;
+	if ((uPos[0] &          2u) != 0u) result[0] +=          8u;    if ((uPos[1] &          2u) != 0u) result[0] +=         16u;    if ((uPos[2] &          2u) != 0u) result[0] +=         32u;
+	if ((uPos[0] &          4u) != 0u) result[0] +=         64u;    if ((uPos[1] &          4u) != 0u) result[0] +=        128u;    if ((uPos[2] &          4u) != 0u) result[0] +=        256u;
+	if ((uPos[0] &          8u) != 0u) result[0] +=        512u;    if ((uPos[1] &          8u) != 0u) result[0] +=       1024u;    if ((uPos[2] &          8u) != 0u) result[0] +=       2048u;
+	if ((uPos[0] &         16u) != 0u) result[0] +=       4096u;    if ((uPos[1] &         16u) != 0u) result[0] +=       8192u;    if ((uPos[2] &         16u) != 0u) result[0] +=      16384u;
+	if ((uPos[0] &         32u) != 0u) result[0] +=      32768u;    if ((uPos[1] &         32u) != 0u) result[0] +=      65536u;    if ((uPos[2] &         32u) != 0u) result[0] +=     131072u;
+	if ((uPos[0] &         64u) != 0u) result[0] +=     262144u;    if ((uPos[1] &         64u) != 0u) result[0] +=     524288u;    if ((uPos[2] &         64u) != 0u) result[0] +=    1048576u;
+	if ((uPos[0] &        128u) != 0u) result[0] +=    2097152u;    if ((uPos[1] &        128u) != 0u) result[0] +=    4194304u;    if ((uPos[2] &        128u) != 0u) result[0] +=    8388608u;
+	if ((uPos[0] &        256u) != 0u) result[0] +=   16777216u;    if ((uPos[1] &        256u) != 0u) result[0] +=   33554432u;    if ((uPos[2] &        256u) != 0u) result[0] +=   67108864u;
+	if ((uPos[0] &        512u) != 0u) result[0] +=  134217728u;    if ((uPos[1] &        512u) != 0u) result[0] +=  268435456u;    if ((uPos[2] &        512u) != 0u) result[0] +=  536870912u;
+	if ((uPos[0] &       1024u) != 0u) result[0] += 1073741824u;    if ((uPos[1] &       1024u) != 0u) result[0] += 2147483648u;    if ((uPos[2] &       1024u) != 0u) result[1] +=          1u;
+	if ((uPos[0] &       2048u) != 0u) result[1] +=          2u;    if ((uPos[1] &       2048u) != 0u) result[1] +=          4u;    if ((uPos[2] &       2048u) != 0u) result[1] +=          8u;
+	if ((uPos[0] &       4096u) != 0u) result[1] +=         16u;    if ((uPos[1] &       4096u) != 0u) result[1] +=         32u;    if ((uPos[2] &       4096u) != 0u) result[1] +=         64u;
+	if ((uPos[0] &       8192u) != 0u) result[1] +=        128u;    if ((uPos[1] &       8192u) != 0u) result[1] +=        256u;    if ((uPos[2] &       8192u) != 0u) result[1] +=        512u;
+	if ((uPos[0] &      16384u) != 0u) result[1] +=       1024u;    if ((uPos[1] &      16384u) != 0u) result[1] +=       2048u;    if ((uPos[2] &      16384u) != 0u) result[1] +=       4096u;
+	if ((uPos[0] &      32768u) != 0u) result[1] +=       8192u;    if ((uPos[1] &      32768u) != 0u) result[1] +=      16384u;    if ((uPos[2] &      32768u) != 0u) result[1] +=      32768u;
+	if ((uPos[0] &      65536u) != 0u) result[1] +=      65536u;    if ((uPos[1] &      65536u) != 0u) result[1] +=     131072u;    if ((uPos[2] &      65536u) != 0u) result[1] +=     262144u;
+	if ((uPos[0] &     131072u) != 0u) result[1] +=     524288u;    if ((uPos[1] &     131072u) != 0u) result[1] +=    1048576u;    if ((uPos[2] &     131072u) != 0u) result[1] +=    2097152u;
+	if ((uPos[0] &     262144u) != 0u) result[1] +=    4194304u;    if ((uPos[1] &     262144u) != 0u) result[1] +=    8388608u;    if ((uPos[2] &     262144u) != 0u) result[1] +=   16777216u;
+	if ((uPos[0] &     524288u) != 0u) result[1] +=   33554432u;    if ((uPos[1] &     524288u) != 0u) result[1] +=   67108864u;    if ((uPos[2] &     524288u) != 0u) result[1] +=  134217728u;
+	if ((uPos[0] &    1048576u) != 0u) result[1] +=  268435456u;    if ((uPos[1] &    1048576u) != 0u) result[1] +=  536870912u;    if ((uPos[2] &    1048576u) != 0u) result[1] += 1073741824u;
+	if ((uPos[0] &    2097152u) != 0u) result[1] += 2147483648u;    if ((uPos[1] &    2097152u) != 0u) result[2] +=          1u;    if ((uPos[2] &    2097152u) != 0u) result[2] +=          2u;
+	if ((uPos[0] &    4194304u) != 0u) result[2] +=          4u;    if ((uPos[1] &    4194304u) != 0u) result[2] +=          8u;    if ((uPos[2] &    4194304u) != 0u) result[2] +=         16u;
+	if ((uPos[0] &    8388608u) != 0u) result[2] +=         32u;    if ((uPos[1] &    8388608u) != 0u) result[2] +=         64u;    if ((uPos[2] &    8388608u) != 0u) result[2] +=        128u;
+	if ((uPos[0] &   16777216u) != 0u) result[2] +=        256u;    if ((uPos[1] &   16777216u) != 0u) result[2] +=        512u;    if ((uPos[2] &   16777216u) != 0u) result[2] +=       1024u;
+	if ((uPos[0] &   33554432u) != 0u) result[2] +=       2048u;    if ((uPos[1] &   33554432u) != 0u) result[2] +=       4096u;    if ((uPos[2] &   33554432u) != 0u) result[2] +=       8192u;
+	if ((uPos[0] &   67108864u) != 0u) result[2] +=      16384u;    if ((uPos[1] &   67108864u) != 0u) result[2] +=      32768u;    if ((uPos[2] &   67108864u) != 0u) result[2] +=      65536u;
+	if ((uPos[0] &  134217728u) != 0u) result[2] +=     131072u;    if ((uPos[1] &  134217728u) != 0u) result[2] +=     262144u;    if ((uPos[2] &  134217728u) != 0u) result[2] +=     524288u;
+	if ((uPos[0] &  268435456u) != 0u) result[2] +=    1048576u;    if ((uPos[1] &  268435456u) != 0u) result[2] +=    2097152u;    if ((uPos[2] &  268435456u) != 0u) result[2] +=    4194304u;
+	if ((uPos[0] &  536870912u) != 0u) result[2] +=    8388608u;    if ((uPos[1] &  536870912u) != 0u) result[2] +=   16777216u;    if ((uPos[2] &  536870912u) != 0u) result[2] +=   33554432u;
+	if ((uPos[0] & 1073741824u) != 0u) result[2] +=   67108864u;    if ((uPos[1] & 1073741824u) != 0u) result[2] +=  134217728u;    if ((uPos[2] & 1073741824u) != 0u) result[2] +=  268435456u;
+	if ((uPos[0] & 2147483648u) != 0u) result[2] +=  536870912u;    if ((uPos[1] & 2147483648u) != 0u) result[2] += 1073741824u;    if ((uPos[2] & 2147483648u) != 0u) result[2] += 2147483648u;
+
+	return result;
+}
+
+uvec3 plus96(uvec3 a, uvec3 b) {
+	uvec3 result = a + b;
+	bool y = result[0] < a[0];
+	bool z = result[1] < a[1] || (y && result[1] == (0u - 1u));
+	return result + uvec3(0u, y ? 1u : 0u, z ? 1u : 0u);
+}
+
+uvec3 minus96(uvec3 a, uvec3 b) {
+	bool y = a[0] < b[0];
+	bool z = a[1] < b[1] || (y && a[1] == b[1]);
+	return a - b - uvec3(0u, y ? 1u : 0u, z ? 1u : 0u);
+}
+
+uvec3 leftShift96(uvec3 a, uint distance) {
+	uvec3 result = distance < 32u ? a << distance : uvec3(0u, 0u, 0u);
+	if ( 0u < distance && distance <= 32u) result.yz |= a.xy >> (32u - distance);
+	if (32u < distance && distance <  64u) result.yz |= a.xy << (distance - 32u);
+	if (32u < distance && distance <= 64u) result.z  |= a.x  >> (64u - distance);
+	if (64u < distance && distance <  96u) result.z  |= a.x  << (distance - 64u);
+	return result;
+}
+
+bool greater96(uvec3 a, uvec3 b) {
+	if (a[2] > b[2]) return true;
+	if (a[2] < b[2]) return false;
+	if (a[1] > b[1]) return true;
+	if (a[1] < b[1]) return false;
+	return a[0] > b[0];
+}
+
+uint binary_search(uvec3 code) {
+	uint minV = 0u;
+	uint maxV = inIndexListLength;
+	uint midV = maxV / 2u;
+
+	// 32 iteration binary search unrolled
+	// remark: might overflow if min + max > MAX_UINT => limitation: inIndexListLength can be at most 2147483647 => do only 31 iterations
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+//	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+
+	return minV;
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	float range   = inRange[id] * mRangeScale;
+	uint  idx     = inIndexList[id];
+	ivec3 iPos    = inPosition[idx].xyz;
+	uvec3 code    = encode(iPos);
+
+	uvec3 mask;
+	uint  digits  = uint(ceil(log2(range * POS_RESOLUTION))) * DIMENSIONS;
+
+	if (DIMENSIONS > 0) mask[0] = (digits < 32u ? 1u <<      digits              : 0u) - 1u;
+	if (DIMENSIONS > 1) mask[1] = (digits < 64u ? 1u << (max(digits, 32u) - 32u) : 0u) - 1u;
+	if (DIMENSIONS > 2) mask[2] = (digits < 96u ? 1u << (max(digits, 64u) - 64u) : 0u) - 1u;
+	
+	uvec3 centerCellCode = code - (code & mask);
+
+//	uvec3 xMask2 = uvec3(0b01010101010101010101010101010101u, 0b01010101010101010101010101010101u, 0u);
+//	uvec3 yMask2 = uvec3(0b10101010101010101010101010101010u, 0b10101010101010101010101010101010u, 0u);
+//	uvec3 xMask3 = uvec3(0b01001001001001001001001001001001u, 0b10010010010010010010010010010010u, 0b00100100100100100100100100100100u);
+//	uvec3 yMask3 = uvec3(0b10010010010010010010010010010010u, 0b00100100100100100100100100100100u, 0b01001001001001001001001001001001u);
+//	uvec3 zMask3 = uvec3(0b00100100100100100100100100100100u, 0b01001001001001001001001001001001u, 0b10010010010010010010010010010010u);
+	uvec3 xMask3 = uvec3(011111111111u, 022222222222u,  04444444444u);
+	uvec3 yMask3 = uvec3(022222222222u,  04444444444u, 011111111111u);
+	uvec3 zMask3 = uvec3( 04444444444u, 011111111111u, 022222222222u);
+	uvec3 x0 = minus96(centerCellCode &  xMask3,             plus96(mask, uvec3(1u, 0u, 0u))     ) & xMask3;
+	uvec3 x2 =  plus96(centerCellCode | ~xMask3,             plus96(mask, uvec3(1u, 0u, 0u))     ) & xMask3;
+	uvec3 y0 = minus96(centerCellCode &  yMask3, leftShift96(plus96(mask, uvec3(1u, 0u, 0u)), 1u)) & yMask3;
+	uvec3 y2 =  plus96(centerCellCode | ~yMask3, leftShift96(plus96(mask, uvec3(1u, 0u, 0u)), 1u)) & yMask3;
+	uvec3 z0 = minus96(centerCellCode &  zMask3, leftShift96(plus96(mask, uvec3(1u, 0u, 0u)), 2u)) & zMask3;
+	uvec3 z2 =  plus96(centerCellCode | ~zMask3, leftShift96(plus96(mask, uvec3(1u, 0u, 0u)), 2u)) & zMask3;
+	uvec3 x1 = centerCellCode & xMask3;
+	uvec3 y1 = centerCellCode & yMask3;
+	uvec3 z1 = centerCellCode & zMask3;
+
+	uvec3 cellCodes[27];
+	cellCodes[ 0] = x0 | y0 | z0;    cellCodes[ 1] = x1 | y0 | z0;    cellCodes[ 2] = x2 | y0 | z0;
+	cellCodes[ 3] = x0 | y1 | z0;    cellCodes[ 4] = x1 | y1 | z0;    cellCodes[ 5] = x2 | y1 | z0;
+	cellCodes[ 6] = x0 | y2 | z0;    cellCodes[ 7] = x1 | y2 | z0;    cellCodes[ 8] = x2 | y2 | z0;
+	
+	cellCodes[ 9] = x0 | y0 | z1;    cellCodes[10] = x1 | y0 | z1;    cellCodes[11] = x2 | y0 | z1;
+	cellCodes[12] = x0 | y1 | z1;    cellCodes[13] = x1 | y1 | z1;    cellCodes[14] = x2 | y1 | z1;
+	cellCodes[15] = x0 | y2 | z1;    cellCodes[16] = x1 | y2 | z1;    cellCodes[17] = x2 | y2 | z1;
+	
+	cellCodes[18] = x0 | y0 | z2;    cellCodes[19] = x1 | y0 | z2;    cellCodes[20] = x2 | y0 | z2;
+	cellCodes[21] = x0 | y1 | z2;    cellCodes[22] = x1 | y1 | z2;    cellCodes[23] = x2 | y1 | z2;
+	cellCodes[24] = x0 | y2 | z2;    cellCodes[25] = x1 | y2 | z2;    cellCodes[26] = x2 | y2 | z2;
+
+	uint cellStarts[27];
+//	uint cellLasts [27];
+	cellStarts[ 0] = binary_search(cellCodes[ 0]);   // cellLasts[ 0] = binary_search(cellCodes[ 0] | mask);
+	cellStarts[ 1] = binary_search(cellCodes[ 1]);   // cellLasts[ 1] = binary_search(cellCodes[ 1] | mask);
+	cellStarts[ 2] = binary_search(cellCodes[ 2]);   // cellLasts[ 2] = binary_search(cellCodes[ 2] | mask);
+	cellStarts[ 3] = binary_search(cellCodes[ 3]);   // cellLasts[ 3] = binary_search(cellCodes[ 3] | mask);
+	cellStarts[ 4] = binary_search(cellCodes[ 4]);   // cellLasts[ 4] = binary_search(cellCodes[ 4] | mask);
+	cellStarts[ 5] = binary_search(cellCodes[ 5]);   // cellLasts[ 5] = binary_search(cellCodes[ 5] | mask);
+	cellStarts[ 6] = binary_search(cellCodes[ 6]);   // cellLasts[ 6] = binary_search(cellCodes[ 6] | mask);
+	cellStarts[ 7] = binary_search(cellCodes[ 7]);   // cellLasts[ 7] = binary_search(cellCodes[ 7] | mask);
+	cellStarts[ 8] = binary_search(cellCodes[ 8]);   // cellLasts[ 8] = binary_search(cellCodes[ 8] | mask);
+	cellStarts[ 9] = binary_search(cellCodes[ 9]);   // cellLasts[ 9] = binary_search(cellCodes[ 9] | mask);
+	cellStarts[10] = binary_search(cellCodes[10]);   // cellLasts[10] = binary_search(cellCodes[10] | mask);
+	cellStarts[11] = binary_search(cellCodes[11]);   // cellLasts[11] = binary_search(cellCodes[11] | mask);
+	cellStarts[12] = binary_search(cellCodes[12]);   // cellLasts[12] = binary_search(cellCodes[12] | mask);
+	cellStarts[13] = binary_search(cellCodes[13]);   // cellLasts[13] = binary_search(cellCodes[13] | mask);
+	cellStarts[14] = binary_search(cellCodes[14]);   // cellLasts[14] = binary_search(cellCodes[14] | mask);
+	cellStarts[15] = binary_search(cellCodes[15]);   // cellLasts[15] = binary_search(cellCodes[15] | mask);
+	cellStarts[16] = binary_search(cellCodes[16]);   // cellLasts[16] = binary_search(cellCodes[16] | mask);
+	cellStarts[17] = binary_search(cellCodes[17]);   // cellLasts[17] = binary_search(cellCodes[17] | mask);
+	cellStarts[18] = binary_search(cellCodes[18]);   // cellLasts[18] = binary_search(cellCodes[18] | mask);
+	cellStarts[19] = binary_search(cellCodes[19]);   // cellLasts[19] = binary_search(cellCodes[19] | mask);
+	cellStarts[20] = binary_search(cellCodes[20]);   // cellLasts[20] = binary_search(cellCodes[20] | mask);
+	cellStarts[21] = binary_search(cellCodes[21]);   // cellLasts[21] = binary_search(cellCodes[21] | mask);
+	cellStarts[22] = binary_search(cellCodes[22]);   // cellLasts[22] = binary_search(cellCodes[22] | mask);
+	cellStarts[23] = binary_search(cellCodes[23]);   // cellLasts[23] = binary_search(cellCodes[23] | mask);
+	cellStarts[24] = binary_search(cellCodes[24]);   // cellLasts[24] = binary_search(cellCodes[24] | mask);
+	cellStarts[25] = binary_search(cellCodes[25]);   // cellLasts[25] = binary_search(cellCodes[25] | mask);
+	cellStarts[26] = binary_search(cellCodes[26]);   // cellLasts[26] = binary_search(cellCodes[26] | mask);
+
+	uint  cellNr   = 0u;
+	uint  idN      = cellStarts[0u];
+	uvec3 cellCode = cellCodes[0u];
+	uvec3 cellLast = cellCode | mask;
+	vec3  pos      = vec3(iPos) / POS_RESOLUTION;
+
+	while (cellNr < 27u) {
+		uvec3 codeN = uvec3(inPosCode0[idN], inPosCode1[idN], inPosCode2[idN]);
+		if (idN >= inIndexListLength || greater96(codeN, cellLast)) {
+			cellNr++;
+			idN      = cellStarts[cellNr];
+			cellCode = cellCodes [cellNr];
+			cellLast = cellCode | mask;
+			continue;
+		}
+		
+		uint idxN = inIndexList[idN];
+		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
+
+		if (id != idN && distance(pos, posN) <= range) {
+			uint i = atomicAdd(inOutNeighborsLength, 1u);
+			if (i < outNeighbors.length()) {
+				outNeighbors[i] = uvec2(id, idN);
+			} else {
+				inOutNeighborsLength = outNeighbors.length();
+			}
+		}
+		idN++;
+	}
+}

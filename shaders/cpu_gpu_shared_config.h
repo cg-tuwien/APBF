@@ -23,7 +23,7 @@
 
 
 // ----------------------- PBD ------------------------
-#define DIMENSIONS 3
+#define DIMENSIONS 3 // currently only supporting 2 or 3
 
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0

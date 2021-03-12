@@ -3,20 +3,16 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
-struct neighbors
-{
-	uint mNeighbor[NEIGHBOR_LIST_MAX_LENGTH];
-};
-
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
 layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
 layout(set =  2, binding = 0) buffer InRange      { float          inRange[]; };
-layout(set =  3, binding = 0) buffer OutNeighbors { neighbors outNeighbors[]; };
+layout(set =  3, binding = 0) buffer OutNeighbors { uvec2     outNeighbors[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  4, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  4, binding = 0) buffer InIndexListLength    { uint inIndexListLength; };
+layout(set =  5, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
@@ -36,13 +32,16 @@ void main()
 	vec3 pos = vec3(inPosition[idx].xyz) / POS_RESOLUTION;
 
 	uint neighborCount = 0;
-	for (uint i = 0; i < inIndexListLength; i++) {
-		uint idxN = inIndexList[i];
+	for (uint idN = 0; idN < inIndexListLength; idN++) {
+		uint idxN = inIndexList[idN];
 		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
-		if (distance(pos, posN) > range) continue;
+		if (id == idN || distance(pos, posN) > range) continue;
 
-		outNeighbors[id].mNeighbor[++neighborCount] = i;
-		if (neighborCount >= NEIGHBOR_LIST_MAX_LENGTH - 1u) break;
+		uint i = atomicAdd(inOutNeighborsLength, 1u);
+		if (i < outNeighbors.length()) {
+			outNeighbors[i] = uvec2(idN, id);
+		} else {
+			inOutNeighborsLength = outNeighbors.length();
+		}
 	}
-	outNeighbors[id].mNeighbor[0] = neighborCount;
 }
