@@ -1,4 +1,5 @@
 #include "incompressibility.h"
+#include "measurements.h"
 
 pbd::incompressibility& pbd::incompressibility::set_data(fluid* aFluid, neighbors* aNeighbors)
 {
@@ -9,6 +10,8 @@ pbd::incompressibility& pbd::incompressibility::set_data(fluid* aFluid, neighbor
 
 void pbd::incompressibility::apply()
 {
+	measurements::debug_label_start("Incompressibility constraints");
+
 	auto& kernelWidthList      = mFluid->get<fluid::id::kernel_width>();
 	auto& boundarinessList     = mFluid->get<fluid::id::boundariness>();
 	auto& particleList         = mFluid->get<fluid::id::particle>();
@@ -23,4 +26,6 @@ void pbd::incompressibility::apply()
 	shader_provider::incompressibility_1(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), incompDataList.write().buffer(), scaledGradientList.write().buffer(), mNeighbors->length());
 	shader_provider::incompressibility_2(particleList.index_buffer(), positionList.write().buffer(), radiusList.buffer(), inverseMassList.buffer(), incompDataList.buffer(), boundarinessList.write().buffer(), lambdaList.write().buffer(), particleList.length());
 	shader_provider::incompressibility_3(particleList.index_buffer(), inverseMassList.buffer(), mNeighbors->buffer(), scaledGradientList.buffer(), lambdaList.buffer(), positionList.write().buffer(), mNeighbors->length());
+
+	measurements::debug_label_end();
 }

@@ -65,6 +65,18 @@ void measurements::clean_up_resources()
 	mBuffers.clear();
 }
 
+void measurements::debug_label_start(const std::string& aName, const glm::vec4& aColor)
+{
+	auto color = std::array<float, 4>({ aColor[0], aColor[1], aColor[2], aColor[3] });
+	auto label = vk::DebugUtilsLabelEXT{}.setPLabelName(aName.c_str()).setColor(color);
+	shader_provider::cmd_bfr()->handle().beginDebugUtilsLabelEXT(label, gvk::context().dynamic_dispatch());
+}
+
+void measurements::debug_label_end()
+{
+	shader_provider::cmd_bfr()->handle().endDebugUtilsLabelEXT(gvk::context().dynamic_dispatch());
+}
+
 vk::QueryPool& measurements::add_timing_interval_and_get_query_pool(const std::string& aName)
 {
 	auto iter = mIntervals.find(aName);

@@ -1,4 +1,5 @@
 #include "algorithms.h"
+#include "measurements.h"
 
 void pbd::algorithms::copy_bytes(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
 {
@@ -67,6 +68,8 @@ void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecon
 
 	auto& histogramTable = aHelperList;
 
+	measurements::debug_label_start("radix sort");
+
 	for (auto subkeyOffset = 0u; (subkeyOffset < 32u) && (aValueUpperBound >> subkeyOffset != 0); subkeyOffset += subkeyLength)
 	{
 		auto lastIteration = (subkeyOffset + subkeyLength >= 32u) || (aValueUpperBound >> (subkeyOffset + subkeyLength) == 0u);
@@ -84,6 +87,7 @@ void pbd::algorithms::sort(const avk::buffer& aValues, const avk::buffer& aSecon
 			}
 		}
 	}
+	measurements::debug_label_end();
 }
 
 void pbd::algorithms::prefix_sum(const avk::buffer& aValues, const avk::buffer& aHelperList, const avk::buffer& aValueCount, size_t aMaxValueCount, const avk::buffer* aResult)

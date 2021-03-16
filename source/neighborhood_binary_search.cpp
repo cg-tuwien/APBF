@@ -1,4 +1,5 @@
 #include "neighborhood_binary_search.h"
+#include "measurements.h"
 
 pbd::neighborhood_binary_search& pbd::neighborhood_binary_search::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, pbd::neighbors* aNeighbors)
 {
@@ -16,6 +17,8 @@ pbd::neighborhood_binary_search& pbd::neighborhood_binary_search::set_range_scal
 
 void pbd::neighborhood_binary_search::apply()
 {
+	measurements::debug_label_start("neighborhood binary search", glm::vec4(1, 0.5, 0, 1));
+
 	auto& positionList      = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	auto  unsortedCodeList  = pbd::gpu_list<sizeof(uint32_t)>().request_length(positionList.requested_length());
 	auto  unsortedIndexList = pbd::gpu_list<sizeof(uint32_t)>().request_length(positionList.requested_length());
@@ -47,4 +50,6 @@ void pbd::neighborhood_binary_search::apply()
 	}
 
 	shader_provider::neighborhood_binary_search(mParticles->index_buffer(), positionList.buffer(), sortedCodeLists[0].buffer(), sortedCodeLists[1].buffer(), sortedCodeLists[DIMENSIONS - 1].buffer(), mRange->buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mRangeScale);
+
+	measurements::debug_label_end();
 }

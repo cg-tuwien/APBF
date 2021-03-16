@@ -61,6 +61,5 @@ private:
 #else
 	pbd::neighborhood_binary_search mNeighborhoodFluid;
 #endif
-//	pbd::neighborhood_green mParticleSort;
 	user_controlled_boxes mUcb;
 };

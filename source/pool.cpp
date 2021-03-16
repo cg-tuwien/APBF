@@ -12,14 +12,14 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles.request_length(100000);
 	mFluid.request_length(100000);
 //	mTransfers.request_length(100); // not even necessary because index list never gets used
-	mNeighborsFluid.request_length(10000000);
+	mNeighborsFluid.request_length(40000000);
 	mParticles.write();               //
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), 4, 0); // TODO instead of 4, initialize with radius * 4
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aRadius * 4.0f, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), 0, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
 	mVelocityHandling.set_data(&mParticles);
@@ -42,8 +42,6 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
 #endif
 	mNeighborhoodFluid.set_range_scale(1.5f);
-//	mParticleSort.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
-//	mParticleSort.set_position_range(aMin, aMax, 4u).set_range_scale(1.5f);
 	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
@@ -57,8 +55,6 @@ void pool::update(float aDeltaTime)
 		if (pbd::settings::merge || pbd::settings::split) {
 			mParticleTransfer.apply(mDeltaTime);
 		}
-//		mParticleSort.apply();
-//		mFluid.get<pbd::fluid::id::particle>().sort();
 		measurements::record_timing_interval_start("Neighborhood");
 		mNeighborhoodFluid.apply();
 		measurements::record_timing_interval_end("Neighborhood");

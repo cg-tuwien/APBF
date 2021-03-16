@@ -61,7 +61,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
+		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 0.5f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -555,15 +555,18 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		// GRAPHICS
 
+		measurements::debug_label_start("Rendering", glm::vec4(0, 0.5, 0, 1));
+
 		switch (mRenderingMethod) {
 		case 3: // "Fluid"
 		{
 			auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
 			auto result = &mImages[ifi].mColor;
-			static auto debug = pbd::gpu_list<4>().request_length(1);
-			debug.set_length(pbd::settings::particleRenderLimit);
+			static auto lengthLimit = pbd::gpu_list<4>().request_length(1); // TODO maybe more elegant solution? Or just remove this debug functionality
+			if (pbd::settings::particleRenderLimit != 0) lengthLimit.set_length(pbd::settings::particleRenderLimit);
+			auto& particleCount = pbd::settings::particleRenderLimit == 0 ? position.length() : lengthLimit.length();
 
-			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), debug.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
+			shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), particleCount, mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 			if (mAddAmbientOcclusion) {
 				shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
 				shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7f);
@@ -640,6 +643,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			throw std::runtime_error(fmt::format("Invalid mRenderingMethod[{}]", mRenderingMethod));
 		}
 		mPool->render(mQuakeCam.projection_and_view_matrix()); // TODO won't work if NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT is defined
+
+		measurements::debug_label_end();
 		
 		cmdBfr->end_recording();
 
