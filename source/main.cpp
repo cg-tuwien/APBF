@@ -360,7 +360,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::SliderFloat("Max Delta Time", &mMaxDeltaTime, 0.0f, 0.1f, "%.2f ms");
 				pbd::settings::add_apbf_settings_im_gui_entries();
 //				ImGui::Separator();
-				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RectOnly);
+				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 				ImGui::End();
 			});
@@ -484,8 +484,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			case 2: floatForColor = transferring;                        isParticleProperty = true; color1Float = 0; color2Float =   1; isUint = true; break;
 			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = 4; color2Float =   8;                break;
 			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = 1; color2Float =   2;                break;
-			case 5: floatForColor = radius;                                                         color1Float = 1; color2Float = 1.3;                break;
-			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0; color2Float =   10;                break;
+			case 5: floatForColor = radius;                                                         color1Float = 1; color2Float = 1.3f;               break;
+			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0; color2Float =  10;                break;
 		}
 		if (isParticleProperty) {
 			auto old = floatForColor;
@@ -657,17 +657,14 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// Submit the draw call and take care of the command buffer's lifetime:
 		mQueue->submit(cmdBfr, imageAvailableSemaphore);
 		mainWnd->handle_lifetime(std::move(cmdBfr));
+
+		pbd::gpu_list_data::garbage_collection();
 	}
 
 	void finalize() override
 	{
 		// TODO let all templated classes use the same buffer cache
-		pbd::gpu_list<4>::cleanup();
-		pbd::gpu_list<8>::cleanup();
-		pbd::gpu_list<12>::cleanup();
-		pbd::gpu_list<16>::cleanup();
-		pbd::gpu_list<32>::cleanup();
-		pbd::gpu_list<sizeof(uint32_t) * NEIGHBOR_LIST_MAX_LENGTH>::cleanup();
+		pbd::gpu_list_data::cleanup();
 		measurements::clean_up_resources();
 	}
 

@@ -91,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
     <ClCompile Include="source\box_collision.cpp" />
+    <ClCompile Include="source\gpu_list_data.cpp" />
     <ClCompile Include="source\incompressibility.cpp" />
     <ClCompile Include="source\initialize.cpp" />
     <ClCompile Include="source\inter_particle_collision.cpp" />
@@ -120,6 +121,7 @@
     <ClInclude Include="shaders\kernels.glsl" />
     <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\box_collision.h" />
+    <ClInclude Include="source\gpu_list_data.h" />
     <ClInclude Include="source\incompressibility.h" />
     <ClInclude Include="source\initialize.h" />
     <ClInclude Include="source\inter_particle_collision.h" />

@@ -309,6 +309,9 @@
     <ClCompile Include="source\neighborhood_binary_search.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
+    <ClCompile Include="source\gpu_list_data.cpp">
+      <Filter>source\pbd\gpu_lists</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -397,6 +400,9 @@
     </ClInclude>
     <ClInclude Include="source\neighborhood_binary_search.h">
       <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\gpu_list_data.h">
+      <Filter>source\pbd\gpu_lists</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

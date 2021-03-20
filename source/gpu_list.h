@@ -1,4 +1,5 @@
 #pragma once
+#include "gpu_list_data.h"
 #include "algorithms.h"
 #include "list_interface.h"
 
@@ -43,27 +44,13 @@ namespace pbd
 		// only defined for gpu_list<4>; interprets the values as uint and sorts them into ascending order
 		void sort(size_t aValueUpperBound = MAXUINT32);
 
-		static void cleanup();
-
 	private:
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
 		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
 
-		class gpu_list_data
-		{
-		public:
-			gpu_list_data(avk::buffer aBuffer, avk::buffer aLength) : mBuffer{ std::move(aBuffer) }, mLength{ std::move(aLength) } {}
-			avk::buffer mBuffer;
-			avk::buffer mLength;
-		};
-
 		std::shared_ptr<gpu_list_data> mData;
 		size_t mRequestedLength;
 		list_interface<gpu_list<4ui64>>* mOwner = nullptr;
-
-		// static buffer cache
-		static std::shared_ptr<gpu_list_data> get_list(size_t aMinLength);
-		static std::list<std::shared_ptr<gpu_list_data>> mReservedLists;
 	};
 }
 
@@ -74,9 +61,6 @@ namespace pbd
 
 
 
-
-template<size_t Stride>
-std::list<std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data>> pbd::gpu_list<Stride>::mReservedLists;
 
 template<size_t Stride>
 inline pbd::gpu_list<Stride>::gpu_list()
@@ -186,12 +170,6 @@ inline pbd::gpu_list<Stride>& pbd::gpu_list<Stride>::write()
 	return *this;
 }
 
-template<size_t Stride>
-inline void pbd::gpu_list<Stride>::cleanup()
-{
-	mReservedLists.clear();
-}
-
 template<>
 inline void pbd::gpu_list<4>::sort(size_t aValueUpperBound)
 {
@@ -251,7 +229,7 @@ inline void pbd::gpu_list<Stride>::prepare_for_edit(size_t aNeededLength, bool a
 	if (aNeededLength == 0) { mData = nullptr; return; }
 
 	auto oldData = mData;
-	mData = get_list(aNeededLength);
+	mData = gpu_list_data::get_list(aNeededLength, Stride);
 
 	if (oldData == nullptr) {
 		set_length(0);
@@ -270,40 +248,4 @@ template<size_t Stride>
 inline void pbd::gpu_list<Stride>::copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset, size_t aTargetOffset)
 {
 	algorithms::copy_bytes(aSource, aTarget, aCopiedLength * Stride, aSourceOffset * Stride, aTargetOffset * Stride);
-}
-
-template<size_t Stride>
-inline std::shared_ptr<typename pbd::gpu_list<Stride>::gpu_list_data> pbd::gpu_list<Stride>::get_list(size_t aMinLength)
-{
-	auto minSize = aMinLength * Stride;
-	std::shared_ptr<gpu_list_data>* bestExisting = nullptr;
-	for (auto& data : mReservedLists)
-	{
-		if (data.use_count() == 1 && data->mBuffer->meta_at_index<avk::buffer_meta>().total_size() >= minSize)
-		{
-			if (bestExisting == nullptr || (*bestExisting)->mBuffer->meta_at_index<avk::buffer_meta>().total_size() > data->mBuffer->meta_at_index<avk::buffer_meta>().total_size())
-			{
-				bestExisting = &data;
-			}
-		}
-	}
-	if (bestExisting == nullptr) {
-
-		auto newBuffer = gvk::context().create_buffer(
-			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
-			avk::storage_buffer_meta::create_from_size(aMinLength * Stride),
-			avk::instance_buffer_meta::create_from_element_size(Stride, aMinLength) // TODO should this be avoided?
-		);
-		auto newLengthBuffer = gvk::context().create_buffer(
-			avk::memory_usage::device, vk::BufferUsageFlagBits::eTransferSrc,
-			avk::storage_buffer_meta::create_from_size(4)
-		);
-		mReservedLists.push_back(std::make_shared<gpu_list_data>(std::move(newBuffer), std::move(newLengthBuffer)));
-		if (mReservedLists.size() >= 50)
-		{
-			LOG_WARNING("high number of reserved GPU buffers (" + std::to_string(mReservedLists.size()) + ")");
-		}
-		bestExisting = &mReservedLists.back();
-	}
-	return *bestExisting;
 }
