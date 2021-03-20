@@ -54,6 +54,7 @@ struct apbf_settings
 	int mMerge;
 	int mSplit;
 	int mBaseKernelWidthOnTargetRadius;
+	int mBaseKernelWidthOnBoundaryDistance;
 	int mUpdateTargetRadius;
 	int mUpdateBoundariness;
 	int mGroundTruthBoundaryDistance;

@@ -333,9 +333,9 @@ void shader_provider::uint_to_float(const avk::buffer& aInUintBuffer, const avk:
 	dispatch_indirect();
 }
 
-void shader_provider::uint_to_float_but_gradual(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor, float aMaxAdationStep)
+void shader_provider::uint_to_float_but_gradual(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor, float aMaxAdationStep, float aLowerBound)
 {
-	struct push_constants { float mFactor, mMaxAdationStep; } pushConstants{ aFactor, aMaxAdationStep };
+	struct push_constants { float mFactor, mMaxAdationStep, mLowerBound; } pushConstants{ aFactor, aMaxAdationStep, aLowerBound };
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/uint_to_float_but_gradual.comp",
 		avk::descriptor_binding(0, 0, aInUintBuffer),
@@ -350,6 +350,31 @@ void shader_provider::uint_to_float_but_gradual(const avk::buffer& aInUintBuffer
 		avk::descriptor_binding(1, 0, aOutFloatBuffer),
 		avk::descriptor_binding(2, 0, aInUintBufferLength)
 		}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::uint_to_float_with_indexed_lower_bound(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInIndexList, const avk::buffer& aInLowerBound, const avk::buffer& aInUintBufferLength, float aFactor, float aLowerBoundFactor, float aMaxAdationStep)
+{
+	struct push_constants { float mFactor, mLowerBoundFactor, mMaxAdaptionStep; } pushConstants{ aFactor, aLowerBoundFactor, aMaxAdationStep };
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/uint_to_float_with_indexed_lower_bound.comp",
+		avk::descriptor_binding(0, 0, aInUintBuffer),
+		avk::descriptor_binding(1, 0, aOutFloatBuffer),
+		avk::descriptor_binding(2, 0, aInIndexList),
+		avk::descriptor_binding(3, 0, aInLowerBound),
+		avk::descriptor_binding(4, 0, aInUintBufferLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	prepare_dispatch_indirect(aInUintBufferLength);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInUintBuffer),
+		avk::descriptor_binding(1, 0, aOutFloatBuffer),
+		avk::descriptor_binding(2, 0, aInIndexList),
+		avk::descriptor_binding(3, 0, aInLowerBound),
+		avk::descriptor_binding(4, 0, aInUintBufferLength)
+	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }

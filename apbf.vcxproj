@@ -81,6 +81,7 @@
     <None Include="shaders\scattered_write.comp" />
     <None Include="shaders\uint_to_float.comp" />
     <None Include="shaders\uint_to_float_but_gradual.comp" />
+    <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp" />
     <None Include="shaders\vec3_to_length.comp" />
     <None Include="shaders\write_increasing_sequence.comp" />
     <None Include="shaders\write_increasing_sequence_from_to.comp" />

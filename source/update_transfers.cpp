@@ -30,6 +30,11 @@ void pbd::update_transfers::apply()
 	auto  nearestNeighborList     = gpu_list<4>().request_length(mFluid->requested_length());
 	auto  uintBoundarinessList    = gpu_list<8>().request_length(mFluid->requested_length());
 
+	// find_split_and_merge_0: initialization for boundariness filter (it turned out that the filter doesn't help that much -> TODO remove?)
+	// find_split_and_merge_1: one iteration of boundary distance "flood-fill", find shortest neighbor-distance
+	// find_split_and_merge_2: get the closest neighbor using the shortest neighbor-distance, boundariness filter calculations
+	// find_split_and_merge_3: compute target radius, boundary distance "decay", merge, split (preparation)
+
 	shader_provider::write_sequence(minNeighborDistList.write().buffer(), mNeighbors->length(), std::numeric_limits<uint32_t>::max(), 0u);
 	shader_provider::find_split_and_merge_0(boundarinessList.buffer(), uintBoundarinessList.write().buffer(), mFluid->length());
 	shader_provider::find_split_and_merge_1(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), minNeighborDistList.write().buffer(), mNeighbors->length());

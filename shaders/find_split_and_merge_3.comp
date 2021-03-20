@@ -66,6 +66,7 @@ void main()
 	
 	// compute target radius using boundary distance
 
+	// TODO remove (mGroundTruthBoundaryDistance was just for debugging)
 	if (bool(apbfSettings.mGroundTruthBoundaryDistance)) {
 		// hardcoded ground-truth for boundaryDistance for the pool scene:
 		vec3 poolMin = vec3(-40, -10, -80);
@@ -79,13 +80,18 @@ void main()
 
 	float targetRadius;
 	if (bool(apbfSettings.mUpdateTargetRadius)) {
-		targetRadius = apbfSettings.mSmallestTargetRadius + max(0, (boundaryDistance - apbfSettings.mTargetRadiusOffset) * apbfSettings.mTargetRadiusScaleFactor);
+		if (bool(apbfSettings.mBaseKernelWidthOnBoundaryDistance)) {
+			targetRadius = (apbfSettings.mTargetRadiusScaleFactor / (KERNEL_SCALE + KERNEL_SCALE * apbfSettings.mTargetRadiusScaleFactor)) * boundaryDistance;
+			targetRadius = max(targetRadius, apbfSettings.mSmallestTargetRadius);
+		} else {
+			targetRadius = apbfSettings.mSmallestTargetRadius + max(0, (boundaryDistance - apbfSettings.mTargetRadiusOffset) * apbfSettings.mTargetRadiusScaleFactor);
+		}
 		outTargetRadius[id] = targetRadius;
 	} else {
 		targetRadius = outTargetRadius[id]; // TODO inOut
 	}
 	boundariness = (boundariness >= 1.0f && neighborBoundariness >= apbfSettings.mNeighborBoundarinessThreshold) ? 1.0f : 0.0f;
-	inOutBoundaryDist[id] = uint((boundaryDistance + 2 * radius) * (1 - boundariness) * POS_RESOLUTION);
+	inOutBoundaryDist[id] = uint((boundaryDistance * (1.0f - boundariness) + radius) * POS_RESOLUTION); // boundary distance "decay"
 	inBoundariness[id]    = boundariness; // TODO rename inOutBoundariness or remove (no functionality, only for displaying filtered boundariness)
 
 

@@ -12,16 +12,16 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles.request_length(100000);
 	mFluid.request_length(100000);
 //	mTransfers.request_length(100); // not even necessary because index list never gets used
-	mNeighborsFluid.request_length(40000000);
+	mNeighborsFluid.request_length(10000000); // TODO why does a longer neighbor list lead to higher storage requirements for each time machine keyframe? Probably because these long buffers get re-used for other lists which then get stored in keyframes
 	mParticles.write();               //
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aRadius * 4.0f, 0);
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), 0, 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aRadius * KERNEL_SCALE, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
+	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), aRadius * POS_RESOLUTION, 0);
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
 	mBoxCollision.set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
@@ -41,8 +41,8 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
 #endif
-	mNeighborhoodFluid.set_range_scale(1.5f);
-	mTimeMachine.set_max_keyframes(8).set_keyframe_interval(120).enable();
+	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
+	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
 }
@@ -52,13 +52,23 @@ void pool::update(float aDeltaTime)
 	mDeltaTime = FIXED_TIME_STEP == 0 ? aDeltaTime : FIXED_TIME_STEP;
 	if (!mTimeMachine.step_forward()) {
 		mVelocityHandling.apply(mDeltaTime);
+
 		if (pbd::settings::merge || pbd::settings::split) {
 			mParticleTransfer.apply(mDeltaTime);
 		}
+
+		if (pbd::settings::baseKernelWidthOnBoundaryDistance) {
+			shader_provider::uint_to_float_with_indexed_lower_bound(mFluid.get<pbd::fluid::id::boundary_distance>().buffer(), mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.get<pbd::fluid::id::particle>().index_buffer(), mFluid.get<pbd::fluid::id::particle>().hidden_list().get<pbd::hidden_particles::id::radius>().buffer(), mFluid.length(), pbd::settings::targetRadiusScaleFactor / POS_RESOLUTION, KERNEL_SCALE, pbd::settings::kernelWidthAdaptionSpeed);
+			//shader_provider::uint_to_float_but_gradual(mFluid.get<pbd::fluid::id::boundary_distance>().buffer(), mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), pbd::settings::targetRadiusScaleFactor / POS_RESOLUTION, pbd::settings::kernelWidthAdaptionSpeed, pbd::settings::smallestTargetRadius * KERNEL_SCALE);
+		}
+
 		measurements::record_timing_interval_start("Neighborhood");
 		mNeighborhoodFluid.apply();
 		measurements::record_timing_interval_end("Neighborhood");
-		mSpreadKernelWidth.apply();
+
+		if (!pbd::settings::baseKernelWidthOnBoundaryDistance) {
+			mSpreadKernelWidth.apply();
+		}
 
 		for (auto i = 0; i < pbd::settings::solverIterations; i++) {
 			mBoxCollision.apply();

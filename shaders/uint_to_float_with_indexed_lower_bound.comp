@@ -2,19 +2,21 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 // ---------------------- lists -----------------------
-layout(set =  0, binding = 0) buffer InBuffer  { uint   inBuffer[]; };
-layout(set =  1, binding = 0) buffer OutBuffer { float outBuffer[]; };
+layout(set =  0, binding = 0) buffer InBuffer     { uint      inBuffer[]; };
+layout(set =  1, binding = 0) buffer OutBuffer    { float    outBuffer[]; };
+layout(set =  2, binding = 0) buffer InIndexList  { uint   inIndexList[]; };
+layout(set =  3, binding = 0) buffer InLowerBound { float inLowerBound[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  2, binding = 0) buffer InBufferLength { uint inBufferLength; };
+layout(set =  4, binding = 0) buffer InBufferLength { uint inBufferLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
 	float mFactor;
+	float mLowerBoundFactor;
 	float mMaxAdaptionStep;
-	float mLowerBound; // added for "Base Kernel Width on Boundary Distance" mode, which now instead uses uint_to_float_with_indexed_lower_bound; TODO remove?
 };
 // ----------------------------------------------------
 
@@ -31,7 +33,11 @@ void main()
 
 	if (id >= inBufferLength) return;
 
-	float value = float(inBuffer[id]) * mFactor;
+	uint idx = inIndexList[id];
+
+	float value      = float(inBuffer[id]) * mFactor;
+	float lowerBound =   inLowerBound[idx] * mLowerBoundFactor;
+
 	value = move_towards(outBuffer[id], value, mMaxAdaptionStep);
-	outBuffer[id] = max(value, mLowerBound);
+	outBuffer[id] = max(value, lowerBound);
 }

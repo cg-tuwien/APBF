@@ -18,6 +18,7 @@ namespace pbd
 		static bool  merge;
 		static bool  split;
 		static bool  baseKernelWidthOnTargetRadius;
+		static bool  baseKernelWidthOnBoundaryDistance;
 		static bool  updateTargetRadius;
 		static bool  updateBoundariness;
 		static bool  groundTruthBoundaryDistance;

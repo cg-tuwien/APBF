@@ -61,7 +61,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 0.5f);
+		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -71,6 +71,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// Create the camera and buffers that will contain camera data:
 		mQuakeCam.set_translation({ 0.0f, 0.0f, 0.0f });
 		mQuakeCam.set_perspective_projection(glm::radians(60.0f), mainWnd->aspect_ratio(), 0.5f, 500.0f);
+		mQuakeCam.disable();
 		current_composition()->add_element(mQuakeCam);
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			mCameraDataBuffer.emplace_back(context().create_buffer(
@@ -358,7 +359,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
 				ImGui::SliderFloat("Max Delta Time", &mMaxDeltaTime, 0.0f, 0.1f, "%.2f ms");
 				pbd::settings::add_apbf_settings_im_gui_entries();
-				ImGui::Separator();
+//				ImGui::Separator();
+				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RectOnly);
 
 				ImGui::End();
 			});
@@ -403,7 +405,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			current_composition()->stop();
 		}
 
-		if (!mQuakeCam.is_enabled()) {
+		if (!mQuakeCam.is_enabled() && !mImGuiHovered) {
 			mPool->handle_input(glm::inverse(mQuakeCam.projection_and_view_matrix()), mQuakeCam.translation());
 		}
 	}
@@ -706,7 +708,7 @@ private: // v== Member variables ==v
 	std::vector<avk::image_view> mOffscreenImageViews;
 	std::vector<images> mImages;
 
-	//avk::buffer mTest;
+	bool mImGuiHovered = false;
 	
 	// Settings from the UI:
 	int mRenderingMethod = 3;

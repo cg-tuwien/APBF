@@ -25,7 +25,8 @@ public:
 	static void indexed_subtract(const avk::buffer& aInIndexList, const avk::buffer& aInMinuend, const avk::buffer& aInSubtrahend, const avk::buffer& aOutDifference, const avk::buffer& aInIndexListLength);
 	static void float_to_uint(const avk::buffer& aInFloatBuffer, const avk::buffer& aOutUintBuffer, const avk::buffer& aInFloatBufferLength, float aFactor);
 	static void uint_to_float(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor);
-	static void uint_to_float_but_gradual(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor, float aMaxAdationStep);
+	static void uint_to_float_but_gradual(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor, float aMaxAdationStep, float aLowerBound = -std::numeric_limits<float>::infinity());
+	static void uint_to_float_with_indexed_lower_bound(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInIndexList, const avk::buffer& aInLowerBound, const avk::buffer& aInUintBufferLength, float aFactor, float aLowerBoundFactor, float aMaxAdationStep);
 	static void vec3_to_length(const avk::buffer& aInVec4Buffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInVec4BufferLength);
 	static void generate_new_index_list(const avk::buffer& aInRangeEnd, const avk::buffer& aOutBuffer, const avk::buffer& aInRangeEndLength, const avk::buffer& aOutBufferLength);
 	static void generate_new_edit_list(const avk::buffer& aInIndexList, const avk::buffer& aInEditList, const avk::buffer& aInRangeStart, const avk::buffer& aInTargetIndex, const avk::buffer& aOutBuffer, const avk::buffer& aInIndexListLength);
