@@ -44,7 +44,7 @@ void compute_boundariness(uint id, float selfGradLength, float underpressure)
 	underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
 	float boundariness = selfGradLength + underpressure;
 //	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
-//	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness
+	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness; should boundariness only be computed in the last iteration if pbd::settings::solverIterations > 1?
 	outBoundariness[id] = min(1, boundariness);
 }
 

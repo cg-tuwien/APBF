@@ -22,6 +22,11 @@ void pbd::incompressibility::apply()
 	auto  scaledGradientList   = pbd::gpu_list<16>().request_length(mNeighbors->requested_length());
 	auto  lambdaList           = pbd::gpu_list< 4>().request_length(mFluid->requested_length());
 
+	// incompressibility_0: initialization of incompDataList, contribution of every particle to its own density
+	// incompressibility_1: contribution of neighbors to the density and the gradient
+	// incompressibility_2: use density and gradient to compute lambda and boundariness, begin to solve the constraint by moving the "center particle" (at the center of the kernel)
+	// incompressibility_3: finish solving the constraint by moving neighbors
+
 	shader_provider::incompressibility_0(particleList.index_buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), incompDataList.write().buffer(), particleList.length());
 	shader_provider::incompressibility_1(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), incompDataList.write().buffer(), scaledGradientList.write().buffer(), mNeighbors->length());
 	shader_provider::incompressibility_2(particleList.index_buffer(), positionList.write().buffer(), radiusList.buffer(), inverseMassList.buffer(), incompDataList.buffer(), boundarinessList.write().buffer(), lambdaList.write().buffer(), particleList.length());

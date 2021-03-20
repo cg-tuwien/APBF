@@ -12,7 +12,7 @@ bool  pbd::settings::baseKernelWidthOnBoundaryDistance = true;
 bool  pbd::settings::updateTargetRadius                = true;
 bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
-float pbd::settings::boundarinessAdaptionSpeed         = 1.0f; // TODO delete?
+float pbd::settings::boundarinessAdaptionSpeed         = 0.5f; // TODO delete?
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
 float pbd::settings::boundarinessSelfGradLengthFactor  = 8.0f;
 float pbd::settings::boundarinessUnderpressureFactor   = 4.0f;
@@ -21,7 +21,7 @@ float pbd::settings::mergeDuration                     = 2.0f;
 float pbd::settings::splitDuration                     = 2.0f;
 float pbd::settings::smallestTargetRadius              = 1.0f;
 float pbd::settings::targetRadiusOffset                = 10.0f;
-float pbd::settings::targetRadiusScaleFactor           = 0.1f;
+float pbd::settings::targetRadiusScaleFactor           = 0.7f;
 float pbd::settings::particleRenderScale               = 0.7f;
 int   pbd::settings::particleRenderLimit               = 0;
 int   pbd::settings::color                             = 0;
@@ -44,7 +44,7 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Boundary Distance", &pbd::settings::baseKernelWidthOnBoundaryDistance);
 	ImGui::Checkbox("Ground Truth for Boundary Distance", &pbd::settings::groundTruthBoundaryDistance);
-//	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", 2.0f);
+	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", 2.0f);
 	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", 2.0f);
 
 	ImGui::SliderFloat("Smallest Target Radius", &pbd::settings::smallestTargetRadius, 0.1f, 8.0f, "%.1f", 2.0f);

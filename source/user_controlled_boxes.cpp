@@ -68,7 +68,7 @@ void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection
 	}
 
 	if (gvk::input().key_pressed(gvk::key_code::del)) {
-		for (auto i = mSelected.size() - 1; i >= 0; i--) if (mSelected[i]) {
+		for (auto i = static_cast<int>(mSelected.size()) - 1; i >= 0; i--) if (mSelected[i]) {
 			mBoxMinData.erase(mBoxMinData.begin() + i);
 			mBoxMaxData.erase(mBoxMaxData.begin() + i);
 			mSelected.erase(mSelected.begin() + i);

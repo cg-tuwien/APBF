@@ -21,6 +21,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aRadius * KERNEL_SCALE, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness>().write().buffer(), mFluid.length(), 1, 0);
 	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), aRadius * POS_RESOLUTION, 0);
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
