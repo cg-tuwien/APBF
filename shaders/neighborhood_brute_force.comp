@@ -21,6 +21,15 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
+void addNeighborPair(uint selfId, uint neighborId) {
+	uint i = atomicAdd(inOutNeighborsLength, 1u);
+	if (i < outNeighbors.length()) {
+		outNeighbors[i] = uvec2(selfId, neighborId);
+	} else {
+		inOutNeighborsLength = outNeighbors.length();
+	}
+}
+
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
@@ -37,11 +46,6 @@ void main()
 		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
 		if (id == idN || distance(pos, posN) > range) continue;
 
-		uint i = atomicAdd(inOutNeighborsLength, 1u);
-		if (i < outNeighbors.length()) {
-			outNeighbors[i] = uvec2(idN, id);
-		} else {
-			inOutNeighborsLength = outNeighbors.length();
-		}
+		addNeighborPair(id, idN);
 	}
 }

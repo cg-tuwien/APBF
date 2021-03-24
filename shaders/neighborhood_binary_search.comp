@@ -24,28 +24,20 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
+void addNeighborPair(uint selfId, uint neighborId) {
+	uint i = atomicAdd(inOutNeighborsLength, 1u);
+	if (i < outNeighbors.length()) {
+		outNeighbors[i] = uvec2(selfId, neighborId);
+	} else {
+		inOutNeighborsLength = outNeighbors.length();
+	}
+}
+
 // z-curve
 uvec3 encode(ivec3 pos) {
 	uvec3 uPos = pos;
 //	uPos -= 1u << 31u; // shifting (0,0,0) into the center
 	uvec3 result = uvec3(0, 0, 0);
-//	uint dim    = 0u;
-//	uint digit  = 0u;
-//	uint r      = 0u;
-//	uint offset = 0u;
-//
-//	for (uint i = 0u; i < 32u * DIMENSIONS; i++) {
-//		result[r] += ((uPos[dim] >> digit) & 1u) << (i - 32u * r);
-//		if (++dim >= DIMENSIONS) {
-//			dim = 0u;
-//			digit++;
-//		}
-//		if (i >= limit) {
-//			limit += 32u;
-//			r++;
-//		}
-//	}
-//	return result;
 
 	if ((uPos[0] &          1u) != 0u) result[0] +=          1u;    if ((uPos[1] &          1u) != 0u) result[0] +=          2u;    if ((uPos[2] &          1u) != 0u) result[0] +=          4u;
 	if ((uPos[0] &          2u) != 0u) result[0] +=          8u;    if ((uPos[1] &          2u) != 0u) result[0] +=         16u;    if ((uPos[2] &          2u) != 0u) result[0] +=         32u;
@@ -257,12 +249,7 @@ void main()
 		vec3 posN = vec3(inPosition[idxN].xyz) / POS_RESOLUTION;
 
 		if (id != idN && distance(pos, posN) <= range) {
-			uint i = atomicAdd(inOutNeighborsLength, 1u);
-			if (i < outNeighbors.length()) {
-				outNeighbors[i] = uvec2(id, idN);
-			} else {
-				inOutNeighborsLength = outNeighbors.length();
-			}
+			addNeighborPair(id, idN);
 		}
 		idN++;
 	}
