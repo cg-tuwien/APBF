@@ -104,7 +104,7 @@ const avk::buffer& shader_provider::append_list(const avk::buffer& aTargetList, 
 
 void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aEditList, const avk::buffer& aEditListLength, uint32_t aStride)
 {
-	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
+	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4u };
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/copy_scattered_read.comp",
 		avk::descriptor_binding(0, 0, aSourceList),
@@ -113,7 +113,7 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::descriptor_binding(3, 0, aEditListLength),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
-	prepare_dispatch_indirect(aEditListLength);
+	prepare_dispatch_indirect(aEditListLength, 0u, aStride / 4u);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aSourceList),
@@ -121,6 +121,27 @@ void shader_provider::copy_scattered_read(const avk::buffer& aSourceList, const 
 		avk::descriptor_binding(2, 0, aEditList),
 		avk::descriptor_binding(3, 0, aEditListLength)
 	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
+void shader_provider::copy_with_differing_stride(const avk::buffer& aSourceList, const avk::buffer& aTargetList, const avk::buffer& aCopyLength, uint32_t aSourceStride, uint32_t aTargetStride)
+{
+	struct push_constants { uint32_t mSourceStride, mTargetStride; } pushConstants{ aSourceStride / 4u, aTargetStride / 4u };
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/copy_with_differing_stride.comp",
+		avk::descriptor_binding(0, 0, aSourceList),
+		avk::descriptor_binding(1, 0, aTargetList),
+		avk::descriptor_binding(2, 0, aCopyLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	prepare_dispatch_indirect(aCopyLength, 0u, std::min(aSourceStride, aTargetStride) / 4u);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aSourceList),
+		avk::descriptor_binding(1, 0, aTargetList),
+		avk::descriptor_binding(2, 0, aCopyLength)
+		}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
 }
@@ -644,6 +665,28 @@ void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::
 	dispatch_indirect();
 }
 
+void shader_provider::linked_list_to_neighbor_list(const avk::buffer& aInLinkedList, const avk::buffer& aInPrefixSum, const avk::buffer& aOutNeighborList, const avk::buffer& aInParticleCount, const avk::buffer& aOutNeighborCount)
+{
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/linked_list_to_neighbor_list.comp",
+		avk::descriptor_binding(0, 0, aInLinkedList),
+		avk::descriptor_binding(1, 0, aInPrefixSum),
+		avk::descriptor_binding(2, 0, aOutNeighborList),
+		avk::descriptor_binding(3, 0, aInParticleCount),
+		avk::descriptor_binding(4, 0, aOutNeighborCount)
+	));
+	prepare_dispatch_indirect(aInParticleCount);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInLinkedList),
+		avk::descriptor_binding(1, 0, aInPrefixSum),
+		avk::descriptor_binding(2, 0, aOutNeighborList),
+		avk::descriptor_binding(3, 0, aInParticleCount),
+		avk::descriptor_binding(4, 0, aOutNeighborCount)
+	}));
+	dispatch_indirect();
+}
+
 void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutNeighborsLength, float aRangeScale)
 {
 	struct push_constants { float mRangeScale; } pushConstants{ aRangeScale };
@@ -655,6 +698,7 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 		avk::descriptor_binding(3, 0, aOutNeighbors),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -665,7 +709,8 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 		avk::descriptor_binding(2, 0, aInRange),
 		avk::descriptor_binding(3, 0, aOutNeighbors),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, aInOutNeighborsLength)
+		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();

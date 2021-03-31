@@ -44,6 +44,9 @@ namespace pbd
 		// only defined for gpu_list<4>; interprets the values as uint and sorts them into ascending order
 		void sort(size_t aValueUpperBound = MAXUINT32);
 
+		template<size_t NewStride>
+		gpu_list<NewStride> convert_to_stride() const;
+
 	private:
 		void prepare_for_edit(size_t aNeededLength, bool aCurrentContentNeeded = false);
 		void copy_list(const avk::buffer& aSource, const avk::buffer& aTarget, size_t aCopiedLength, size_t aSourceOffset = 0, size_t aTargetOffset = 0);
@@ -184,6 +187,16 @@ inline void pbd::gpu_list<4>::sort(size_t aValueUpperBound)
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), length(), 0u, 1u);
 	pbd::algorithms::sort(unsortedList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), length(), unsortedList.requested_length(), sortedList.write().buffer(), sortedIndexList.write().buffer(), static_cast<uint32_t>(aValueUpperBound));
 	apply_edit(sortedIndexList, this);
+}
+
+template<size_t Stride>
+template<size_t NewStride>
+inline pbd::gpu_list<NewStride> pbd::gpu_list<Stride>::convert_to_stride() const
+{
+	auto result = gpu_list<NewStride>().request_length(requested_length());
+	result.set_length(length());
+	shader_provider::copy_with_differing_stride(buffer(), result.write().buffer(), length(), Stride, NewStride);
+	return result;
 }
 
 template<size_t Stride>

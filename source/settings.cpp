@@ -11,6 +11,7 @@ bool  pbd::settings::baseKernelWidthOnTargetRadius     = true;
 bool  pbd::settings::baseKernelWidthOnBoundaryDistance = true;
 bool  pbd::settings::updateTargetRadius                = true;
 bool  pbd::settings::updateBoundariness                = true;
+bool  pbd::settings::neighborListSorted                = true;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f; // TODO delete?
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
@@ -39,6 +40,7 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Checkbox("Merge", &pbd::settings::merge);
 	ImGui::SliderFloat("Split Duration", &pbd::settings::splitDuration, 0.0f, 4.0f, "%.1f");
 	ImGui::SliderFloat("Merge Duration", &pbd::settings::mergeDuration, 0.0f, 4.0f, "%.1f");
+	ImGui::Checkbox("Neighbor List Sorted", &pbd::settings::neighborListSorted);
 	ImGui::Checkbox("Update Boundariness", &pbd::settings::updateBoundariness);
 	ImGui::Checkbox("Update Target Radius", &pbd::settings::updateTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
@@ -69,6 +71,7 @@ void pbd::settings::update_apbf_settings_buffer()
 	apbfSettings.mBaseKernelWidthOnBoundaryDistance = baseKernelWidthOnBoundaryDistance;
 	apbfSettings.mUpdateTargetRadius                = updateTargetRadius;
 	apbfSettings.mUpdateBoundariness                = updateBoundariness;
+	apbfSettings.mNeighborListSorted                = neighborListSorted;
 	apbfSettings.mGroundTruthBoundaryDistance       = groundTruthBoundaryDistance;
 	apbfSettings.mBoundarinessAdaptionSpeed         = boundarinessAdaptionSpeed;
 	apbfSettings.mKernelWidthAdaptionSpeed          = kernelWidthAdaptionSpeed;

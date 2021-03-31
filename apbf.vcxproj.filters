@@ -244,6 +244,12 @@
     <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp">
       <Filter>shaders</Filter>
     </None>
+    <None Include="shaders\copy_with_differing_stride.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="shaders\linked_list_to_neighbor_list.comp">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

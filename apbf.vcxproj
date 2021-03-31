@@ -30,6 +30,7 @@
     <None Include="shaders\calculate_position_hash.comp" />
     <None Include="shaders\color.frag" />
     <None Include="shaders\copy_scattered_read.comp" />
+    <None Include="shaders\copy_with_differing_stride.comp" />
     <None Include="shaders\darken_image.comp" />
     <None Include="shaders\find_split_and_merge_0.comp" />
     <None Include="shaders\find_split_and_merge_1.comp" />
@@ -54,6 +55,7 @@
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\kernel_width.comp" />
     <None Include="shaders\kernel_width_init.comp" />
+    <None Include="shaders\linked_list_to_neighbor_list.comp" />
     <None Include="shaders\neighborhood_binary_search.comp" />
     <None Include="shaders\neighborhood_brute_force.comp" />
     <None Include="shaders\mask_neighborhood.comp" />

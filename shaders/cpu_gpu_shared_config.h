@@ -57,6 +57,7 @@ struct apbf_settings
 	int mBaseKernelWidthOnBoundaryDistance;
 	int mUpdateTargetRadius;
 	int mUpdateBoundariness;
+	int mNeighborListSorted;
 	int mGroundTruthBoundaryDistance;
 	float mBoundarinessAdaptionSpeed;
 	float mKernelWidthAdaptionSpeed;

@@ -4,16 +4,16 @@
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer SourceList { uint sourceList[]; };
 layout(set =  1, binding = 0) buffer TargetList { uint targetList[]; };
-layout(set =  2, binding = 0) buffer EditList   { uint   editList[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  3, binding = 0) buffer EditListLength      { uint editListLength; };
+layout(set =  2, binding = 0) buffer CopyLength { uint copyLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	uint mStride;
+	uint mSourceStride;
+	uint mTargetStride;
 };
 // ----------------------------------------------------
 
@@ -22,9 +22,11 @@ void main()
 {
 	uint id = gl_GlobalInvocationID.x;
 
-	if (id >= editListLength * mStride) return;
+	uint elementLength = min(mSourceStride, mTargetStride);
+	uint elementNr     = id / elementLength;
 
-	uint elementNr = id / mStride;
-	uint offset    = id - elementNr * mStride;
-	targetList[id] = sourceList[editList[elementNr] * mStride + offset];
+	if (elementNr >= copyLength) return;
+
+	uint offset = id - elementNr * elementLength;
+	targetList[elementNr * mTargetStride + offset] = sourceList[elementNr * mSourceStride + offset];
 }

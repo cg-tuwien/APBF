@@ -21,6 +21,7 @@ namespace pbd
 		static bool  baseKernelWidthOnBoundaryDistance;
 		static bool  updateTargetRadius;
 		static bool  updateBoundariness;
+		static bool  neighborListSorted;
 		static bool  groundTruthBoundaryDistance;
 		static float boundarinessAdaptionSpeed;
 		static float kernelWidthAdaptionSpeed;
