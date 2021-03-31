@@ -1,4 +1,5 @@
 #include "neighborhood_green.h"
+#include "settings.h"
 
 pbd::neighborhood_green& pbd::neighborhood_green::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, pbd::neighbors* aNeighbors)
 {
@@ -35,7 +36,13 @@ void pbd::neighborhood_green::apply()
 	auto& cellEndList       = unsortedIndexList;
 
 	sortedIndexList.set_length(positionList.length());
-	mNeighbors    ->set_length(0);
+
+	if (settings::neighborListSorted) {
+		mNeighbors->set_length(mParticles->length());
+	}
+	else {
+		mNeighbors->set_length(0);
+	}
 
 	// TODO only hash particles selected by index list!
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), positionList.length(), 0u, 1u);
@@ -53,8 +60,13 @@ void pbd::neighborhood_green::apply()
 	shader_provider::find_value_ranges(mParticles->index_buffer(), sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), mParticles->length());
 	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
 
-//	auto bedug = cellStartList.read<uint32_t>();
-//	auto degub =   cellEndList.read<uint32_t>();
-//	auto debug = mNeighbors->read<std::pair<uint32_t, uint32_t>>();
-//	auto test = true;
+	if (settings::neighborListSorted) {
+		auto neighborCount = gpu_list<4>().request_length(mParticles->requested_length());
+		auto prefixHelper  = gpu_list<4>().request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(neighborCount.requested_length()));
+		auto linkedList    = *mNeighbors;
+
+		shader_provider::copy_with_differing_stride(linkedList.buffer(), neighborCount.write().buffer(), mParticles->length(), 8u, 4u);
+		algorithms::prefix_sum(neighborCount.write().buffer(), prefixHelper.write().buffer(), mParticles->length(), neighborCount.requested_length());
+		shader_provider::linked_list_to_neighbor_list(linkedList.buffer(), neighborCount.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length());
+	}
 }

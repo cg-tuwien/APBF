@@ -1,4 +1,5 @@
 #include "neighborhood_rtx.h"
+#include "settings.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
 pbd::neighborhood_rtx::neighborhood_rtx()
@@ -34,12 +35,28 @@ void pbd::neighborhood_rtx::apply()
 {
 	auto& positionList     = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	auto  blasReference   = mBlas->device_address();
-	mNeighbors->set_length(0);
+
+	if (settings::neighborListSorted) {
+		mNeighbors->set_length(mParticles->length());
+	}
+	else {
+		mNeighbors->set_length(0);
+	}
 
 	reserve_geometry_instances_buffer(mParticles->requested_length());
 	shader_provider::generate_acceleration_structure_instances(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mGeometryInstances, mParticles->length(), blasReference, mRangeScale, static_cast<uint32_t>(mMaxInstanceCount));
 	build_acceleration_structure();
 	shader_provider::neighborhood_rtx_2(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mTlas, mRangeScale);
+
+	if (settings::neighborListSorted) {
+		auto neighborCount = gpu_list<4>().request_length(mParticles->requested_length());
+		auto prefixHelper  = gpu_list<4>().request_length(algorithms::prefix_sum_calculate_needed_helper_list_length(neighborCount.requested_length()));
+		auto linkedList    = *mNeighbors;
+
+		shader_provider::copy_with_differing_stride(linkedList.buffer(), neighborCount.write().buffer(), mParticles->length(), 8u, 4u);
+		algorithms::prefix_sum(neighborCount.write().buffer(), prefixHelper.write().buffer(), mParticles->length(), neighborCount.requested_length());
+		shader_provider::linked_list_to_neighbor_list(linkedList.buffer(), neighborCount.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length());
+	}
 }
 
 void pbd::neighborhood_rtx::reserve_geometry_instances_buffer(size_t aSize)

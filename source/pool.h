@@ -14,7 +14,7 @@
 #include "time_machine.h"
 #include "user_controlled_boxes.h"
 
-#define NEIGHBORHOOD_TYPE 0 // 0 = brute force, 1 = Green, 2 = RTX, 3 = binary search
+#define NEIGHBORHOOD_TYPE 3 // 0 = brute force, 1 = Green, 2 = RTX, 3 = binary search
 
 class pool
 {

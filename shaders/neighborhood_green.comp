@@ -17,6 +17,10 @@ layout(set =  6, binding = 0) buffer InIndexListLength    { uint inIndexListLeng
 layout(set =  7, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
 // ----------------------------------------------------
 
+// ------------------ apbf settings -------------------
+layout(set =  8, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+// ----------------------------------------------------
+
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
 	vec3 mMinPos;
@@ -26,14 +30,7 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
-void addNeighborPair(uint selfId, uint neighborId) {
-	uint i = atomicAdd(inOutNeighborsLength, 1u);
-	if (i < outNeighbors.length()) {
-		outNeighbors[i] = uvec2(selfId, neighborId);
-	} else {
-		inOutNeighborsLength = outNeighbors.length();
-	}
-}
+#include "neighbor_add.glsl"
 
 uvec3 map_pos_to_grid(vec3 pos) {
 	return uvec3((pos - mMinPos) / (mMaxPos - mMinPos) * (1u << mResolutionLog2)) * uvec3(1u, DIMENSIONS > 1, DIMENSIONS > 2);
@@ -54,6 +51,8 @@ void main()
 {
 	uint id = gl_GlobalInvocationID.x;
 	if (id >= inIndexListLength) return;
+
+	neighborPairInit();
 
 	float range   = inRange[id] * mRangeScale;
 	uint  idx     = inIndexList[id];

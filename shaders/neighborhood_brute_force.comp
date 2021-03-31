@@ -25,31 +25,7 @@ layout(push_constant) uniform PushConstants {
 };
 // ----------------------------------------------------
 
-uint lastNeighborPairIdx;
-uint neighborCount = 0u;
-
-void neighborPairInit() {
-	if (bool(apbfSettings.mNeighborListSorted)) {
-		lastNeighborPairIdx = gl_GlobalInvocationID.x;
-		outNeighbors[lastNeighborPairIdx].x = 0u;
-	}
-}
-
-void addNeighborPair(uint selfId, uint neighborId) {
-	uint i = atomicAdd(inOutNeighborsLength, 1u);
-	if (i < outNeighbors.length()) {
-		if (bool(apbfSettings.mNeighborListSorted)) {
-			outNeighbors[gl_GlobalInvocationID.x].x = ++neighborCount;
-			outNeighbors[lastNeighborPairIdx    ].y = i;
-			outNeighbors[i                      ]   = uvec2(neighborId, 0u);
-			lastNeighborPairIdx = i;
-		} else {
-			outNeighbors[i] = uvec2(selfId, neighborId);
-		}
-	} else {
-		inOutNeighborsLength = outNeighbors.length();
-	}
-}
+#include "neighbor_add.glsl"
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 void main()

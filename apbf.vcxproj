@@ -62,6 +62,7 @@
     <None Include="shaders\neighborhood_green.comp" />
     <None Include="shaders\neighborhood_rtx.comp" />
     <None Include="shaders\neighborhood_rtx_2.comp" />
+    <None Include="shaders\neighbor_add.glsl" />
     <None Include="shaders\particle_transfer.comp" />
     <None Include="shaders\point.vert" />
     <None Include="shaders\append_list.comp" />

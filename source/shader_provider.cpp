@@ -729,6 +729,7 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(5, 0, aOutNeighbors),
 		avk::descriptor_binding(6, 0, aInIndexListLength),
 		avk::descriptor_binding(7, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -741,7 +742,8 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(4, 0, aInCellEnd),
 		avk::descriptor_binding(5, 0, aOutNeighbors),
 		avk::descriptor_binding(6, 0, aInIndexListLength),
-		avk::descriptor_binding(7, 0, aInOutNeighborsLength)
+		avk::descriptor_binding(7, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -761,6 +763,7 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 		avk::descriptor_binding(6, 0, aOutNeighbors),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
 		avk::descriptor_binding(8, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -774,7 +777,8 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 		avk::descriptor_binding(5, 0, aInRange),
 		avk::descriptor_binding(6, 0, aOutNeighbors),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
-		avk::descriptor_binding(8, 0, aInOutNeighborsLength)
+		avk::descriptor_binding(8, 0, aInOutNeighborsLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -819,6 +823,7 @@ void shader_provider::neighborhood_rtx_2(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
 		avk::descriptor_binding(6, 0, aInTlas),
+		avk::descriptor_binding(7, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -830,7 +835,8 @@ void shader_provider::neighborhood_rtx_2(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(3, 0, aOutNeighbors),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(6, 0, aInTlas)
+		avk::descriptor_binding(6, 0, aInTlas),
+		avk::descriptor_binding(7, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
