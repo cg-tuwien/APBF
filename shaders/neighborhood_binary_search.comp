@@ -3,6 +3,8 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
+#define BLOCKSIZE 256
+
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList  { uint       inIndexList[]; };
 layout(set =  1, binding = 0) buffer InPosition   { ivec4       inPosition[]; };
@@ -27,6 +29,8 @@ layout(push_constant) uniform PushConstants {
 	float mRangeScale;
 };
 // ----------------------------------------------------
+
+shared uvec3 posCode[BLOCKSIZE];
 
 #include "neighbor_add.glsl"
 
@@ -102,50 +106,61 @@ bool greater96(uvec3 a, uvec3 b) {
 	return a[0] > b[0];
 }
 
+uvec3 posCodeAt(uint id) {
+	uint sharedIdx = id - (gl_WorkGroupID.x * BLOCKSIZE);
+	return sharedIdx < BLOCKSIZE ? posCode[sharedIdx] : uvec3(inPosCode0[id], inPosCode1[id], inPosCode2[id]);
+}
+
 uint binary_search(uvec3 code) {
 	uint minV = 0u;
 	uint maxV = inIndexListLength;
-	uint midV = maxV / 2u;
+	
+	if (!greater96(posCode[0], code) && !greater96(code, posCode[BLOCKSIZE - 1])) {
+		minV = gl_WorkGroupID.x * BLOCKSIZE;
+		maxV = minV + BLOCKSIZE;
+	}
+	
+	uint midV = (minV + maxV) / 2u;
 
 	// 32 iteration binary search unrolled
 	// remark: might overflow if min + max > MAX_UINT => limitation: inIndexListLength can be at most 2147483647 => do only 31 iterations
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
-//	if (greater96(code, uvec3(inPosCode0[midV], inPosCode1[midV], inPosCode2[midV]))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
+//	if (greater96(code, posCodeAt(midV))) minV = midV + 1u; else maxV = midV; midV = min((minV + maxV) / 2u, inIndexListLength - 1u);
 
 	return minV;
 }
 
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = BLOCKSIZE, local_size_y = 1, local_size_z = 1) in;
 void main()
 {
 	uint id = gl_GlobalInvocationID.x;
@@ -157,6 +172,10 @@ void main()
 	uint  idx     = inIndexList[id];
 	ivec3 iPos    = inPosition[idx].xyz;
 	uvec3 code    = encode(iPos);
+//	uvec3 code    = uvec3(inPosCode0[id], inPosCode1[id], inPosCode2[id]); // TODO test if read or recompute is faster
+	posCode[gl_LocalInvocationID.x] = code;
+
+	barrier();
 
 	uvec3 mask;
 	uint  digits  = uint(ceil(log2(range * POS_RESOLUTION))) * DIMENSIONS;
