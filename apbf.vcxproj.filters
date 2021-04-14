@@ -253,6 +253,9 @@
     <None Include="shaders\neighbor_add.glsl">
       <Filter>shader_includes</Filter>
     </None>
+    <None Include="shaders\initialize_sphere.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -320,6 +323,9 @@
     </ClCompile>
     <ClCompile Include="source\gpu_list_data.cpp">
       <Filter>source\pbd\gpu_lists</Filter>
+    </ClCompile>
+    <ClCompile Include="source\spherical_pool.cpp">
+      <Filter>source\scenes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -412,6 +418,9 @@
     </ClInclude>
     <ClInclude Include="source\gpu_list_data.h">
       <Filter>source\pbd\gpu_lists</Filter>
+    </ClInclude>
+    <ClInclude Include="source\spherical_pool.h">
+      <Filter>source\scenes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

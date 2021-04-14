@@ -5,24 +5,23 @@
 
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList     { uint      inIndexList[]; };
-layout(set =  1, binding = 0) buffer OutPosition     { ivec4     outPosition[]; };
-layout(set =  2, binding = 0) buffer OutVelocity     { vec4      outVelocity[]; };
-layout(set =  3, binding = 0) buffer OutInverseMass  { float  outInverseMass[]; };
-layout(set =  4, binding = 0) buffer OutRadius       { float       outRadius[]; };
-layout(set =  5, binding = 0) buffer OutTransferring { uint  outTransferring[]; };
+layout(set =  1, binding = 0) buffer InPosition      { vec4       inPosition[]; };
+layout(set =  2, binding = 0) buffer OutPosition     { ivec4     outPosition[]; };
+layout(set =  3, binding = 0) buffer OutVelocity     { vec4      outVelocity[]; };
+layout(set =  4, binding = 0) buffer OutInverseMass  { float  outInverseMass[]; };
+layout(set =  5, binding = 0) buffer OutRadius       { float       outRadius[]; };
+layout(set =  6, binding = 0) buffer OutTransferring { uint  outTransferring[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  6, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  7, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
-	vec3 mMinPos;
+	vec3  mVelocity;
 	float mRadius;
-	vec3 mVelocity;
 	float mInverseMass;
-	uvec3 mParticleCount;
 };
 // ----------------------------------------------------
 
@@ -34,13 +33,7 @@ void main()
 	if (id >= inIndexListLength) return;
 
 	uint idx = inIndexList[id];
-	
-	uvec3 gridPos;
-	gridPos.x = id / (mParticleCount.z * mParticleCount.y);     id -= gridPos.x * mParticleCount.z * mParticleCount.y;
-	gridPos.y = id / (mParticleCount.z                   );     id -= gridPos.y * mParticleCount.z;
-	gridPos.z = id;
-
-	vec3 pos = mMinPos + 2 * mRadius * gridPos;
+	vec3 pos = inPosition [id].xyz;
 
 	outPosition[idx].xyz = ivec3(pos * POS_RESOLUTION);
 	outVelocity[idx].xyz = mVelocity;

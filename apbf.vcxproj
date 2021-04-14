@@ -50,6 +50,7 @@
     <None Include="shaders\indexed_subtract.comp" />
     <None Include="shaders\infer_velocity.comp" />
     <None Include="shaders\initialize_box.comp" />
+    <None Include="shaders\initialize_sphere.comp" />
     <None Include="shaders\initialize_split_particles.comp" />
     <None Include="shaders\instanced2.vert" />
     <None Include="shaders\inter_particle_collision.comp" />
@@ -106,6 +107,7 @@
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\settings.cpp" />
+    <ClCompile Include="source\spherical_pool.cpp" />
     <ClCompile Include="source\spread_kernel_width.cpp" />
     <ClCompile Include="source\update_transfers.cpp" />
     <ClCompile Include="source\user_controlled_boxes.cpp" />
@@ -136,6 +138,7 @@
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\settings.h" />
+    <ClInclude Include="source\spherical_pool.h" />
     <ClInclude Include="source\spread_kernel_width.h" />
     <ClInclude Include="source\time_machine.h" />
     <ClInclude Include="source\update_transfers.h" />
