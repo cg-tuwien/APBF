@@ -25,6 +25,8 @@
 // ----------------------- PBD ------------------------
 #define DIMENSIONS 3 // currently only supporting 2 or 3
 
+#define SCENE 1 // 0: pool, 1: spherical_pool
+
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
 #define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0
@@ -37,6 +39,21 @@
 #define KERNEL_SPREADING_FACTOR 0.5
 
 #define MAX_TRANSFERS 100
+// ----------------------------------------------------
+
+// ---------------------- HELPERS ---------------------
+#define CONCAT_AUX(a, b) a ## b
+#define CONCAT(a, b) CONCAT_AUX(a, b)
+#define STRINGIZE_AUX(a) #a
+#define STRINGIZE(a) STRINGIZE_AUX(a)
+// ----------------------------------------------------
+
+// ---------------------- SCENES ----------------------
+#define SCENE_0 pool
+#define SCENE_1 spherical_pool
+
+#define SCENE_NAME CONCAT(SCENE_, SCENE)
+#define SCENE_FILENAME STRINGIZE(CONCAT(SCENE_NAME, .h))
 // ----------------------------------------------------
 
 

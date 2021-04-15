@@ -1,11 +1,11 @@
+#include "../shaders/cpu_gpu_shared_config.h"
 #include <gvk.hpp>
 #include <imgui.h>
 #include <random>
 #include "shader_provider.h"
-#include "spherical_pool.h"
+#include SCENE_FILENAME
 #include "measurements.h"
 #include "settings.h"
-#include "../shaders/cpu_gpu_shared_config.h"
 
 #ifdef _DEBUG
 #include "Test.h"
@@ -61,8 +61,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
+#if SCENE == 0
+		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
+#else
 		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 20.0f, 1.0f);
-//		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
+#endif
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -678,7 +681,7 @@ private: // v== Member variables ==v
 	gvk::quake_camera mQuakeCam;
 	std::vector<avk::buffer> mCameraDataBuffer;
 
-	std::unique_ptr<spherical_pool> mPool;
+	std::unique_ptr<SCENE_NAME> mPool;
 
 	uint32_t mNumParticles;
 	std::vector<avk::buffer> mParticlesBuffer;

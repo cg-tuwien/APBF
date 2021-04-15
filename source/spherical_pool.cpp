@@ -23,14 +23,14 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness>().write().buffer(), mFluid.length(), 1, 0);
 	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aParticleRadius * POS_RESOLUTION), 0);
-	mVelocityHandling.set_data(&mParticles);
-	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
-	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
-	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
-	mSphereCollision.set_data(&mParticles);
-	mSphereCollision.set_sphere(aCenter, aPoolRadius, true);
-	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
-	mParticleTransfer.set_data(&mFluid, &mTransfers);
+
+	mVelocityHandling .set_data(&mParticles                           ).set_acceleration(glm::vec3(0, -10, 0));
+	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid             );
+	mIncompressibility.set_data(&mFluid, &mNeighborsFluid             );
+	mSphereCollision  .set_data(&mParticles                           ).set_sphere(aCenter, aPoolRadius, true);
+	mUpdateTransfers  .set_data(&mFluid, &mNeighborsFluid, &mTransfers);
+	mParticleTransfer .set_data(&mFluid, &mTransfers                  );
+
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);

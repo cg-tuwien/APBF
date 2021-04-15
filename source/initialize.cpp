@@ -48,7 +48,7 @@ pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, con
 
 	while (radius <= aShapeRadius) {
 		append_sphere(particleList, aCenter, radius, aParticleRadius, DIMENSIONS);
-		radius = std::pow(DIMENSIONS * 2 * particleList.size() / std::numbers::pi, 1.0f / DIMENSIONS) * aParticleRadius + aParticleRadius; // only works for DIMENSIONS = 2 or 3
+		radius = std::pow(DIMENSIONS * 2 * particleList.size() / static_cast<float>(std::numbers::pi), 1.0f / DIMENSIONS) * aParticleRadius + aParticleRadius; // only works for DIMENSIONS = 2 or 3
 	}
 
 	auto inverseMass = aInverseDensity / static_cast<float>(std::pow(2.0f * aParticleRadius, DIMENSIONS));
