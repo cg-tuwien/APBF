@@ -256,6 +256,9 @@
     <None Include="shaders\initialize_sphere.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\sphere_collision.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -326,6 +329,9 @@
     </ClCompile>
     <ClCompile Include="source\spherical_pool.cpp">
       <Filter>source\scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="source\sphere_collision.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -421,6 +427,9 @@
     </ClInclude>
     <ClInclude Include="source\spherical_pool.h">
       <Filter>source\scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\sphere_collision.h">
+      <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

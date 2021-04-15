@@ -13,7 +13,7 @@ layout(set =  0, binding = 0) buffer InIndexList   { uint      inIndexList[]; };
 layout(set =  1, binding = 0) buffer InOutPosition { ivec4   inOutPosition[]; };
 layout(set =  2, binding = 0) buffer InRadius      { float        inRadius[]; };
 layout(set =  3, binding = 0) buffer InInverseMass { float   inInverseMass[]; };
-layout(set =  4, binding = 0) buffer InNeighbors   { neighbors inNeighbors[]; };
+layout(set =  4, binding = 0) buffer InNeighbors   { neighbors inNeighbors[]; }; // TODO update to new neighborhood data structure
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------

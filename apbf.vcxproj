@@ -83,6 +83,7 @@
     <None Include="shaders\rt_stupid_intersection.rint" />
     <None Include="shaders\rt_trace_rays.rgen" />
     <None Include="shaders\scattered_write.comp" />
+    <None Include="shaders\sphere_collision.comp" />
     <None Include="shaders\uint_to_float.comp" />
     <None Include="shaders\uint_to_float_but_gradual.comp" />
     <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp" />
@@ -107,6 +108,7 @@
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
     <ClCompile Include="source\settings.cpp" />
+    <ClCompile Include="source\sphere_collision.cpp" />
     <ClCompile Include="source\spherical_pool.cpp" />
     <ClCompile Include="source\spread_kernel_width.cpp" />
     <ClCompile Include="source\update_transfers.cpp" />
@@ -138,6 +140,7 @@
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
     <ClInclude Include="source\settings.h" />
+    <ClInclude Include="source\sphere_collision.h" />
     <ClInclude Include="source\spherical_pool.h" />
     <ClInclude Include="source\spread_kernel_width.h" />
     <ClInclude Include="source\time_machine.h" />

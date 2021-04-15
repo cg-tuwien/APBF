@@ -2,6 +2,7 @@
 
 #include "velocity_handling.h"
 #include "spread_kernel_width.h"
+#include "sphere_collision.h"
 #include "incompressibility.h"
 #include "update_transfers.h"
 #include "particle_transfer.h"
@@ -46,6 +47,7 @@ private:
 
 	pbd::velocity_handling mVelocityHandling;
 	pbd::spread_kernel_width mSpreadKernelWidth;
+	pbd::sphere_collision mSphereCollision;
 	pbd::incompressibility mIncompressibility;
 	pbd::update_transfers mUpdateTransfers;
 	pbd::particle_transfer mParticleTransfer;

@@ -699,6 +699,29 @@ void shader_provider::box_collision(const avk::buffer& aInIndexList, const avk::
 	dispatch_indirect();
 }
 
+void shader_provider::sphere_collision(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInIndexListLength, const glm::vec3& aSphereCenter, float aSphereRadius, bool aHollow)
+{
+	struct push_constants { glm::vec3 mSphereCenter; float mSphereRadius; vk::Bool32 mHollow; } pushConstants{ aSphereCenter, aSphereRadius, aHollow };
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/sphere_collision.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInOutPosition),
+		avk::descriptor_binding(2, 0, aInRadius),
+		avk::descriptor_binding(3, 0, aInIndexListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	prepare_dispatch_indirect(aInIndexListLength);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInOutPosition),
+		avk::descriptor_binding(2, 0, aInRadius),
+		avk::descriptor_binding(3, 0, aInIndexListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::linked_list_to_neighbor_list(const avk::buffer& aInLinkedList, const avk::buffer& aInPrefixSum, const avk::buffer& aOutNeighborList, const avk::buffer& aInParticleCount, const avk::buffer& aOutNeighborCount)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(

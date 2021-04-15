@@ -46,7 +46,7 @@ pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, con
 	auto radius = 0.0f;
 	auto particleList = std::vector<glm::vec4>();
 
-	while (radius < aShapeRadius) {
+	while (radius <= aShapeRadius) {
 		append_sphere(particleList, aCenter, radius, aParticleRadius, DIMENSIONS);
 		radius = std::pow(DIMENSIONS * 2 * particleList.size() / std::numbers::pi, 1.0f / DIMENSIONS) * aParticleRadius + aParticleRadius; // only works for DIMENSIONS = 2 or 3
 	}

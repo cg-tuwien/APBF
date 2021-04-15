@@ -1,0 +1,60 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set =  0, binding = 0) buffer InIndexList   { uint    inIndexList[]; };
+layout(set =  1, binding = 0) buffer InOutPosition { ivec4 inOutPosition[]; };
+layout(set =  2, binding = 0) buffer InRadius      { float      inRadius[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set =  3, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	vec3  mSphereCenter;
+	float mSphereRadius;
+	bool  mHollow;        // true: keep all particles inside sphere; false: keep all particles outside of sphere
+};
+// ----------------------------------------------------
+
+// From https://www.shadertoy.com/view/4djSRW (MIT License, see LICENSE in root directory)
+float hash11(float p)
+{
+    p = fract(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return fract(p);
+}
+
+bvec3 smallestComponent(vec3 v)
+{
+	bool b1 = v.x <= v.y;
+	bool b2 = v.x <= v.z;
+	bool b3 = v.y <= v.z;
+	return bvec3(b1 && b2, !b1 && b3, !b2 && !b3);
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inIndexListLength) return;
+
+	uint idx = inIndexList[id];
+	vec3 pos = vec3(inOutPosition[idx].xyz) / POS_RESOLUTION;
+	float radius = inRadius[idx];
+
+	float offsetDirection = mHollow ? -1.0f : 1.0f;
+	float offset          = offsetDirection * (radius + hash11(id * pos.y + pos.x + pos.z) * 0.05);
+	vec3  relPos          = pos - mSphereCenter;
+	float d               = length(relPos);
+	float targetD         = mSphereRadius + offset;
+	if ((d < targetD) == mHollow) return;
+
+	pos = mSphereCenter + relPos * (targetD / d);
+	inOutPosition[idx].xyz = ivec3(pos * POS_RESOLUTION);
+}

@@ -17,7 +17,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius - 2.0f, aParticleRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, aParticleRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aParticleRadius * static_cast<float>(KERNEL_SCALE), 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
@@ -27,6 +27,8 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
+	mSphereCollision.set_data(&mParticles);
+	mSphereCollision.set_sphere(aCenter, aPoolRadius, true);
 	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 	mParticleTransfer.set_data(&mFluid, &mTransfers);
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
@@ -63,6 +65,7 @@ void spherical_pool::update(float aDeltaTime)
 		}
 
 		for (auto i = 0; i < pbd::settings::solverIterations; i++) {
+			mSphereCollision.apply();
 			mIncompressibility.apply();
 		}
 
