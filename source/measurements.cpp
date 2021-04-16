@@ -53,9 +53,11 @@ float measurements::get_timing_interval_in_ms(const std::string& aName)
 		return 0.0f;
 	}
 	auto query = oldestInFlight * 2u; // choose oldest query
-	gvk::context().mLogicalDevice.getQueryPoolResults(*queryPool, query, 2u, sizeof(timestamps), timestamps.data(), sizeof(uint32_t), vk::QueryResultFlagBits::eWait);
-	float delta = (timestamps[1] - timestamps[0]) * gvk::context().physical_device().getProperties().limits.timestampPeriod / 1000000.0f;
-	avgRendertime = avgRendertime * 0.9f + delta * 0.1f;
+	auto ready = gvk::context().mLogicalDevice.getQueryPoolResults(*queryPool, query, 2u, sizeof(timestamps), timestamps.data(), sizeof(uint32_t), vk::QueryResultFlagBits::eWait);
+	if (ready == vk::Result::eSuccess) {
+		float delta = (timestamps[1] - timestamps[0]) * gvk::context().physical_device().getProperties().limits.timestampPeriod / 1000000.0f;
+		avgRendertime = avgRendertime * 0.9f + delta * 0.1f;
+	}
 	return avgRendertime;
 }
 

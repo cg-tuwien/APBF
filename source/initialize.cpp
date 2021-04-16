@@ -84,7 +84,7 @@ void pbd::initialize::append_sphere(std::vector<glm::vec4>& aParticleList, const
 	auto dAngle = static_cast<float>(std::numbers::pi) / pCount;
 	auto angle  = 0.0f;
 
-	for (auto i = static_cast<int>(pCount) / 2; i--; i >= 0) {
+	for (auto i = static_cast<int>(pCount) / 2; i > 0; i--) {
 		angle += dAngle;
 		auto layerOffset = std::sin(angle) * aSphereRadius;
 		auto layerRadius = std::cos(angle) * aSphereRadius;
