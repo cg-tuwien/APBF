@@ -64,7 +64,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #if SCENE == 0
 		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
 #else
-		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 20.0f, 1.0f);
+		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 21.5f, 1.0f);
 #endif
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();

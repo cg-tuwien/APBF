@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../shaders/cpu_gpu_shared_config.h"
 #include "velocity_handling.h"
 #include "spread_kernel_width.h"
 #include "sphere_collision.h"
@@ -7,13 +8,7 @@
 #include "update_transfers.h"
 #include "particle_transfer.h"
 #include "time_machine.h"
-
-#include "neighborhood_brute_force.h"
-#include "neighborhood_green.h"
-#include "neighborhood_rtx.h"
-#include "neighborhood_binary_search.h"
-
-#define NEIGHBORHOOD_TYPE 3 // 0 = brute force, 1 = Green, 2 = RTX, 3 = binary search
+#include NEIGHBOR_SEARCH_FILENAME
 
 class spherical_pool
 {
@@ -51,13 +46,5 @@ private:
 	pbd::incompressibility mIncompressibility;
 	pbd::update_transfers mUpdateTransfers;
 	pbd::particle_transfer mParticleTransfer;
-#if NEIGHBORHOOD_TYPE == 0
-	pbd::neighborhood_brute_force mNeighborhoodFluid;
-#elif NEIGHBORHOOD_TYPE == 1
-	pbd::neighborhood_green mNeighborhoodFluid;
-#elif NEIGHBORHOOD_TYPE == 2
-	pbd::neighborhood_rtx mNeighborhoodFluid;
-#else
-	pbd::neighborhood_binary_search mNeighborhoodFluid;
-#endif
+	pbd::NEIGHBOR_SEARCH_NAME mNeighborhoodFluid;
 };

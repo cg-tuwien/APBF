@@ -26,6 +26,7 @@
 #define DIMENSIONS 3 // currently only supporting 2 or 3
 
 #define SCENE 1 // 0: pool, 1: spherical_pool
+#define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
@@ -54,6 +55,16 @@
 
 #define SCENE_NAME CONCAT(SCENE_, SCENE)
 #define SCENE_FILENAME STRINGIZE(CONCAT(SCENE_NAME, .h))
+// ----------------------------------------------------
+
+// ----------------- NEIGHBOR SEARCH ------------------
+#define NEIGHBOR_SEARCH_0 neighborhood_brute_force
+#define NEIGHBOR_SEARCH_1 neighborhood_green
+#define NEIGHBOR_SEARCH_2 neighborhood_rtx
+#define NEIGHBOR_SEARCH_3 neighborhood_binary_search
+
+#define NEIGHBOR_SEARCH_NAME CONCAT(NEIGHBOR_SEARCH_, NEIGHBORHOOD_TYPE)
+#define NEIGHBOR_SEARCH_FILENAME STRINGIZE(CONCAT(NEIGHBOR_SEARCH_NAME, .h))
 // ----------------------------------------------------
 
 

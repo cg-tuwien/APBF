@@ -2,6 +2,9 @@
 #include "measurements.h"
 #include "settings.h"
 
+#undef DIMENSIONS
+#define DIMENSIONS 3 // TODO maybe create optimized version for 2D
+
 pbd::neighborhood_binary_search& pbd::neighborhood_binary_search::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, pbd::neighbors* aNeighbors)
 {
 	mParticles = aParticles;

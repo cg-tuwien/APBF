@@ -3,6 +3,8 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
+#undef DIMENSIONS
+#define DIMENSIONS 3 // TODO maybe create optimized version for 2D
 #define BLOCKSIZE 256
 
 // ---------------------- lists -----------------------
