@@ -40,9 +40,11 @@
     <None Include="shaders\find_value_ranges.comp" />
     <None Include="shaders\float_to_uint.comp" />
     <None Include="shaders\generate_acceleration_structure_instances.comp" />
+    <None Include="shaders\generate_glue.comp" />
     <None Include="shaders\generate_new_edit_list.comp" />
     <None Include="shaders\generate_new_index_and_edit_list.comp" />
     <None Include="shaders\generate_new_index_list.comp" />
+    <None Include="shaders\glue.comp" />
     <None Include="shaders\incompressibility_0.comp" />
     <None Include="shaders\incompressibility_1.comp" />
     <None Include="shaders\incompressibility_2.comp" />
@@ -96,6 +98,7 @@
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
     <ClCompile Include="source\box_collision.cpp" />
+    <ClCompile Include="source\glue.cpp" />
     <ClCompile Include="source\gpu_list_data.cpp" />
     <ClCompile Include="source\incompressibility.cpp" />
     <ClCompile Include="source\initialize.cpp" />
@@ -128,6 +131,7 @@
     <ClInclude Include="shaders\kernels.glsl" />
     <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\box_collision.h" />
+    <ClInclude Include="source\glue.h" />
     <ClInclude Include="source\gpu_list_data.h" />
     <ClInclude Include="source\incompressibility.h" />
     <ClInclude Include="source\initialize.h" />

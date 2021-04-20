@@ -1049,6 +1049,66 @@ void shader_provider::inter_particle_collision(const avk::buffer& aInIndexList, 
 	dispatch_indirect();
 }
 
+const avk::buffer& shader_provider::generate_glue(const avk::buffer& aInIndexList, const avk::buffer& aInNeighbors, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aOutGlueIndex0, const avk::buffer& aOutGlueIndex1, const avk::buffer& aOutGlueDistance, const avk::buffer& aInNeighborsLength)
+{
+	auto zero = 0u;
+	pbd::algorithms::copy_bytes(&zero, length_result_buffer(), 4);
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/generate_glue.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInNeighbors),
+		avk::descriptor_binding(2, 0, aInPosition),
+		avk::descriptor_binding(3, 0, aInRadius),
+		avk::descriptor_binding(4, 0, aOutGlueIndex0),
+		avk::descriptor_binding(5, 0, aOutGlueIndex1),
+		avk::descriptor_binding(6, 0, aOutGlueDistance),
+		avk::descriptor_binding(7, 0, aInNeighborsLength),
+		avk::descriptor_binding(8, 0, length_result_buffer())
+	));
+	prepare_dispatch_indirect(aInNeighborsLength);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInNeighbors),
+		avk::descriptor_binding(2, 0, aInPosition),
+		avk::descriptor_binding(3, 0, aInRadius),
+		avk::descriptor_binding(4, 0, aOutGlueIndex0),
+		avk::descriptor_binding(5, 0, aOutGlueIndex1),
+		avk::descriptor_binding(6, 0, aOutGlueDistance),
+		avk::descriptor_binding(7, 0, aInNeighborsLength),
+		avk::descriptor_binding(8, 0, length_result_buffer())
+	}));
+	dispatch_indirect();
+	return length_result_buffer();
+}
+
+void shader_provider::glue(const avk::buffer& aInGlueIndex0, const avk::buffer& aInGlueIndex1, const avk::buffer& aInGlueDistance, const avk::buffer& aInOutPosition, const avk::buffer& aInInverseMass, const avk::buffer& aInGlueLength, float aStability, float aElasticity)
+{
+	struct push_constants { float mStability, mElasticity; } pushConstants{ aStability, aElasticity };
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/particle manipulation/glue.comp",
+		avk::descriptor_binding(0, 0, aInGlueIndex0),
+		avk::descriptor_binding(1, 0, aInGlueIndex1),
+		avk::descriptor_binding(2, 0, aInGlueDistance),
+		avk::descriptor_binding(3, 0, aInOutPosition),
+		avk::descriptor_binding(4, 0, aInInverseMass),
+		avk::descriptor_binding(5, 0, aInGlueLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	prepare_dispatch_indirect(aInGlueLength);
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInGlueIndex0),
+		avk::descriptor_binding(1, 0, aInGlueIndex1),
+		avk::descriptor_binding(2, 0, aInGlueDistance),
+		avk::descriptor_binding(3, 0, aInOutPosition),
+		avk::descriptor_binding(4, 0, aInInverseMass),
+		avk::descriptor_binding(5, 0, aInGlueLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::incompressibility_0(const avk::buffer& aInIndexList, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aOutIncompData, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(

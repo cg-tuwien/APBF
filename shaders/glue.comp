@@ -1,0 +1,55 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+#include "cpu_gpu_shared_config.h"
+
+// ---------------------- lists -----------------------
+layout(set =  0, binding = 0) buffer InGlueIndex0   { uint   inGlueIndex0[]; };
+layout(set =  1, binding = 0) buffer InGlueIndex1   { uint   inGlueIndex1[]; };
+layout(set =  2, binding = 0) buffer InGlueDistance { uint inGlueDistance[]; };
+layout(set =  3, binding = 0) buffer InOutPosition  { ivec4 inOutPosition[]; };
+layout(set =  4, binding = 0) buffer InInverseMass  { float inInverseMass[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set =  5, binding = 0) buffer InGlueLength { uint inGlueLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	float mStability;
+	float mElasticity; // TODO delete overstretched glue
+};
+// ----------------------------------------------------
+
+void add_to_pos(uint particleId, ivec3 posShift)
+{
+	atomicAdd(inOutPosition[particleId].x, posShift.x);
+	atomicAdd(inOutPosition[particleId].y, posShift.y);
+	atomicAdd(inOutPosition[particleId].z, posShift.z);
+}
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+	if (id >= inGlueLength) return;
+
+	uint glue0    = inGlueIndex0  [id];
+	uint glue1    = inGlueIndex1  [id];
+	uint glueDist = inGlueDistance[id];
+
+	ivec3 pos0 = inPosition[glue0].xyz;
+	ivec3 pos1 = inPosition[glue1].xyz;
+	float invMass0 = inInverseMass[glue0];
+	float invMass1 = inInverseMass[glue1];
+
+	vec3  diff = vec3(pos1 - pos0);
+	float dist = length(diff);
+
+	float constrEval = dist - glueDist;
+	float scalar = mStability * constrEval / ((invMass0 + invMass1) * dist);
+
+	add_to_pos(glue.x, ivec3(( invMass0 * scalar) * diff));
+	add_to_pos(glue.y, ivec3((-invMass1 * scalar) * diff));
+}

@@ -259,6 +259,12 @@
     <None Include="shaders\sphere_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
+    <None Include="shaders\generate_glue.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\glue.comp">
+      <Filter>shaders\particle manipulation</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">
@@ -331,6 +337,9 @@
       <Filter>source\scenes</Filter>
     </ClCompile>
     <ClCompile Include="source\sphere_collision.cpp">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\glue.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
   </ItemGroup>
@@ -429,6 +438,9 @@
       <Filter>source\scenes</Filter>
     </ClInclude>
     <ClInclude Include="source\sphere_collision.h">
+      <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\glue.h">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClInclude>
   </ItemGroup>
