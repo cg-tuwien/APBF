@@ -17,7 +17,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, aParticleRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, 0.0f, false, aParticleRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aParticleRadius * static_cast<float>(KERNEL_SCALE), 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);

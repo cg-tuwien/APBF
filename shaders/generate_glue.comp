@@ -43,5 +43,5 @@ void main()
 	uint i = atomicAdd(inOutGlueLength, 1u);
 	outGlueIndex0  [i] = idx;
 	outGlueIndex1  [i] = idxN;
-	outGlueDistance[i] = dist * POS_RESOLUTION;
+	outGlueDistance[i] = uint(dist * POS_RESOLUTION);
 }

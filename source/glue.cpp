@@ -5,7 +5,7 @@ pbd::glue& pbd::glue::set_data(particles* aParticles, neighbors* aNeighbors, glu
 	mParticles = aParticles;
 	mNeighbors = aNeighbors;
 	mGlue      = aGlue;
-	assert(aGlue->get<glue_list::id::particle_0>().hidden_list() == aGlue->get<glue_list::id::particle_1>().hidden_list());
+	assert(&aGlue->get<glue_list::id::particle_0>().hidden_list() == &aGlue->get<glue_list::id::particle_1>().hidden_list());
 	return *this;
 }
 

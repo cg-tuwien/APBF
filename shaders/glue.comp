@@ -39,8 +39,8 @@ void main()
 	uint glue1    = inGlueIndex1  [id];
 	uint glueDist = inGlueDistance[id];
 
-	ivec3 pos0 = inPosition[glue0].xyz;
-	ivec3 pos1 = inPosition[glue1].xyz;
+	ivec3 pos0 = inOutPosition[glue0].xyz;
+	ivec3 pos1 = inOutPosition[glue1].xyz;
 	float invMass0 = inInverseMass[glue0];
 	float invMass1 = inInverseMass[glue1];
 
@@ -50,6 +50,6 @@ void main()
 	float constrEval = dist - glueDist;
 	float scalar = mStability * constrEval / ((invMass0 + invMass1) * dist);
 
-	add_to_pos(glue.x, ivec3(( invMass0 * scalar) * diff));
-	add_to_pos(glue.y, ivec3((-invMass1 * scalar) * diff));
+	add_to_pos(glue0, ivec3(( invMass0 * scalar) * diff));
+	add_to_pos(glue1, ivec3((-invMass1 * scalar) * diff));
 }

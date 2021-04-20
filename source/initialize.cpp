@@ -32,7 +32,7 @@ pbd::particles pbd::initialize::add_box_shape(pbd::particles& aParticles, const 
 	return newParticles;
 }
 
-pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, const glm::vec3& aCenter, float aShapeRadius, float aParticleRadius, float aInverseDensity, const glm::vec3& aVelocity)
+pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, const glm::vec3& aCenter, float aShapeOuterRadius, float aShapeInnerRadius, bool aOuterRadiusMoreImportant, float aParticleRadius, float aInverseDensity, const glm::vec3& aVelocity)
 {
 	auto& positionList     = aParticles.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto& velocityList     = aParticles.hidden_list().get<pbd::hidden_particles::id::velocity>();
@@ -42,18 +42,21 @@ pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, con
 	auto& transferringList = aParticles.hidden_list().get<pbd::hidden_particles::id::transferring>();
 	auto  tempPositionList = gpu_list<16>();
 
-	aShapeRadius -= aParticleRadius;
-	auto radius = 0.0f;
+	auto s = aOuterRadiusMoreImportant ? -1.0f : 1.0f;
+	auto a = static_cast<float>(std::pow(aOuterRadiusMoreImportant ? aShapeOuterRadius : aShapeInnerRadius, DIMENSIONS));
+	auto b = static_cast<float>(std::pow(aParticleRadius, DIMENSIONS) * 2 * DIMENSIONS / std::numbers::pi) * s;
+	aShapeOuterRadius -= aParticleRadius;
+	if (aShapeInnerRadius != 0.0f) aShapeInnerRadius += aParticleRadius;
+	auto radius = aOuterRadiusMoreImportant ? aShapeOuterRadius : aShapeInnerRadius;
+	auto offset = aParticleRadius * s;
 	auto particleList = std::vector<glm::vec4>();
 
-	while (radius <= aShapeRadius) {
+	while (aShapeInnerRadius <= radius && radius <= aShapeOuterRadius) {
 		append_sphere(particleList, aCenter, radius, aParticleRadius, DIMENSIONS);
-		radius = std::pow(DIMENSIONS * 2 * particleList.size() / static_cast<float>(std::numbers::pi), 1.0f / DIMENSIONS) * aParticleRadius + aParticleRadius; // only works for DIMENSIONS = 2 or 3
+		radius = std::pow(a + b * particleList.size(), 1.0f / DIMENSIONS) + offset; // only works for DIMENSIONS = 2 or 3
 	}
 
 	auto inverseMass = aInverseDensity / static_cast<float>(std::pow(2.0f * aParticleRadius, DIMENSIONS));
-//	auto particleCount = glm::uvec3((maxPos - minPos) / (2.0f * aParticleRadius));
-//	auto amountToCreate = particleCount.x * particleCount.y * particleCount.z;
 	auto newParticles = aParticles.increase_length(particleList.size());
 	if (particleList.size() == 0) return newParticles;
 
