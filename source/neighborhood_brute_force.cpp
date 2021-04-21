@@ -1,4 +1,5 @@
 #include "neighborhood_brute_force.h"
+#include "measurements.h"
 #include "settings.h"
 
 pbd::neighborhood_brute_force& pbd::neighborhood_brute_force::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, neighbors* aNeighbors)
@@ -17,6 +18,8 @@ pbd::neighborhood_brute_force& pbd::neighborhood_brute_force::set_range_scale(fl
 
 void pbd::neighborhood_brute_force::apply()
 {
+	measurements::debug_label_start("neighborhood brute force", glm::vec4(1, 0.5, 0, 1));
+
 	auto& positionList = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	if (settings::neighborListSorted) {
 		mNeighbors->set_length(mParticles->length());
@@ -35,4 +38,6 @@ void pbd::neighborhood_brute_force::apply()
 		algorithms::prefix_sum(neighborCount.write().buffer(), prefixHelper.write().buffer(), mParticles->length(), neighborCount.requested_length());
 		shader_provider::linked_list_to_neighbor_list(linkedList.buffer(), neighborCount.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length());
 	}
+
+	measurements::debug_label_end();
 }

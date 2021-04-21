@@ -58,6 +58,6 @@ void main()
 		float rangeN = inRange[idN] * mRangeScale;
 		if (id == idN || distance(pos, posN) > rangeN) continue;
 
-		addNeighborPair(idN, id);
+		addNeighborPair(idN, id); // TODO this does not work for mNeighborListSorted == true
 	}
 }

@@ -33,7 +33,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
-	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
+	mNeighborhoodFluid.set_position_range(aCenter - aPoolRadius, aCenter + aPoolRadius, 4u);
 #endif
 	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();

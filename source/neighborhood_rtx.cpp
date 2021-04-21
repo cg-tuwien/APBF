@@ -1,4 +1,5 @@
 #include "neighborhood_rtx.h"
+#include "measurements.h"
 #include "settings.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
@@ -33,6 +34,8 @@ pbd::neighborhood_rtx& pbd::neighborhood_rtx::set_range_scale(float aScale)
 
 void pbd::neighborhood_rtx::apply()
 {
+	measurements::debug_label_start("neighborhood RTX", glm::vec4(1, 0.5, 0, 1));
+
 	auto& positionList     = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	auto  blasReference   = mBlas->device_address();
 
@@ -57,6 +60,8 @@ void pbd::neighborhood_rtx::apply()
 		algorithms::prefix_sum(neighborCount.write().buffer(), prefixHelper.write().buffer(), mParticles->length(), neighborCount.requested_length());
 		shader_provider::linked_list_to_neighbor_list(linkedList.buffer(), neighborCount.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length());
 	}
+
+	measurements::debug_label_end();
 }
 
 void pbd::neighborhood_rtx::reserve_geometry_instances_buffer(size_t aSize)

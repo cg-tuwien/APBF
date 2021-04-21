@@ -1,4 +1,5 @@
 #include "neighborhood_green.h"
+#include "measurements.h"
 #include "settings.h"
 
 pbd::neighborhood_green& pbd::neighborhood_green::set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, pbd::neighbors* aNeighbors)
@@ -25,6 +26,8 @@ pbd::neighborhood_green& pbd::neighborhood_green::set_position_range(const glm::
 
 void pbd::neighborhood_green::apply()
 {
+	measurements::debug_label_start("neighborhood Green", glm::vec4(1, 0.5, 0, 1));
+
 	auto  maxHash           = 1u << (mResolutionLog2 * DIMENSIONS);
 	auto& positionList      = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
 	auto  unsortedHashList  = pbd::gpu_list<sizeof(uint32_t)>().request_length(positionList.requested_length());
@@ -69,4 +72,6 @@ void pbd::neighborhood_green::apply()
 		algorithms::prefix_sum(neighborCount.write().buffer(), prefixHelper.write().buffer(), mParticles->length(), neighborCount.requested_length());
 		shader_provider::linked_list_to_neighbor_list(linkedList.buffer(), neighborCount.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length());
 	}
+
+	measurements::debug_label_end();
 }
