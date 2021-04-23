@@ -42,12 +42,20 @@
 #define MAX_TRANSFERS 100
 // ----------------------------------------------------
 
+
+
+
+
 // ---------------------- HELPERS ---------------------
 #define CONCAT_AUX(a, b) a ## b
 #define CONCAT(a, b) CONCAT_AUX(a, b)
 #define STRINGIZE_AUX(a) #a
 #define STRINGIZE(a) STRINGIZE_AUX(a)
 // ----------------------------------------------------
+
+
+
+
 
 // ---------------------- SCENES ----------------------
 #define SCENE_0 pool
@@ -56,6 +64,10 @@
 #define SCENE_NAME CONCAT(SCENE_, SCENE)
 #define SCENE_FILENAME STRINGIZE(CONCAT(SCENE_NAME, .h))
 // ----------------------------------------------------
+
+
+
+
 
 // ----------------- NEIGHBOR SEARCH ------------------
 #define NEIGHBOR_SEARCH_0 neighborhood_brute_force
