@@ -50,17 +50,25 @@ void main()
 	float volS           = pow(radiusS, DIMENSIONS);
 	float volT           = pow(radiusT, DIMENSIONS);
 	float factorS        = merge ? min(1, mDeltaTime / ttl) : mDeltaTime * (volS - volT) / (2 * ttl * volS);
-	float transfMass     = factorS / invMassS;
-	float transfVol      = factorS * pow(radiusS, DIMENSIONS);
+//	float transfMass     = factorS / invMassS;
+	float transfVol      = factorS * volS;
+	float normFactor     = 1.0 / (invMassS + factorS * invMassT);
 
-	inOutInverseMass[idS]    =                                    invMassS / (1 - invMassS * transfMass);
+	inOutInverseMass[idS]    =                                    invMassS / (1 - factorS);
+//	inOutInverseMass[idS]    =                                    invMassS / (1 - invMassS * transfMass);
 //	inOutInverseMass[idT]    = isinf(invMassT) ? 1 / transfMass : invMassT / (1 + invMassT * transfMass);
-	inOutInverseMass[idT]    =                                           1 / (1 / invMassT + transfMass);
-//	inOutRadius[idS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
-	inOutRadius[idS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
+//	inOutInverseMass[idT]    =                                           1 / (1 / invMassT + transfMass);
+	inOutInverseMass[idT]    =                         invMassS * invMassT * normFactor;
+//	inOutRadius[idS]         = radiusS * pow(1 - factorS, 1.0 / DIMENSIONS);
+	inOutRadius[idS]         = pow(volS - transfVol, 1.0 / DIMENSIONS);
 	inOutRadius[idT]         = pow(volT + transfVol, 1.0 / DIMENSIONS);
-//	inOutPosition[idT]       = 
-	// TODO
+//	inOutPosition[idT].xyz   = ivec3((invMassS *      posT + factorS * invMassT *      posS) * normFactor);
+//	inOutVelocity[idT].xyz   = ivec3((invMassS * velocityT + factorS * invMassT * velocityS) * normFactor);
+//	inOutPosition[idT].xyz   = ivec3(invMassS * normFactor *      posT + factorS * invMassT * normFactor *      posS); // rounding errors can break 2D version
+//	inOutVelocity[idT].xyz   =       invMassS * normFactor * velocityT + factorS * invMassT * normFactor * velocityS;
+	inOutPosition[idT].xyz   =      posS + ivec3(invMassS * normFactor * (     posT -      posS));
+	inOutVelocity[idT].xyz   = velocityS +       invMassS * normFactor * (velocityT - velocityS);
+
 	inOutTransferTimeLeft[id] = (ttl - mDeltaTime) * (merge ? 1 : -1);
 
 	if (ttl == mDeltaTime) {
