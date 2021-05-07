@@ -157,9 +157,6 @@
     <None Include="shaders\particle_transfer.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\neighborhood_rtx.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
     <None Include="shaders\generate_acceleration_structure_instances.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>

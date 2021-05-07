@@ -841,33 +841,6 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 	dispatch_indirect();
 }
 
-void shader_provider::neighborhood_rtx(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::top_level_acceleration_structure_t& aInTlas, float aRangeScale)
-{
-	struct push_constants { float mRangeScale; } pushConstants{ aRangeScale };
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/particle manipulation/neighborhood_rtx.comp",
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInPosition),
-		avk::descriptor_binding(2, 0, aInRange),
-		avk::descriptor_binding(3, 0, aOutNeighbors),
-		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, aInTlas),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
-	));
-	prepare_dispatch_indirect(aInIndexListLength);
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInPosition),
-		avk::descriptor_binding(2, 0, aInRange),
-		avk::descriptor_binding(3, 0, aOutNeighbors),
-		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, aInTlas)
-	}));
-	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
-	dispatch_indirect();
-}
-
 void shader_provider::neighborhood_rtx_2(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutNeighborsLength, const avk::top_level_acceleration_structure& aInTlas, float aRangeScale)
 {
 	struct push_constants { float mRangeScale; } pushConstants{ aRangeScale };

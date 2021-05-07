@@ -26,7 +26,7 @@
 #define DIMENSIONS 3 // currently only supporting 2 or 3
 
 #define SCENE 1 // 0: pool, 1: spherical_pool
-#define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
+#define NEIGHBORHOOD_TYPE 2 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
