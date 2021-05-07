@@ -169,7 +169,7 @@
     <None Include="shaders\initialize_split_particles.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\neighborhood_rtx_2.comp">
+    <None Include="shaders\neighborhood_rtx.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
     <None Include="shaders\incompressibility_2.comp">

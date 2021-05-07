@@ -841,11 +841,11 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 	dispatch_indirect();
 }
 
-void shader_provider::neighborhood_rtx_2(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutNeighborsLength, const avk::top_level_acceleration_structure& aInTlas, float aRangeScale)
+void shader_provider::neighborhood_rtx(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRange, const avk::buffer& aOutNeighbors, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutNeighborsLength, const avk::top_level_acceleration_structure& aInTlas, float aRangeScale)
 {
 	struct push_constants { float mRangeScale; } pushConstants{ aRangeScale };
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/particle manipulation/neighborhood_rtx_2.comp",
+		"shaders/particle manipulation/neighborhood_rtx.comp",
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInPosition),
 		avk::descriptor_binding(2, 0, aInRange),
