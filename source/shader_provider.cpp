@@ -1482,7 +1482,7 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 	struct push_constants { glm::vec3 mColor1; float mColor1Float; glm::vec3 mColor2; float mColor2Float; float mParticleRenderScale; } pushConstants{ aColor1, aColor1Float, aColor2, aColor2Float, aParticleRenderScale };
 
 	static auto renderpass = gvk::context().create_renderpass({
-		avk::attachment::declare_for(aOutColor , avk::on_load::clear,   avk::color(0),         avk::on_store::store).set_image_usage_hint(avk::image_usage::shader_storage),
+		avk::attachment::declare_for(aOutColor , avk::on_load::clear,   avk::color(0),         avk::on_store::store).set_clear_color({1.0f, 1.0f, 1.0f, 1.0f}).set_image_usage_hint(avk::image_usage::shader_storage),
 		avk::attachment::declare_for(aOutNormal, avk::on_load::clear,   avk::color(1),         avk::on_store::store),
 		avk::attachment::declare_for(aOutDepth , avk::on_load::clear,   avk::depth_stencil(),  avk::on_store::store)
 	});
