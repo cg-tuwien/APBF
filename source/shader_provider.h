@@ -10,6 +10,7 @@ public:
 	static void set_updater(gvk::updater* aUpdater);
 	static void start_recording();
 	static void end_recording(std::optional<avk::resource_reference<avk::semaphore_t>> aWaitSemaphore = {});
+	static bool is_recording();
 	static avk::command_buffer& cmd_bfr();
 	static void roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount);
 	static void mask_neighborhood(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount);
@@ -65,7 +66,7 @@ public:
 	static void find_split_and_merge_2(const avk::buffer& aInNeighbors, const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInMinNeighborSqDist, const avk::buffer& aOutNearestNeighbor, const avk::buffer& aInBoundariness, const avk::buffer& aInOutUintBoundariness, const avk::buffer& aInNeighborsLength);
 	static void find_split_and_merge_3(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoundariness, const avk::buffer& aInUintBoundariness, const avk::buffer& aInOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNearestNeighbor, const avk::buffer& aOutTransferSource, const avk::buffer& aOutTransferTarget, const avk::buffer& aOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutSplit, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutTransferLength, const avk::buffer& aInOutSplitLength, uint32_t aMaxTransferLength, uint32_t aMaxSplitLength);
 	static const avk::buffer& remove_impossible_splits(const avk::buffer& aInSplit, const avk::buffer& aOutTransferring, const avk::buffer& aInTransferLength, const avk::buffer& aInParticleLength, const avk::buffer& aInSplitLength, uint32_t aMaxTransferLength, uint32_t aMaxParticleLength);
-	static void initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength);
+	static void initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutBackupPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength);
 	static void particle_transfer(const avk::buffer& aInOutPosition, const avk::buffer& aInOutRadius, const avk::buffer& aInOutInverseMass, const avk::buffer& aInOutVelocity, const avk::buffer& aOutTransferSource, const avk::buffer& aOutTransferTarget, const avk::buffer& aOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutDeleteParticleList, const avk::buffer& aOutDeleteTransferList, const avk::buffer& aInTransferLength, const avk::buffer& aInOutDeleteParticleListLength, const avk::buffer& aInOutDeleteTransferListLength, float aDeltaTime);
 
 	static void apply_acceleration(const avk::buffer& aInIndexList, const avk::buffer& aInOutVelocity, const avk::buffer& aInIndexListLength, const glm::vec3& aAcceleration);
@@ -95,4 +96,5 @@ private:
 	static avk::command_buffer mCmdBfr;
 	static avk::queue* mQueue;
 	static gvk::updater* mUpdater;
+	static bool mIsRecording;
 };

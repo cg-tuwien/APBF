@@ -13,6 +13,7 @@ public:
 	static float get_timing_interval_in_ms(const std::string& aName);
 	static void clean_up_resources();
 
+	// Set labels that will be visible in debugging tools like Nvidia Nsight
 	static void debug_label_start(const std::string& aName, const glm::vec4& aColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 	static void debug_label_end();
 

@@ -66,7 +66,7 @@ void main()
 //	inOutVelocity[idT].xyz   = ivec3((invMassS * velocityT + factorS * invMassT * velocityS) * normFactor);
 //	inOutPosition[idT].xyz   = ivec3(invMassS * normFactor *      posT + factorS * invMassT * normFactor *      posS); // rounding errors can break 2D version
 //	inOutVelocity[idT].xyz   =       invMassS * normFactor * velocityT + factorS * invMassT * normFactor * velocityS;
-	inOutPosition[idT].xyz   =      posS + ivec3(invMassS * normFactor * (     posT -      posS));
+//	inOutPosition[idT].xyz   =      posS + ivec3(invMassS * normFactor * (     posT -      posS)); // introduces erratic particle movement
 	inOutVelocity[idT].xyz   = velocityS +       invMassS * normFactor * (velocityT - velocityS);
 
 	inOutTransferTimeLeft[id] = (ttl - mDeltaTime) * (merge ? 1 : -1);

@@ -109,6 +109,7 @@
     <ClCompile Include="source\neighborhood_rtx.cpp" />
     <ClCompile Include="source\particle_transfer.cpp" />
     <ClCompile Include="source\pool.cpp" />
+    <ClCompile Include="source\save_particle_info.cpp" />
     <ClCompile Include="source\settings.cpp" />
     <ClCompile Include="source\sphere_collision.cpp" />
     <ClCompile Include="source\spherical_pool.cpp" />
@@ -142,6 +143,7 @@
     <ClInclude Include="source\neighborhood_rtx.h" />
     <ClInclude Include="source\particle_transfer.h" />
     <ClInclude Include="source\pool.h" />
+    <ClInclude Include="source\save_particle_info.h" />
     <ClInclude Include="source\settings.h" />
     <ClInclude Include="source\sphere_collision.h" />
     <ClInclude Include="source\spherical_pool.h" />

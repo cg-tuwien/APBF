@@ -77,6 +77,13 @@ void main()
 		boundaryDistance =     dot(toMin, vec3(smallestComponent(toMin)));
 		boundaryDistance = min(dot(toMax, vec3(smallestComponent(toMax))), boundaryDistance);
 	}
+	// TODO remove: Ground Truth Boundariness
+//	{
+//		vec3  fluidCenter = vec3(0, 10, -60);
+//		float fluidRadius = 100.0f;
+//		vec3 posF = vec3(pos) / POS_RESOLUTION;
+//		boundariness = fluidRadius - radius * 2.9f < distance(posF, fluidCenter) ? 1.0f : 0.0f;
+//	}
 
 	float targetRadius;
 	if (bool(apbfSettings.mUpdateTargetRadius)) {

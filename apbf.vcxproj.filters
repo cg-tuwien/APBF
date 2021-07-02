@@ -35,6 +35,9 @@
     <Filter Include="shader_includes">
       <UniqueIdentifier>{1f74b116-ce97-4400-9f4b-d94659189245}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\pbd\Debug">
+      <UniqueIdentifier>{ba90d786-8222-4fb1-aea1-473fb1b37ec0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
@@ -339,6 +342,9 @@
     <ClCompile Include="source\glue.cpp">
       <Filter>source\pbd\particle manipulation</Filter>
     </ClCompile>
+    <ClCompile Include="source\save_particle_info.cpp">
+      <Filter>source\pbd\Debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -439,6 +445,9 @@
     </ClInclude>
     <ClInclude Include="source\glue.h">
       <Filter>source\pbd\particle manipulation</Filter>
+    </ClInclude>
+    <ClInclude Include="source\save_particle_info.h">
+      <Filter>source\pbd\Debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

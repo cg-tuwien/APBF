@@ -18,6 +18,7 @@ void pbd::update_transfers::apply()
 	auto& boundaryDistanceList    = mFluid->get<fluid::id::boundary_distance>();
 	auto& transferringList        = particleList.hidden_list().get<pbd::hidden_particles::id::transferring>();
 	auto& positionList            = particleList.hidden_list().get<pbd::hidden_particles::id::position>();
+	auto& backupPositionList      = particleList.hidden_list().get<pbd::hidden_particles::id::pos_backup>();
 	auto& radiusList              = particleList.hidden_list().get<pbd::hidden_particles::id::radius>();
 	auto& inverseMassList         = particleList.hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
 	auto& transferSourceList      = mTransfers->hidden_list().get<hidden_transfers::id::source>();
@@ -53,7 +54,7 @@ void pbd::update_transfers::apply()
 		timeLeftList.set_length(splitList.length());
 		shader_provider::write_sequence_float(timeLeftList.write().buffer(), timeLeftList.write().length(), -settings::splitDuration, 0);
 		auto duplicates = splitList.duplicate_these();
-		shader_provider::initialize_split_particles(duplicates.index_buffer(), positionList.write().buffer(), inverseMassList.write().buffer(), radiusList.write().buffer(), duplicates.length());
+		shader_provider::initialize_split_particles(duplicates.index_buffer(), positionList.write().buffer(), backupPositionList.write().buffer(), inverseMassList.write().buffer(), radiusList.write().buffer(), duplicates.length());
 
 		transferSourceList += splitList;
 		transferTargetList += duplicates;

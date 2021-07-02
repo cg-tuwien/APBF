@@ -23,10 +23,10 @@
 
 
 // ----------------------- PBD ------------------------
-#define DIMENSIONS 3 // currently only supporting 2 or 3
+#define DIMENSIONS 2 // currently only supporting 2 or 3
 
 #define SCENE 1 // 0: pool, 1: spherical_pool
-#define NEIGHBORHOOD_TYPE 2 // 0: brute force, 1: Green, 2: RTX, 3: binary search
+#define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 #define POS_RESOLUTION 262144.0
 #define KERNEL_WIDTH_RESOLUTION 262144.0
@@ -37,9 +37,9 @@
 #define FIXED_TIME_STEP (1.0f / 60.0f) // 0 for variable timestep
 
 #define KERNEL_SCALE 4.0
-#define KERNEL_SPREADING_FACTOR 0.5
+#define KERNEL_WIDTH_PROPAGATION_FACTOR 0.5
 
-#define MAX_TRANSFERS 100
+#define MAX_TRANSFERS 10000
 // ----------------------------------------------------
 
 

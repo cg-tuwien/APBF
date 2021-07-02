@@ -5,6 +5,7 @@
 avk::command_buffer shader_provider::mCmdBfr;
 avk::queue*   shader_provider::mQueue   = nullptr;
 gvk::updater* shader_provider::mUpdater = nullptr;
+bool shader_provider::mIsRecording = false;
 
 void shader_provider::set_queue(avk::queue& aQueue)
 {
@@ -24,6 +25,7 @@ void shader_provider::start_recording()
 	// Create a command buffer and render into the *current* swap chain image:
 	mCmdBfr = commandPool->alloc_command_buffer(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	cmd_bfr()->begin_recording();
+	mIsRecording = true;
 }
 
 void shader_provider::end_recording(std::optional<avk::resource_reference<avk::semaphore_t>> aWaitSemaphore)
@@ -31,6 +33,12 @@ void shader_provider::end_recording(std::optional<avk::resource_reference<avk::s
 	cmd_bfr()->end_recording();
 	mQueue->submit(cmd_bfr(), aWaitSemaphore);
 	gvk::context().main_window()->handle_lifetime(std::move(mCmdBfr));
+	mIsRecording = false;
+}
+
+bool shader_provider::is_recording()
+{
+	return mIsRecording;
 }
 
 avk::command_buffer& shader_provider::cmd_bfr()
@@ -1345,24 +1353,26 @@ const avk::buffer& shader_provider::remove_impossible_splits(const avk::buffer& 
 	return length_result_buffer();
 }
 
-void shader_provider::initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength)
+void shader_provider::initialize_split_particles(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aOutBackupPosition, const avk::buffer& aOutInverseMass, const avk::buffer& aInOutRadius, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/initialize_split_particles.comp",
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInOutPosition),
-		avk::descriptor_binding(2, 0, aOutInverseMass),
-		avk::descriptor_binding(3, 0, aInOutRadius),
-		avk::descriptor_binding(4, 0, aInIndexListLength)
+		avk::descriptor_binding(2, 0, aOutBackupPosition),
+		avk::descriptor_binding(3, 0, aOutInverseMass),
+		avk::descriptor_binding(4, 0, aInOutRadius),
+		avk::descriptor_binding(5, 0, aInIndexListLength)
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
 	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInOutPosition),
-		avk::descriptor_binding(2, 0, aOutInverseMass),
-		avk::descriptor_binding(3, 0, aInOutRadius),
-		avk::descriptor_binding(4, 0, aInIndexListLength)
+		avk::descriptor_binding(2, 0, aOutBackupPosition),
+		avk::descriptor_binding(3, 0, aOutInverseMass),
+		avk::descriptor_binding(4, 0, aInOutRadius),
+		avk::descriptor_binding(5, 0, aInIndexListLength)
 	}));
 	dispatch_indirect();
 }

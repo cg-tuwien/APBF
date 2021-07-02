@@ -48,7 +48,7 @@ void main()
 
 	// spread original kernel width to neighbor
 	float distanceFromKernel = dist - originalKernelWidth;
-	float influence = max(0, 1 - max(0, distanceFromKernel / (originalKernelWidth * KERNEL_SPREADING_FACTOR)));
+	float influence = max(0, 1 - max(0, distanceFromKernel / (originalKernelWidth * KERNEL_WIDTH_PROPAGATION_FACTOR)));
 	atomicMax(inOutKernelWidth[n[1]], uint(originalKernelWidth * influence * KERNEL_WIDTH_RESOLUTION));
 
 	// reduce neighborhood to only lie within the old/original kernel width

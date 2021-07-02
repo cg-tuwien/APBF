@@ -7,6 +7,7 @@
 #include "incompressibility.h"
 #include "update_transfers.h"
 #include "particle_transfer.h"
+#include "save_particle_info.h"
 #include "time_machine.h"
 #include NEIGHBOR_SEARCH_FILENAME
 
@@ -46,5 +47,6 @@ private:
 	pbd::incompressibility mIncompressibility;
 	pbd::update_transfers mUpdateTransfers;
 	pbd::particle_transfer mParticleTransfer;
+	pbd::save_particle_info mSaveParticleInfo;
 	pbd::NEIGHBOR_SEARCH_NAME mNeighborhoodFluid;
 };

@@ -15,11 +15,11 @@ pbd::particles pbd::initialize::add_box_shape(pbd::particles& aParticles, const 
 	auto maxPos = aMaxPos;
 #if DIMENSIONS < 3
 	minPos.z = (aMinPos.z + aMaxPos.z) / 2 - aRadius;
-	maxPos.z = (aMinPos.z + aMaxPos.z) / 2 + aRadius * 1.5; // * 1.5 to address rounding errors
+	maxPos.z = (aMinPos.z + aMaxPos.z) / 2 + aRadius * 1.5f; // * 1.5 to address rounding errors
 #endif
 #if DIMENSIONS < 2
 	minPos.y = (aMinPos.y + aMaxPos.y) / 2 - aRadius;
-	maxPos.y = (aMinPos.y + aMaxPos.y) / 2 + aRadius * 1.5; // * 1.5 to address rounding errors
+	maxPos.y = (aMinPos.y + aMaxPos.y) / 2 + aRadius * 1.5f; // * 1.5 to address rounding errors
 #endif
 
 	auto inverseMass = aInverseDensity / static_cast<float>(std::pow(2.0f * aRadius, DIMENSIONS));

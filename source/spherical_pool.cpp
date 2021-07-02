@@ -17,7 +17,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, 0.0f, false, aParticleRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, 0.0f, true, aParticleRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aParticleRadius * static_cast<float>(KERNEL_SCALE), 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
@@ -30,6 +30,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mSphereCollision  .set_data(&mParticles                           ).set_sphere(aCenter, aPoolRadius, true);
 	mUpdateTransfers  .set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 	mParticleTransfer .set_data(&mFluid, &mTransfers                  );
+	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid             );
 
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
@@ -93,7 +94,12 @@ pbd::neighbors& spherical_pool::neighbors()
 	return mNeighborsFluid;
 }
 
-void spherical_pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos) {}
+void spherical_pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
+{
+	if (gvk::input().key_pressed(gvk::key_code::o)) {
+		mSaveParticleInfo.apply();
+	}
+}
 
 void spherical_pool::render(const glm::mat4& aViewProjection) {}
 
