@@ -128,7 +128,7 @@ void main()
 		}
 		outTransferSource  [tIdx] = sourceIdx;
 		outTransferTarget  [tIdx] = targetIdx;
-		outTransferTimeLeft[tIdx] = apbfSettings.mMergeDuration;
+		outTransferTimeLeft[tIdx] = max(0.0001, apbfSettings.mMergeDuration); // 0 would be interpreted as a split
 	} else {
 		uint sIdx = atomicAdd(inOutSplitLength, 1u);
 		if (sIdx >= mMaxSplitLength) {

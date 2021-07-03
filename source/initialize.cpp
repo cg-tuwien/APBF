@@ -53,6 +53,7 @@ pbd::particles pbd::initialize::add_sphere_shape(pbd::particles& aParticles, con
 
 	while (aShapeInnerRadius <= radius && radius <= aShapeOuterRadius) {
 		append_sphere(particleList, aCenter, radius, aParticleRadius, DIMENSIONS);
+		if (aOuterRadiusMoreImportant && radius < aParticleRadius) break; // already placed center particle; stop before another one is placed at the same position
 		radius = std::pow(a + b * particleList.size(), 1.0f / DIMENSIONS) + offset; // only works for DIMENSIONS = 2 or 3
 	}
 

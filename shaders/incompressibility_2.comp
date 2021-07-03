@@ -35,7 +35,7 @@ layout(set =  8, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings;
 float move_towards(float oldValue, float newValue, float maxStep)
 {
 	float step = newValue - oldValue;
-	return oldValue + min(abs(step), maxStep) * sign(step);
+	return oldValue + min(maxStep, max(-maxStep, step));
 }
 
 void compute_boundariness(uint id, float selfGradLength, float underpressure)

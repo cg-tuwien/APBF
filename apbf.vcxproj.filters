@@ -345,6 +345,9 @@
     <ClCompile Include="source\save_particle_info.cpp">
       <Filter>source\pbd\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="source\waterfall.cpp">
+      <Filter>source\scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -448,6 +451,9 @@
     </ClInclude>
     <ClInclude Include="source\save_particle_info.h">
       <Filter>source\pbd\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="source\waterfall.h">
+      <Filter>source\scenes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

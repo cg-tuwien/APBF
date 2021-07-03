@@ -24,7 +24,7 @@ void pbd::save_particle_info::apply()
 	auto        radii =       radiusList.read<     float>();
 	auto  kernelWidth =  kernelWidthList.read<     float>();
 	auto targetRadius = targetRadiusList.read<     float>();
-	auto boundaryDist = boundaryDistList.read<     float>();
+	auto boundaryDist = boundaryDistList.read<glm:: uint>();
 	auto     nbrPairs =      mNeighbors->read<glm::uvec2>();
 	auto     nbrCount = std::vector<unsigned int>();
 	auto       radius = std::vector<float>();
@@ -80,6 +80,6 @@ void pbd::save_particle_info::apply()
 
 	{
 		auto toFile = std::ofstream("boundaryDistance.txt");
-		for (auto& data : boundaryDist) toFile << data << ";";
+		for (auto& data : boundaryDist) toFile << (data / POS_RESOLUTION) << ";";
 	}
 }

@@ -125,6 +125,7 @@
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\test.cpp" />
+    <ClCompile Include="source\waterfall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="source\targetver.hpp" />
     <ClInclude Include="source\test.h" />
     <ClInclude Include="source\uninterleaved_list.h" />
+    <ClInclude Include="source\waterfall.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">

@@ -23,7 +23,7 @@ layout(push_constant) uniform PushConstants {
 float move_towards(float oldValue, float newValue, float maxStep)
 {
 	float step = newValue - oldValue;
-	return oldValue + min(abs(step), maxStep) * sign(step);
+	return oldValue + min(maxStep, max(-maxStep, step));
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;

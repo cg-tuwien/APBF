@@ -61,9 +61,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-#if SCENE == 0
-		mPool = std::make_unique<pool>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
-#else
+#if SCENE == 0 || SCENE == 2
+		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
+#elif SCENE == 1
 		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 100.0f, 1.0f);
 #endif
 		auto* mainWnd = context().main_window();
@@ -476,19 +476,19 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto transferring = mPool->particles().hidden_list().get<pbd::hidden_particles::id::transferring>();
 
 		pbd::gpu_list<4> floatForColor;
-		auto color1 = glm::vec3(0, 0.2, 0);
-		auto color2 = glm::vec3(1, 0.2, 0);
+		auto color1 = glm::vec3(0, 0, 1);
+		auto color2 = glm::vec3(0.62, 0.96, 0.83);
 		auto color1Float = 0.0f;
 		auto color2Float = 1.0f;
 		auto isUint = false;
 		auto isParticleProperty = false;
 		switch (pbd::settings::color) {
-			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();                                                    break;
-			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();        color2Float = POS_RESOLUTION *  20; isUint = true; break;
+			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();        color2 = glm::vec3(1, 0, 0);                       break;
+			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();        color2Float = POS_RESOLUTION *  80; isUint = true; break;
 			case 2: floatForColor = transferring;                        isParticleProperty = true; color1Float = 0; color2Float =   1; isUint = true; break;
-			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = 4; color2Float =   8;                break;
-			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = 1; color2Float =   2;                break;
-			case 5: floatForColor = radius;                                                         color1Float = 1; color2Float = 1.3f;               break;
+			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = 4; color2Float =  32;                break;
+			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = 1; color2Float =   8;                break;
+			case 5: floatForColor = radius;                                                         color1Float = 1; color2Float =   8;               break;
 			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0; color2Float =  10;                break;
 		}
 		if (isParticleProperty) {
