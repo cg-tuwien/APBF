@@ -20,8 +20,10 @@ layout(push_constant) uniform PushConstants {
 
 float move_towards(float oldValue, float newValue, float maxStep)
 {
-	float step = newValue - oldValue;
-	return oldValue + min(maxStep, max(-maxStep, step));
+	float dir     = sign(newValue - oldValue);
+	float result  = oldValue * (1.0f + maxStep * dir);
+	bool  reached = oldValue < newValue != result < newValue;
+	return reached ? newValue : result;
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;

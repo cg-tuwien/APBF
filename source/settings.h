@@ -24,7 +24,7 @@ namespace pbd
 		static bool  neighborListSorted;                  // if enabled, the list of neighbor pairs is sorted by the first of the two ids; for reduced scatter in memory access
 		static bool  groundTruthBoundaryDistance;         // hardcoded boundary distance; outdated; TODO delete?
 		static float boundarinessAdaptionSpeed;           // maximum step width for updating boundariness (slow down to filter short occurrences of false positives)
-		static float kernelWidthAdaptionSpeed;            // maximum step width for updating kernel width (fast kernel width changes can cause large changes in the density estimate and lead to erratic particle movement)
+		static float kernelWidthAdaptionSpeed;            // maximum percent change for updating kernel width (fast kernel width changes can cause large changes in the density estimate and lead to erratic particle movement)
 		static float boundarinessSelfGradLengthFactor;    // for boundariness classification: influence of the gradient length for the particle itself
 		static float boundarinessUnderpressureFactor;     // for boundariness classification: influence of underpressure
 		static float neighborBoundarinessThreshold;       // for filtering false positives in boundariness classification: only keep if enough neighbors are also classified as boundary particle; did not really improve the results; TODO delete?
