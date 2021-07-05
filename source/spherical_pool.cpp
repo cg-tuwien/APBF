@@ -97,7 +97,10 @@ pbd::neighbors& spherical_pool::neighbors()
 void spherical_pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
 	if (gvk::input().key_pressed(gvk::key_code::o)) {
+		shader_provider::start_recording();
+		mNeighborhoodFluid.apply();
 		mSaveParticleInfo.apply();
+		shader_provider::end_recording();
 	}
 }
 
