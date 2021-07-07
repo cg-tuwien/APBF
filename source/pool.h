@@ -15,6 +15,7 @@ class pool
 {
 public:
 	pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius = 1.0f);
+	pool(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius = 1.0f);
 	void update(float aDeltaTime);
 	pbd::particles& particles();
 	pbd::fluid& fluid();

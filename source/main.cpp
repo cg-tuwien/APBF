@@ -61,11 +61,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #ifdef _DEBUG
 		pbd::test::test_all();
 #endif
-#if SCENE == 0 || SCENE == 2
-		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), 1.0f);
-#elif SCENE == 1
-		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 100.0f, 1.0f);
-#endif
 		auto* mainWnd = context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 		
@@ -83,6 +78,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				uniform_buffer_meta::create_from_data(application_data{})
 			));
 		}
+
+#if SCENE == 0 || SCENE == 2
+		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), mQuakeCam, 1.0f);
+#elif SCENE == 1
+		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 100.0f, mQuakeCam, 1.0f);
+#endif
 
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			auto imColor     = context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment | avk::image_usage::shader_storage);

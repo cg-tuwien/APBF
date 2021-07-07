@@ -15,6 +15,7 @@ class spherical_pool
 {
 public:
 	spherical_pool(const glm::vec3& aCenter, float aPoolRadius, float aParticleRadius = 1.0f);
+	spherical_pool(const glm::vec3& aCenter, float aPoolRadius, gvk::camera& aCamera, float aParticleRadius = 1.0f);
 	void update(float aDeltaTime);
 	pbd::particles& particles();
 	pbd::fluid& fluid();

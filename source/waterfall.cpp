@@ -38,7 +38,6 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	mUcb.add_box(shift + aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z) + shift);
 	mUcb.add_box(shift + aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z) + shift);
 	mUcb.add_box(shift + glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax + shift);
-	mUcb.add_box(shift + glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax + shift);
 #if DIMENSIONS > 2
 	// top pool
 	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
@@ -59,6 +58,20 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
+}
+
+waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
+	waterfall(aMin, aMax, aRadius)
+{
+#if DIMENSIONS == 2
+	auto pos   = aMin + glm::normalize(glm::vec3(0, 0, 1)) * glm::distance(aMin, aMax) * 1.5f;
+	auto focus = aMin;
+#else
+	auto pos   = aMin + glm::vec3(0, 0, aMax.z / 2.0f) + glm::normalize(glm::vec3(-0.3, 0.3, 1)) * glm::distance(aMin, aMax) * 1.5f;
+	auto focus = aMin + glm::vec3(0, -aMax.y / 2.0f, 0);
+#endif
+	aCamera.set_translation(pos);
+	aCamera.set_rotation(glm::conjugate(glm::quat(glm::lookAt(pos, focus, glm::vec3(0, 1, 0)))));
 }
 
 void waterfall::update(float aDeltaTime)

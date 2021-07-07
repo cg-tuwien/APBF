@@ -42,6 +42,15 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mRenderBoxes = true;
 }
 
+spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, gvk::camera& aCamera, float aParticleRadius) :
+	spherical_pool(aCenter, aPoolRadius, aParticleRadius)
+{
+	auto pos = aCenter - glm::vec3(0, 0, aPoolRadius * 2);
+	auto focus = aCenter;
+	aCamera.set_translation(pos);
+	aCamera.set_rotation(glm::conjugate(glm::quat(glm::lookAt(pos, focus, glm::vec3(0, 1, 0)))));
+}
+
 void spherical_pool::update(float aDeltaTime)
 {
 	mDeltaTime = FIXED_TIME_STEP == 0 ? aDeltaTime : FIXED_TIME_STEP;

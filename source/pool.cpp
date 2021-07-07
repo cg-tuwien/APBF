@@ -49,6 +49,15 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mRenderBoxes = true;
 }
 
+pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
+	pool(aMin, aMax, aRadius)
+{
+	auto focus = (aMin + aMax) / 2.0f;
+	auto pos   = focus + glm::normalize(glm::vec3(0, 0, 1)) * glm::distance(aMin, aMax) * 0.9f;
+	aCamera.set_translation(pos);
+	aCamera.set_rotation(glm::conjugate(glm::quat(glm::lookAt(pos, focus, glm::vec3(0, 1, 0)))));
+}
+
 void pool::update(float aDeltaTime)
 {
 	mDeltaTime = FIXED_TIME_STEP == 0 ? aDeltaTime : FIXED_TIME_STEP;
