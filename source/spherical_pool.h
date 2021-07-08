@@ -25,6 +25,7 @@ public:
 	void render(const glm::mat4& aViewProjection);
 
 	pbd::gpu_list<4> scalar_particle_velocities();
+	float max_expected_boundary_distance();
 
 	bool mRenderBoxes;
 
@@ -37,6 +38,7 @@ private:
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
 	pbd::neighbors mNeighborsFluid;
 
+	float mMaxExpectedBoundaryDistance;
 	float mDeltaTime;
 	pbd::time_machine<pbd::particles, pbd::hidden_particles, pbd::particles,
 		pbd::gpu_list<4>, pbd::gpu_list<4>, pbd::gpu_list<4>, pbd::gpu_list<4>,

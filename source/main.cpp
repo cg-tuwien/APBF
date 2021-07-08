@@ -70,6 +70,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		// Create the camera and buffers that will contain camera data:
 		mQuakeCam.set_translation({ 0.0f, 0.0f, 0.0f });
 		mQuakeCam.set_perspective_projection(glm::radians(60.0f), mainWnd->aspect_ratio(), 0.5f, 500.0f);
+		mQuakeCam.set_move_speed(30.0f);
 		mQuakeCam.disable();
 		current_composition()->add_element(mQuakeCam);
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {
@@ -483,14 +484,20 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto color2Float = 1.0f;
 		auto isUint = false;
 		auto isParticleProperty = false;
+		auto maxBd = mPool->max_expected_boundary_distance();
+		auto minRad = pbd::settings::smallestTargetRadius;
+		auto maxRad = pbd::settings::targetRadiusScaleFactor * maxBd / (KERNEL_SCALE + KERNEL_SCALE * pbd::settings::targetRadiusScaleFactor);
+//		auto minKer = minRad * KERNEL_SCALE;
+//		auto maxKer = pbd::settings::targetRadiusScaleFactor * maxBd;
 		switch (pbd::settings::color) {
-			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();        color2 = glm::vec3(1, 0, 0);                       break;
-			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();        color2Float = POS_RESOLUTION *  80; isUint = true; break;
-			case 2: floatForColor = transferring;                        isParticleProperty = true; color1Float = 0; color2Float =   1; isUint = true; break;
-			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = 4; color2Float =  32;                break;
-			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = 1; color2Float =   8;                break;
-			case 5: floatForColor = radius;                                                         color1Float = 1; color2Float =   8;               break;
-			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0; color2Float =  10;                break;
+			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();        color2 = glm::vec3(1, 0, 0);                                break;
+			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();        color2Float = POS_RESOLUTION * maxBd * 0.8f; isUint = true; break;
+			case 2: floatForColor = transferring;                        isParticleProperty = true;                                              isUint = true; break;
+//			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = minKer; color2Float = maxKer     ; break;
+			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = minRad; color2Float = maxRad     ; break; //same color mapping as radius for better comparability
+			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = minRad; color2Float = maxRad     ; break;
+			case 5: floatForColor = radius;                                                         color1Float = minRad; color2Float = maxRad     ; break;
+			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0     ; color2Float = minRad * 10; break;
 		}
 		if (isParticleProperty) {
 			auto old = floatForColor;
@@ -684,7 +691,7 @@ private: // v== Member variables ==v
 
 	std::unique_ptr<SCENE_NAME> mPool;
 
-	uint32_t mNumParticles;
+	uint32_t mNumParticles = 0u;
 	std::vector<avk::buffer> mParticlesBuffer;
 #if BLAS_CENTRIC
 	std::vector<avk::buffer> mAabbsBuffer;

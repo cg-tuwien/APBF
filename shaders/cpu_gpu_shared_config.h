@@ -28,16 +28,16 @@
 #define SCENE 1 // 0: pool, 1: spherical_pool, 2: waterfall
 #define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
-#define POS_RESOLUTION 262144.0
-#define KERNEL_WIDTH_RESOLUTION 262144.0
-#define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0
-#define BOUNDARINESS_RESOLUTION 262144.0
+#define POS_RESOLUTION 262144.0f
+#define KERNEL_WIDTH_RESOLUTION 262144.0f
+#define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0f
+#define BOUNDARINESS_RESOLUTION 262144.0f
 #define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
 
 #define FIXED_TIME_STEP (1.0f / 60.0f) // 0 for variable timestep
 
-#define KERNEL_SCALE 4.0
-#define KERNEL_WIDTH_PROPAGATION_FACTOR 0.5
+#define KERNEL_SCALE 4.0f
+#define KERNEL_WIDTH_PROPAGATION_FACTOR 0.5f
 
 #define MAX_TRANSFERS 10000
 // ----------------------------------------------------

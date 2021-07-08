@@ -58,6 +58,8 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
 	mRenderBoxes = true;
+	pbd::settings::smallestTargetRadius = aRadius;
+	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;
 }
 
 waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
@@ -141,4 +143,9 @@ pbd::gpu_list<4> waterfall::scalar_particle_velocities()
 	auto result = pbd::gpu_list<4>().request_length(mParticles.requested_length()).set_length(mParticles.length());
 	shader_provider::vec3_to_length(mParticles.hidden_list().get<pbd::hidden_particles::id::velocity>().buffer(), result.write().buffer(), mParticles.hidden_list().length());
 	return result;
+}
+
+float waterfall::max_expected_boundary_distance()
+{
+	return mMaxExpectedBoundaryDistance;
 }
