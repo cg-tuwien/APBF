@@ -14,9 +14,7 @@ void pbd::save_particle_info::apply()
 	auto& targetRadiusList = mFluid->get<pbd::fluid::id::target_radius>();
 	auto& boundaryDistList = mFluid->get<pbd::fluid::id::boundary_distance>();
 	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
-//	auto&     velocityList = particles.hidden_list().get<pbd::hidden_particles::id::velocity>();
 	auto&     positionList = particles.hidden_list().get<pbd::hidden_particles::id::position>();
-//	auto&    posBackupList = particles.hidden_list().get<pbd::hidden_particles::id::pos_backup>();
 	auto&       radiusList = particles.hidden_list().get<pbd::hidden_particles::id::radius>();
 
 	auto      indices =  particles.index_read();
@@ -81,5 +79,56 @@ void pbd::save_particle_info::apply()
 	{
 		auto toFile = std::ofstream("boundaryDistance.txt");
 		for (auto& data : boundaryDist) toFile << (data / POS_RESOLUTION) << ";";
+	}
+}
+
+void pbd::save_particle_info::save_as_svg(uint32_t id)
+{
+	auto& boundarinessList = mFluid->get<pbd::fluid::id::boundariness>();
+	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
+	auto&     positionList = particles.hidden_list().get<pbd::hidden_particles::id::position>();
+	auto&       radiusList = particles.hidden_list().get<pbd::hidden_particles::id::radius>();
+
+	auto      indices =  particles.index_read();
+	auto    positions =     positionList.read<glm::ivec4>();
+	auto        radii =       radiusList.read<     float>();
+	auto boundariness = boundarinessList.read<     float>();
+
+	auto viewBoxMin = glm::vec2();
+	auto viewBoxMax = glm::vec2();
+
+	for (auto i = 0u; i < indices.size(); i++) {
+		auto id = indices[i];
+		auto pos = glm::vec2(positions[id]) / static_cast<float>(POS_RESOLUTION);
+		auto rad = radii[id];
+
+		if (i == 0u) {
+			viewBoxMin = pos - rad;
+			viewBoxMax = pos + rad;
+		}
+		else {
+			viewBoxMin = glm::min(viewBoxMin, pos - rad);
+			viewBoxMax = glm::max(viewBoxMax, pos + rad);
+		}
+	}
+
+	auto svg = std::string("<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"particle\" />");
+	svg += "<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"boundaryParticle\" />";
+
+	for (auto i = 0u; i < indices.size(); i++) {
+		auto id = indices[i];
+		auto pos = glm::vec2(positions[id]) / static_cast<float>(POS_RESOLUTION);
+		auto rad = radii[id];
+		auto bdr = boundariness[i] >= 1.0f;
+
+		auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
+		svg += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#boundaryParticle" : "#particle");
+	}
+
+	svg = std::format("<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"{} {} {} {}\">{}</svg>", viewBoxMin.x, viewBoxMin.y, viewBoxMax.x, viewBoxMax.y, svg);
+
+	{
+		auto toFile = std::ofstream(std::format("particles_{}.svg", id));
+		toFile << svg;
 	}
 }

@@ -25,9 +25,6 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness>().write().buffer(), mFluid.length(), 1, 0);
 	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aRadius * POS_RESOLUTION), 0);
 
-	mVelocityHandling.set_data(&mParticles);
-	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
-	mBoxCollision.set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
 	mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
 	mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
 	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
@@ -36,10 +33,15 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
 	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
 #endif
-	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
-	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
-	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
-	mParticleTransfer.set_data(&mFluid, &mTransfers);
+
+	mVelocityHandling .set_data(&mParticles                                  ).set_acceleration(glm::vec3(0, -10, 0));
+	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid                    );
+	mIncompressibility.set_data(&mFluid, &mNeighborsFluid                    );
+	mBoxCollision     .set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
+	mUpdateTransfers  .set_data(&mFluid, &mNeighborsFluid, &mTransfers       );
+	mParticleTransfer .set_data(&mFluid, &mTransfers                         );
+	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid                    );
+
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
@@ -119,6 +121,13 @@ void waterdrop::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 
 	if (gvk::input().key_pressed(gvk::key_code::r)) {
 		mParticles = mFluid.get<pbd::fluid::id::particle>();
+	}
+
+	static auto svgId = 0u;
+	if (gvk::input().key_pressed(gvk::key_code::g)) {
+		shader_provider::start_recording();
+		mSaveParticleInfo.save_as_svg(svgId++);
+		shader_provider::end_recording();
 	}
 }
 
