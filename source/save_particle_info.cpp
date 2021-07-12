@@ -96,6 +96,7 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 
 	auto svg = std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"particle\" style=\"fill:#0000ff;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
 	svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"boundaryParticle\" style=\"fill:#ff0000;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
+	svg = std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svg);
 
 	for (auto i = 0u; i < indices.size(); i++) {
 		auto id = indices[i];
