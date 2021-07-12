@@ -82,7 +82,7 @@ void pbd::save_particle_info::apply()
 	}
 }
 
-void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aViewBoxMin, const glm::vec2& aViewBoxMax)
+void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aViewBoxMin, const glm::vec2& aViewBoxMax, float aRenderScale)
 {
 	auto& boundarinessList = mFluid->get<pbd::fluid::id::boundariness>();
 	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
@@ -94,8 +94,8 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	auto        radii =       radiusList.read<     float>();
 	auto boundariness = boundarinessList.read<     float>();
 
-	auto svg = std::string("<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"particle\" style=\"fill:#0000ff;fill-rule:evenodd;stroke-width:1\" />");
-	svg += "<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"boundaryParticle\" style=\"fill:#ff0000;fill-rule:evenodd;stroke-width:1\" />";
+	auto svg = std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"particle\" style=\"fill:#0000ff;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
+	svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"boundaryParticle\" style=\"fill:#ff0000;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
 
 	for (auto i = 0u; i < indices.size(); i++) {
 		auto id = indices[i];

@@ -52,8 +52,8 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;  // TODO if DIMENSIONS < 3 ignore third dimension
-	mViewBoxMin = glm::vec2(aMin) - (mMaxExpectedBoundaryDistance * 0.1f);
-	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMin = glm::vec2(glm::min(aMin, aDropCenter - aDropRadius)) - (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMax = glm::vec2(glm::max(aMax, aDropCenter + aDropRadius)) + (mMaxExpectedBoundaryDistance * 0.1f);
 }
 
 waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::vec3& aDropCenter, float aDropRadius, gvk::camera& aCamera, float aRadius) :
@@ -128,7 +128,7 @@ void waterdrop::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 	static auto svgId = 0u;
 	if (gvk::input().key_pressed(gvk::key_code::g)) {
 		shader_provider::start_recording();
-		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax);
+		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax, pbd::settings::particleRenderScale);
 		shader_provider::end_recording();
 	}
 }
