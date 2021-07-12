@@ -61,7 +61,9 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	shader_provider::end_recording();
 	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aRadius;
-	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;
+	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;  // TODO if DIMENSIONS < 3 ignore third dimension
+	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMin = 2.0f * glm::vec2(aMin) - mViewBoxMax;
 }
 
 waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
@@ -135,7 +137,7 @@ void waterfall::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 	static auto svgId = 0u;
 	if (gvk::input().key_pressed(gvk::key_code::g)) {
 		shader_provider::start_recording();
-		mSaveParticleInfo.save_as_svg(svgId++);
+		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax);
 		shader_provider::end_recording();
 	}
 

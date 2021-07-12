@@ -27,8 +27,6 @@ public:
 	pbd::gpu_list<4> scalar_particle_velocities();
 	float max_expected_boundary_distance();
 
-	bool mRenderBoxes;
-
 private:
 	pbd::particles mParticles;
 	pbd::fluid mFluid;
@@ -38,6 +36,8 @@ private:
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
 	pbd::neighbors mNeighborsFluid;
 
+	glm::vec2 mViewBoxMin;
+	glm::vec2 mViewBoxMax;
 	float mMaxExpectedBoundaryDistance;
 	float mDeltaTime;
 	pbd::time_machine<pbd::particles, pbd::hidden_particles, pbd::particles,

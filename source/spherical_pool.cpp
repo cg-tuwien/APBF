@@ -39,9 +39,10 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
-	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aParticleRadius;
 	mMaxExpectedBoundaryDistance = aPoolRadius;
+	mViewBoxMin = glm::vec2(aCenter) - (aPoolRadius * 1.1f);
+	mViewBoxMin = glm::vec2(aCenter) + (aPoolRadius * 1.1f);
 }
 
 spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, gvk::camera& aCamera, float aParticleRadius) :
@@ -110,7 +111,7 @@ void spherical_pool::handle_input(const glm::mat4& aInverseViewProjection, const
 	static auto svgId = 0u;
 	if (gvk::input().key_pressed(gvk::key_code::g)) {
 		shader_provider::start_recording();
-		mSaveParticleInfo.save_as_svg(svgId++);
+		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax);
 		shader_provider::end_recording();
 	}
 
