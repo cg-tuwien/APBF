@@ -84,6 +84,8 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), mQuakeCam, 1.0f);
 #elif SCENE == 1
 		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 100.0f, mQuakeCam, 1.0f);
+#elif SCENE == 3
+		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80) * 2.0f, glm::vec3(40, 30, -40) * 2.0f, glm::vec3(30, 60, -60) * 2.0f, 6.0f, mQuakeCam, 1.0f);
 #endif
 
 		for (window::frame_id_t i = 0; i < framesInFlight; ++i) {

@@ -25,7 +25,7 @@
 // ----------------------- PBD ------------------------
 #define DIMENSIONS 2 // currently only supporting 2 or 3
 
-#define SCENE 1 // 0: pool, 1: spherical_pool, 2: waterfall
+#define SCENE 3 // 0: pool, 1: spherical_pool, 2: waterfall, 3: waterdrop
 #define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 #define POS_RESOLUTION 262144.0f
@@ -61,6 +61,7 @@
 #define SCENE_0 pool
 #define SCENE_1 spherical_pool
 #define SCENE_2 waterfall
+#define SCENE_3 waterdrop
 
 #define SCENE_NAME CONCAT(SCENE_, SCENE)
 #define SCENE_FILENAME STRINGIZE(CONCAT(SCENE_NAME, .h))

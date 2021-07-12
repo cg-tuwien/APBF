@@ -125,6 +125,7 @@
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\test.cpp" />
+    <ClCompile Include="source\waterdrop.cpp" />
     <ClCompile Include="source\waterfall.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -162,6 +163,7 @@
     <ClInclude Include="source\targetver.hpp" />
     <ClInclude Include="source\test.h" />
     <ClInclude Include="source\uninterleaved_list.h" />
+    <ClInclude Include="source\waterdrop.h" />
     <ClInclude Include="source\waterfall.h" />
   </ItemGroup>
   <ItemGroup>

@@ -348,6 +348,9 @@
     <ClCompile Include="source\waterfall.cpp">
       <Filter>source\scenes</Filter>
     </ClCompile>
+    <ClCompile Include="source\waterdrop.cpp">
+      <Filter>source\scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.hpp">
@@ -453,6 +456,9 @@
       <Filter>source\pbd\Debug</Filter>
     </ClInclude>
     <ClInclude Include="source\waterfall.h">
+      <Filter>source\scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="source\waterdrop.h">
       <Filter>source\scenes</Filter>
     </ClInclude>
   </ItemGroup>
