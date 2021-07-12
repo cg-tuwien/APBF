@@ -11,6 +11,8 @@ namespace pbd
 		static void add_apbf_settings_im_gui_entries();
 		static void update_apbf_settings_buffer();
 		static avk::buffer& apbf_settings_buffer();
+		static void nextColor();
+		static void previousColor();
 
 		static int   heightKernelId;                      // 0 = cubic, 1 = gauss, 2 = poly6, 3 = cone, 4 = quadratic spike; cubic and poly6 are only for 3D
 		static int   gradientKernelId;                    // 0 = cubic, 1 = gauss, 2 = spiky, 3 = cone, 4 = quadratic spike; cubic and spiky are only for 3D
@@ -37,5 +39,7 @@ namespace pbd
 		static int   particleRenderLimit;                 // for limiting the number of rendered particles (for debugging); 0 means no limit
 		static int   color;                               // 0 = boundariness, 1 = boundary distance, 2 = transferring, 3 = kernel width, 4 = target radius, 5 = radius, 6 = velocity
 		static int   solverIterations;                    // how often the constraint solving is repeated each timestep
+
+		static const std::vector<const char*> colorNames;
 	};
 }

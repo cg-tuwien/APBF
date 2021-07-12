@@ -28,6 +28,8 @@ int   pbd::settings::particleRenderLimit               = 0;
 int   pbd::settings::color                             = 0;
 int   pbd::settings::solverIterations                  = 3;
 
+const std::vector<const char*> pbd::settings::colorNames = std::vector<const char*>({ "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius", "Velocity" });
+
 void pbd::settings::add_apbf_settings_im_gui_entries()
 {
 	ImGui::SliderInt("Solver Iterations", &pbd::settings::solverIterations, 0, 10);
@@ -92,4 +94,16 @@ avk::buffer& pbd::settings::apbf_settings_buffer()
 		avk::uniform_buffer_meta::create_from_data(apbf_settings{})
 	);
 	return result;
+}
+
+void pbd::settings::nextColor()
+{
+	color++;
+	if (color >= colorNames.size()) color = 0;
+}
+
+void pbd::settings::previousColor()
+{
+	if (color <= 0) color = static_cast<int>(colorNames.size());
+	color--;
 }

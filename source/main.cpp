@@ -357,8 +357,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 #endif
 				ImGui::Checkbox("Render Boxes", &mPool->mRenderBoxes);
 				ImGui::Checkbox("Ambient Occlusion", &mAddAmbientOcclusion);
-				static const char* const sColors[] = { "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius", "Velocity" };
-				ImGui::Combo("Color", &pbd::settings::color, sColors, IM_ARRAYSIZE(sColors));
+				ImGui::Combo("Color", &pbd::settings::color, pbd::settings::colorNames.data(), static_cast<int>(pbd::settings::colorNames.size()));
 				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");
 				ImGui::SliderInt("Render Limit", &pbd::settings::particleRenderLimit, 0, 1000);
 
@@ -405,6 +404,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		if (input().key_pressed(key_code::t)) {
 			mPool->time_machine().toggle_enabled();
+		}
+
+		if (input().key_pressed(key_code::c)) {
+			if (input().key_down(key_code::left_shift)) {
+				pbd::settings::previousColor();
+			}
+			else {
+				pbd::settings::nextColor();
+			}
 		}
 		
 		// On Esc pressed,
