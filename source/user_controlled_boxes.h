@@ -9,6 +9,7 @@ public:
 	user_controlled_boxes();
 	void handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos);
 	void add_box(const glm::vec3& aMin, const glm::vec3& aMax);
+	void delete_box(int aBoxIndex);
 	void render(const glm::mat4& aViewProjection);
 	pbd::gpu_list<16>& box_min();
 	pbd::gpu_list<16>& box_max();

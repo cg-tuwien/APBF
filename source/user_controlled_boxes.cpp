@@ -69,10 +69,7 @@ void user_controlled_boxes::handle_input(const glm::mat4& aInverseViewProjection
 
 	if (gvk::input().key_pressed(gvk::key_code::del)) {
 		for (auto i = static_cast<int>(mSelected.size()) - 1; i >= 0; i--) if (mSelected[i]) {
-			mBoxMinData.erase(mBoxMinData.begin() + i);
-			mBoxMaxData.erase(mBoxMaxData.begin() + i);
-			mSelected.erase(mSelected.begin() + i);
-			mBufferOutdated = true;
+			delete_box(i);
 		}
 	}
 
@@ -94,6 +91,14 @@ void user_controlled_boxes::add_box(const glm::vec3& aMin, const glm::vec3& aMax
 	mBoxMinData.push_back(glm::vec4(aMin, 1.0f));
 	mBoxMaxData.push_back(glm::vec4(aMax, 1.0f));
 	mSelected.push_back(false);
+	mBufferOutdated = true;
+}
+
+void user_controlled_boxes::delete_box(int aBoxIndex)
+{
+	mBoxMinData.erase(mBoxMinData.begin() + aBoxIndex);
+	mBoxMaxData.erase(mBoxMaxData.begin() + aBoxIndex);
+	mSelected.erase(mSelected.begin() + aBoxIndex);
 	mBufferOutdated = true;
 }
 
