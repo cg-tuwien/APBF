@@ -8,6 +8,13 @@ pbd::save_particle_info& pbd::save_particle_info::set_data(fluid* aFluid, neighb
 	return *this;
 }
 
+pbd::save_particle_info& pbd::save_particle_info::set_boxes(const pbd::gpu_list<16>* aBoxMin, const pbd::gpu_list<16>* aBoxMax)
+{
+	mBoxMin = aBoxMin;
+	mBoxMax = aBoxMax;
+	return *this;
+}
+
 void pbd::save_particle_info::apply()
 {
 	auto&  kernelWidthList = mFluid->get<pbd::fluid::id::kernel_width>();
@@ -94,9 +101,14 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	auto        radii =       radiusList.read<     float>();
 	auto boundariness = boundarinessList.read<     float>();
 
-	auto svg = std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"particle\" style=\"fill:#0000ff;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
-	svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"boundaryParticle\" style=\"fill:#ff0000;fill-rule:evenodd;stroke-width:1\" />", aRenderScale);
+	auto svg = std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p\" style=\"fill:#0000ff;stroke-width:1\" />", aRenderScale);
+	svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"b\" style=\"fill:#ff0000;stroke-width:1\" />", aRenderScale);
+	if (mBoxMin != nullptr && mBoxMax != nullptr) {
+		svg += "<rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" id=\"box\" style=\"fill:#bffeff;stroke-width:1\" />";
+	}
 	svg = std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svg);
+
+	svg += boxes_to_svg();
 
 	for (auto i = 0u; i < indices.size(); i++) {
 		auto id = indices[i];
@@ -106,7 +118,7 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		pos.y = -pos.y;
 
 		auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
-		svg += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#boundaryParticle" : "#particle");
+		svg += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#b" : "#p");
 	}
 
 	svg = std::format("<svg viewBox=\"{} {} {} {}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svg=\"http://www.w3.org/2000/svg\">{}</svg>", aViewBoxMin.x, -aViewBoxMax.y, aViewBoxMax.x - aViewBoxMin.x, aViewBoxMax.y - aViewBoxMin.y, svg);
@@ -115,4 +127,24 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		auto toFile = std::ofstream(std::format("particles_{}.svg", aSvgId));
 		toFile << svg;
 	}
+}
+
+std::string pbd::save_particle_info::boxes_to_svg()
+{
+	auto svg = std::string();
+	if (mBoxMin == nullptr || mBoxMax == nullptr) return svg;
+
+	auto boxMin = mBoxMin->read<glm::vec4>();
+	auto boxMax = mBoxMax->read<glm::vec4>();
+	assert(boxMin.size() == boxMax.size());
+
+	for (auto i = 0u; i < boxMin.size(); i++) {
+		auto bMin = glm::vec2(boxMin[i]);
+		auto bMax = glm::vec2(boxMax[i]);
+		auto size = bMax - bMin;
+		auto matrix = std::format("matrix({},0,0,{},{},{})", size.x, size.y, bMin.x, -bMax.y);
+		svg += std::format("<use transform=\"{}\" xlink:href=\"#box\" />", matrix);
+	}
+
+	return svg;
 }

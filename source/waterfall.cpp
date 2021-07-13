@@ -50,7 +50,7 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	mBoxCollision     .set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
 	mUpdateTransfers  .set_data(&mFluid, &mNeighborsFluid, &mTransfers       );
 	mParticleTransfer .set_data(&mFluid, &mTransfers                         );
-	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid                    );
+	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid                    ).set_boxes(&mUcb.box_min(), &mUcb.box_max());
 
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
