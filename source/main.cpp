@@ -355,7 +355,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				static const char* const sIntersectionTypes[] = {"AABB Intersection", "Sphere Intersection"};
 				ImGui::Combo("Neighborhood Intersection", &mIntersectionType, sIntersectionTypes, IM_ARRAYSIZE(sIntersectionTypes));
 #endif
-				ImGui::Checkbox("Render Boxes", &mPool->mRenderBoxes);
+				ImGui::Checkbox("Render Boxes", &pbd::settings::renderBoxes);
 				ImGui::Checkbox("Ambient Occlusion", &mAddAmbientOcclusion);
 				ImGui::Combo("Color", &pbd::settings::color, pbd::settings::colorNames.data(), static_cast<int>(pbd::settings::colorNames.size()));
 				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");

@@ -49,7 +49,6 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
-	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;  // TODO if DIMENSIONS < 3 ignore third dimension
 	mViewBoxMin = glm::vec2(glm::min(aMin, aDropCenter - aDropRadius)) - (mMaxExpectedBoundaryDistance * 0.1f);
@@ -119,7 +118,7 @@ pbd::neighbors& waterdrop::neighbors()
 
 void waterdrop::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
-	if (mRenderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
+	if (pbd::settings::renderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
 
 	if (gvk::input().key_pressed(gvk::key_code::r)) {
 		mParticles = mFluid.get<pbd::fluid::id::particle>(); // release drop
@@ -135,7 +134,7 @@ void waterdrop::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 
 void waterdrop::render(const glm::mat4& aViewProjection)
 {
-	if (mRenderBoxes) mUcb.render(aViewProjection);
+	if (pbd::settings::renderBoxes) mUcb.render(aViewProjection);
 }
 
 pbd::gpu_list<4> waterdrop::scalar_particle_velocities()

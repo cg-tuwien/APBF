@@ -39,6 +39,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
 	mUpdateTransfers.set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 	mParticleTransfer.set_data(&mFluid, &mTransfers);
+	mSaveParticleInfo.set_data(&mFluid, &mNeighborsFluid).set_boxes(&mUcb.box_min(), &mUcb.box_max());
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
@@ -46,9 +47,10 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
-	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;
+	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMin = glm::vec2(aMin) - (mMaxExpectedBoundaryDistance * 0.1f);
 }
 
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
@@ -114,12 +116,19 @@ pbd::neighbors& pool::neighbors()
 
 void pool::handle_input(const glm::mat4& aInverseViewProjection, const glm::vec3& aCameraPos)
 {
-	if (mRenderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
+	static auto svgId = 0u;
+	if (gvk::input().key_pressed(gvk::key_code::g)) {
+		shader_provider::start_recording();
+		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax, pbd::settings::particleRenderScale);
+		shader_provider::end_recording();
+	}
+
+	if (pbd::settings::renderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
 }
 
 void pool::render(const glm::mat4& aViewProjection)
 {
-	if (mRenderBoxes) mUcb.render(aViewProjection);
+	if (pbd::settings::renderBoxes) mUcb.render(aViewProjection);
 }
 
 pbd::gpu_list<4> pool::scalar_particle_velocities()

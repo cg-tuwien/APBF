@@ -59,7 +59,6 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	mNeighborhoodFluid.set_range_scale(pbd::settings::baseKernelWidthOnBoundaryDistance ? 1.0f : 1.5f);
 	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
 	shader_provider::end_recording();
-	mRenderBoxes = true;
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;  // TODO if DIMENSIONS < 3 ignore third dimension
 	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
@@ -141,12 +140,12 @@ void waterfall::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 		shader_provider::end_recording();
 	}
 
-	if (mRenderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
+	if (pbd::settings::renderBoxes) mUcb.handle_input(aInverseViewProjection, aCameraPos);
 }
 
 void waterfall::render(const glm::mat4& aViewProjection)
 {
-	if (mRenderBoxes) mUcb.render(aViewProjection);
+	if (pbd::settings::renderBoxes) mUcb.render(aViewProjection);
 }
 
 pbd::gpu_list<4> waterfall::scalar_particle_velocities()

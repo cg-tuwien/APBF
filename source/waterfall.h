@@ -28,8 +28,6 @@ public:
 	pbd::gpu_list<4> scalar_particle_velocities();
 	float max_expected_boundary_distance();
 
-	bool mRenderBoxes;
-
 private:
 	pbd::particles mParticles;
 	pbd::fluid mFluid;

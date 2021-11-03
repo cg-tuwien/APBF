@@ -13,6 +13,7 @@ bool  pbd::settings::updateTargetRadius                = true;
 bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::neighborListSorted                = false;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
+bool  pbd::settings::renderBoxes                       = true;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
 float pbd::settings::boundarinessSelfGradLengthFactor  = 8.0f;

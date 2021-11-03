@@ -1,4 +1,5 @@
 #include "save_particle_info.h"
+#include "settings.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
 pbd::save_particle_info& pbd::save_particle_info::set_data(fluid* aFluid, neighbors* aNeighbors)
@@ -91,7 +92,12 @@ void pbd::save_particle_info::apply()
 
 void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aViewBoxMin, const glm::vec2& aViewBoxMax, float aRenderScale)
 {
+	auto includeBoxes = mBoxMin != nullptr && mBoxMax != nullptr && pbd::settings::renderBoxes;
+	auto includeKernels = pbd::settings::color == 3;
+	auto strokeWidth = glm::compMin(aViewBoxMax - aViewBoxMin) / 1000.0f;
+
 	auto& boundarinessList = mFluid->get<pbd::fluid::id::boundariness>();
+	auto&  kernelWidthList = mFluid->get<pbd::fluid::id::kernel_width>();
 	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
 	auto&     positionList = particles.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto&       radiusList = particles.hidden_list().get<pbd::hidden_particles::id::radius>();
@@ -100,27 +106,39 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	auto    positions =     positionList.read<glm::ivec4>();
 	auto        radii =       radiusList.read<     float>();
 	auto boundariness = boundarinessList.read<     float>();
+	auto  kernelWidth =  kernelWidthList.read<     float>();
 
 	auto svg = std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p\" style=\"fill:#0000ff;stroke-width:1\" />", aRenderScale);
-	svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"b\" style=\"fill:#ff0000;stroke-width:1\" />", aRenderScale);
-	if (mBoxMin != nullptr && mBoxMax != nullptr) {
-		svg += "<rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" id=\"box\" style=\"fill:#bffeff;stroke-width:1\" />";
-	}
+	svg     += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"b\" style=\"fill:#ff0000;stroke-width:1\" />", aRenderScale);
+	if (includeKernels) svg += std::format("<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"k\" style=\"fill:none;stroke:#ff7f00;stroke-width:{};vector-effect:non-scaling-stroke\" />", strokeWidth);
+	if (includeBoxes) svg += "<rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" id=\"box\" style=\"fill:#bffeff;stroke-width:1\" />";
+
 	svg = std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svg);
 
-	svg += boxes_to_svg();
+	if (includeBoxes) svg += boxes_to_svg();
+
+	auto svgParticles = std::string();
+	auto svgKernels   = std::string();
 
 	for (auto i = 0u; i < indices.size(); i++) {
 		auto id = indices[i];
 		auto pos = glm::vec2(positions[id]) / static_cast<float>(POS_RESOLUTION);
 		auto rad = radii[id];
+		auto ker = kernelWidth[i];
 		auto bdr = boundariness[i] >= 1.0f;
 		pos.y = -pos.y;
 
 		auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
-		svg += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#b" : "#p");
+		svgParticles += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#b" : "#p");
+
+		if (includeKernels) {
+			auto matrix = std::format("matrix({},0,0,{},{},{})", ker, ker, pos.x, pos.y);
+			svgKernels += std::format("<use transform=\"{}\" xlink:href=\"#k\" />", matrix);
+		}
 	}
 
+	if (includeKernels) svg += std::format("<g id=\"kernels\"", svgKernels);
+	svg += std::format("<g id=\"particles\"", svgParticles);
 	svg = std::format("<svg viewBox=\"{} {} {} {}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svg=\"http://www.w3.org/2000/svg\">{}</svg>", aViewBoxMin.x, -aViewBoxMax.y, aViewBoxMax.x - aViewBoxMin.x, aViewBoxMax.y - aViewBoxMin.y, svg);
 
 	{
@@ -132,7 +150,6 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 std::string pbd::save_particle_info::boxes_to_svg()
 {
 	auto svg = std::string();
-	if (mBoxMin == nullptr || mBoxMax == nullptr) return svg;
 
 	auto boxMin = mBoxMin->read<glm::vec4>();
 	auto boxMax = mBoxMax->read<glm::vec4>();
@@ -146,5 +163,5 @@ std::string pbd::save_particle_info::boxes_to_svg()
 		svg += std::format("<use transform=\"{}\" xlink:href=\"#box\" />", matrix);
 	}
 
-	return svg;
+	return std::format("<g id=\"boxes\">{}</g>", svg);
 }

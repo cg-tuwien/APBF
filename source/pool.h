@@ -7,6 +7,7 @@
 #include "incompressibility.h"
 #include "update_transfers.h"
 #include "particle_transfer.h"
+#include "save_particle_info.h"
 #include "time_machine.h"
 #include "user_controlled_boxes.h"
 #include NEIGHBOR_SEARCH_FILENAME
@@ -27,8 +28,6 @@ public:
 	pbd::gpu_list<4> scalar_particle_velocities();
 	float max_expected_boundary_distance();
 
-	bool mRenderBoxes;
-
 private:
 	pbd::particles mParticles;
 	pbd::fluid mFluid;
@@ -38,6 +37,8 @@ private:
 	// Just make sure that particle add/delete/reorder doesn't happen between write and read, so that the indices are not outdated.
 	pbd::neighbors mNeighborsFluid;
 
+	glm::vec2 mViewBoxMin;
+	glm::vec2 mViewBoxMax;
 	float mMaxExpectedBoundaryDistance;
 	float mDeltaTime;
 	pbd::time_machine<pbd::particles, pbd::hidden_particles, pbd::particles,
@@ -50,6 +51,7 @@ private:
 	pbd::incompressibility mIncompressibility;
 	pbd::update_transfers mUpdateTransfers;
 	pbd::particle_transfer mParticleTransfer;
+	pbd::save_particle_info mSaveParticleInfo;
 	pbd::NEIGHBOR_SEARCH_NAME mNeighborhoodFluid;
 	user_controlled_boxes mUcb;
 };
