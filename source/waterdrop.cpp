@@ -127,7 +127,7 @@ void waterdrop::handle_input(const glm::mat4& aInverseViewProjection, const glm:
 	static auto svgId = 0u;
 	if (gvk::input().key_pressed(gvk::key_code::g)) {
 		shader_provider::start_recording();
-		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax, pbd::settings::particleRenderScale);
+		mSaveParticleInfo.save_as_svg(svgId++, mViewBoxMin, mViewBoxMax, pbd::settings::particleRenderScale, mMaxExpectedBoundaryDistance);
 		shader_provider::end_recording();
 	}
 }
