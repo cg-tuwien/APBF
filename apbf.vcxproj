@@ -41,7 +41,6 @@
     <None Include="shaders\float_to_uint.comp" />
     <None Include="shaders\generate_acceleration_structure_instances.comp" />
     <None Include="shaders\generate_glue.comp" />
-    <None Include="shaders\generate_new_edit_list.comp" />
     <None Include="shaders\generate_new_index_and_edit_list.comp" />
     <None Include="shaders\generate_new_index_list.comp" />
     <None Include="shaders\glue.comp" />
@@ -54,7 +53,7 @@
     <None Include="shaders\initialize_box.comp" />
     <None Include="shaders\initialize_sphere.comp" />
     <None Include="shaders\initialize_split_particles.comp" />
-    <None Include="shaders\instanced2.vert" />
+    <None Include="shaders\instanced.vert" />
     <None Include="shaders\inter_particle_collision.comp" />
     <None Include="shaders\kernel_width.comp" />
     <None Include="shaders\kernel_width_init.comp" />
@@ -78,11 +77,6 @@
     <None Include="shaders\render_boxes.vert" />
     <None Include="shaders\roundandround.comp" />
     <None Include="shaders\red.frag" />
-    <None Include="shaders\instanced.vert" />
-    <None Include="shaders\rt_hit_green.rchit" />
-    <None Include="shaders\rt_hit_miss.rmiss" />
-    <None Include="shaders\rt_stupid_intersection.rint" />
-    <None Include="shaders\rt_trace_rays.rgen" />
     <None Include="shaders\scattered_write.comp" />
     <None Include="shaders\sphere_collision.comp" />
     <None Include="shaders\uint_to_float.comp" />

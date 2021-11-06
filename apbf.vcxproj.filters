@@ -20,9 +20,6 @@
     <Filter Include="source\pbd\gpu_lists">
       <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="shaders\ray_tracing">
-      <UniqueIdentifier>{52dc4c51-ac11-4aa2-b17a-c24d5f3821e9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\pbd\particle manipulation">
       <UniqueIdentifier>{8f7903e4-29e4-445a-aa3d-86d35e50b6e3}</UniqueIdentifier>
     </Filter>
@@ -41,9 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\red.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\instanced.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\roundandround.comp">
@@ -66,18 +60,6 @@
     </None>
     <None Include="shaders\copy_scattered_read.comp">
       <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\rt_hit_green.rchit">
-      <Filter>shaders\ray_tracing</Filter>
-    </None>
-    <None Include="shaders\rt_hit_miss.rmiss">
-      <Filter>shaders\ray_tracing</Filter>
-    </None>
-    <None Include="shaders\rt_stupid_intersection.rint">
-      <Filter>shaders\ray_tracing</Filter>
-    </None>
-    <None Include="shaders\rt_trace_rays.rgen">
-      <Filter>shaders\ray_tracing</Filter>
     </None>
     <None Include="shaders\write_increasing_sequence.comp">
       <Filter>shaders</Filter>
@@ -106,9 +88,6 @@
     <None Include="shaders\generate_new_index_list.comp">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\generate_new_edit_list.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\scattered_write.comp">
       <Filter>shaders</Filter>
     </None>
@@ -127,7 +106,7 @@
     <None Include="shaders\initialize_box.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\instanced2.vert">
+    <None Include="shaders\instanced.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\box_collision.comp">

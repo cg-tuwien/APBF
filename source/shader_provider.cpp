@@ -446,30 +446,6 @@ void shader_provider::generate_new_index_list(const avk::buffer& aInRangeEnd, co
 	dispatch_indirect();
 }
 
-void shader_provider::generate_new_edit_list(const avk::buffer& aInIndexList, const avk::buffer& aInEditList, const avk::buffer& aInRangeStart, const avk::buffer& aInTargetIndex, const avk::buffer& aOutBuffer, const avk::buffer& aInIndexListLength)
-{
-	prepare_dispatch_indirect(aInIndexListLength);
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/generate_new_edit_list.comp",
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInEditList),
-		avk::descriptor_binding(2, 0, aInRangeStart),
-		avk::descriptor_binding(3, 0, aInTargetIndex),
-		avk::descriptor_binding(4, 0, aOutBuffer),
-		avk::descriptor_binding(5, 0, aInIndexListLength)
-	));
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInEditList),
-		avk::descriptor_binding(2, 0, aInRangeStart),
-		avk::descriptor_binding(3, 0, aInTargetIndex),
-		avk::descriptor_binding(4, 0, aOutBuffer),
-		avk::descriptor_binding(5, 0, aInIndexListLength)
-	}));
-	dispatch_indirect();
-}
-
 void shader_provider::atomic_swap(const avk::buffer& aInIndexList, const avk::buffer& aInOutSwapA, const avk::buffer& aInOutSwapB, const avk::buffer& aInIndexListLength)
 {
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -1505,7 +1481,7 @@ void shader_provider::render_particles(const avk::buffer& aInCameraDataBuffer, c
 	}
 	assert(framebuffers.size() <= static_cast<size_t>(gvk::context().main_window()->number_of_frames_in_flight())); // TODO remove
 	static auto pipeline = with_hot_reload(gvk::context().create_graphics_pipeline_for(
-		avk::vertex_shader("shaders/instanced2.vert"),
+		avk::vertex_shader("shaders/instanced.vert"),
 		avk::fragment_shader("shaders/color.frag"),
 		avk::from_buffer_binding(0)->stream_per_vertex<glm::vec3>()->to_location(0),
 		avk::from_buffer_binding(1)->stream_per_instance<glm::ivec4>()->to_location(1),

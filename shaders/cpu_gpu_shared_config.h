@@ -25,7 +25,7 @@
 // ----------------------- PBD ------------------------
 #define DIMENSIONS 2 // currently only supporting 2 or 3
 
-#define SCENE 3 // 0: pool, 1: spherical_pool, 2: waterfall, 3: waterdrop
+#define SCENE 0 // 0: pool, 1: spherical_pool, 2: waterfall, 3: waterdrop
 #define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 #define POS_RESOLUTION 262144.0f

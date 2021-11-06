@@ -133,7 +133,7 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 			auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
 			svgParticles += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#b" : "#p");
 		} else {
-			// copied from main.cpp and instanced2.vert
+			// copied from main.cpp and instanced.vert
 			auto color1 = glm::vec3(0, 0, 1);
 			auto color2 = glm::vec3(0.62, 0.96, 0.83);
 			auto color1Float = 0.0f;

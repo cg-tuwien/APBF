@@ -16,10 +16,6 @@ layout(set = 0, binding = 0) uniform camera_data
 	mat4 mViewMatrix;
 	/** Camera's projection matrix */
 	mat4 mProjMatrix;
-	/** [0]: time since start, [1]: delta time, [2]: reset particle positions, [3]: set uniform particle radius  */
-	vec4 mTimeAndUserInput;
-	/** [0]: cullMask for traceRayEXT, [1]: neighborhood-origin particle-id, [2]: perform sphere intersection, [3]: unused  */
-	uvec4 mUserInput;
 } camData;
 
 // ------------------ push constants ------------------
