@@ -149,7 +149,7 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		}
 	}
 
-	if (!svgOriginals.empty()) std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svgOriginals);
+	if (!svgOriginals.empty()) svg += std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svgOriginals);
 	if (includeBoxes  ) svg += boxes_to_svg();
 	if (includeKernels) svg += std::format("<g id=\"kernels\">{}</g>", svgKernels);
 	svg += std::format("<g id=\"particles\">{}</g>", svgParticles);
