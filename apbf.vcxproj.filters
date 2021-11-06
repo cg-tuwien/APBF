@@ -35,49 +35,28 @@
     <Filter Include="source\pbd\debug">
       <UniqueIdentifier>{ba90d786-8222-4fb1-aea1-473fb1b37ec0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\rendering">
+      <UniqueIdentifier>{014cd3d9-227a-4b80-9634-2f901bf4e552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\gpu_lists">
+      <UniqueIdentifier>{526ebbc5-aba5-4dfa-b4b0-d7b43e505697}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\neighborhood">
+      <UniqueIdentifier>{5923b771-7853-4a33-b531-76fcf3f3eba5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\sorting">
+      <UniqueIdentifier>{7cf27050-2152-48af-a706-b1268a44f2a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders\misc">
+      <UniqueIdentifier>{04c65b15-30d4-4fc9-bcfc-9566fe501014}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\append_list.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\dispatch_indirect.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">
       <Filter>assets</Filter>
     </None>
     <None Include="gears_vk\assets\1st_party\models\icosahedron.obj">
       <Filter>assets</Filter>
-    </None>
-    <None Include="shaders\copy_scattered_read.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\write_increasing_sequence.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\prefix_sum_apply_on_block_level.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\prefix_sum_spread_from_block_level.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\radix_sort_apply_on_block_level.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\radix_sort_scattered_write.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\find_value_ranges.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\write_sequence.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\scattered_write.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\find_value_changes.comp">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\apply_acceleration.comp">
       <Filter>shaders\particle manipulation</Filter>
@@ -91,9 +70,6 @@
     <None Include="shaders\initialize_box.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\instanced.vert">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\box_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
@@ -103,14 +79,8 @@
     <None Include="shaders\inter_particle_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\color.frag">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\kernel_width.comp">
       <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\write_sequence_float.comp">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\calculate_position_hash.comp">
       <Filter>shaders\particle manipulation</Filter>
@@ -123,12 +93,6 @@
     </None>
     <None Include="shaders\generate_acceleration_structure_instances.comp">
       <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\write_increasing_sequence_from_to.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\uint_to_float.comp">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\initialize_split_particles.comp">
       <Filter>shaders\particle manipulation</Filter>
@@ -157,23 +121,8 @@
     <None Include="shaders\find_split_and_merge_3.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\uint_to_float_but_gradual.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\remove_impossible_splits.comp">
       <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\atomic_swap.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\generate_new_index_and_edit_list.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\render_boxes.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\render_boxes.vert">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\find_split_and_merge_0.comp">
       <Filter>shaders\particle manipulation</Filter>
@@ -181,32 +130,11 @@
     <None Include="shaders\kernel_width_init.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
-    <None Include="shaders\ao.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\ao.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\darken_image.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\vec3_to_length.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\neighborhood_binary_search.comp">
       <Filter>shaders\particle manipulation</Filter>
     </None>
     <None Include="shaders\calculate_position_code.comp">
       <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\copy_with_differing_stride.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\linked_list_to_neighbor_list.comp">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\neighbor_add.glsl">
       <Filter>shader_includes</Filter>
@@ -222,6 +150,93 @@
     </None>
     <None Include="shaders\glue.comp">
       <Filter>shaders\particle manipulation</Filter>
+    </None>
+    <None Include="shaders\ao.frag">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\ao.vert">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\append_list.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\color.frag">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\darken_image.comp">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\instanced.vert">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\render_boxes.frag">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\render_boxes.vert">
+      <Filter>shaders\rendering</Filter>
+    </None>
+    <None Include="shaders\atomic_swap.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\copy_scattered_read.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\copy_with_differing_stride.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\find_value_changes.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\find_value_ranges.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\generate_new_index_and_edit_list.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\linked_list_to_neighbor_list.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_apply_on_block_level.comp">
+      <Filter>shaders\sorting</Filter>
+    </None>
+    <None Include="shaders\prefix_sum_spread_from_block_level.comp">
+      <Filter>shaders\sorting</Filter>
+    </None>
+    <None Include="shaders\radix_sort_apply_on_block_level.comp">
+      <Filter>shaders\sorting</Filter>
+    </None>
+    <None Include="shaders\radix_sort_scattered_write.comp">
+      <Filter>shaders\sorting</Filter>
+    </None>
+    <None Include="shaders\scattered_write.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\dispatch_indirect.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\uint_to_float.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\uint_to_float_but_gradual.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\vec3_to_length.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\write_increasing_sequence.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\write_increasing_sequence_from_to.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\write_sequence.comp">
+      <Filter>shaders\gpu_lists</Filter>
+    </None>
+    <None Include="shaders\write_sequence_float.comp">
+      <Filter>shaders\misc</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
