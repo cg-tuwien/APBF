@@ -46,44 +46,6 @@ avk::command_buffer& shader_provider::cmd_bfr()
 	return mCmdBfr;
 }
 
-void shader_provider::roundandround(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount)
-{
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/roundandround.comp",
-		avk::descriptor_binding(0, 0, aAppData),
-		avk::descriptor_binding(1, 0, aParticles),
-		avk::descriptor_binding(1, 1, aAabbs->as_storage_buffer()),
-		avk::descriptor_binding(2, 0, aTlas)
-	));
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aAppData),
-		avk::descriptor_binding(1, 0, aParticles),
-		avk::descriptor_binding(1, 1, aAabbs->as_storage_buffer()),
-		avk::descriptor_binding(2, 0, aTlas)
-	}));
-	dispatch(aParticleCount);
-}
-
-void shader_provider::mask_neighborhood(const avk::buffer& aAppData, const avk::buffer& aParticles, const avk::buffer& aAabbs, const avk::top_level_acceleration_structure_t& aTlas, uint32_t aParticleCount)
-{
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/mask_neighborhood.comp",
-		avk::descriptor_binding(0, 0, aAppData),
-		avk::descriptor_binding(1, 0, aParticles),
-		avk::descriptor_binding(1, 1, aAabbs->as_storage_buffer()),
-		avk::descriptor_binding(2, 0, aTlas)
-	));
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aAppData),
-		avk::descriptor_binding(1, 0, aParticles),
-		avk::descriptor_binding(1, 1, aAabbs->as_storage_buffer()),
-		avk::descriptor_binding(2, 0, aTlas)
-	}));
-	dispatch(aParticleCount);
-}
-
 const avk::buffer& shader_provider::append_list(const avk::buffer& aTargetList, const avk::buffer& aAppendingList, const avk::buffer& aTargetListLength, const avk::buffer& aAppendingListLength, uint32_t aStride)
 {
 	struct push_constants { uint32_t mStride; } pushConstants{ aStride / 4 };
@@ -298,49 +260,6 @@ void shader_provider::find_value_changes(const avk::buffer& aInBuffer, const avk
 	dispatch_indirect();
 }
 
-void shader_provider::indexed_subtract(const avk::buffer& aInIndexList, const avk::buffer& aInMinuend, const avk::buffer& aInSubtrahend, const avk::buffer& aOutDifference, const avk::buffer& aInIndexListLength)
-{
-	prepare_dispatch_indirect(aInIndexListLength);
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/indexed_subtract.comp",
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInMinuend),
-		avk::descriptor_binding(2, 0, aInSubtrahend),
-		avk::descriptor_binding(3, 0, aOutDifference),
-		avk::descriptor_binding(4, 0, aInIndexListLength)
-	));
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInIndexList),
-		avk::descriptor_binding(1, 0, aInMinuend),
-		avk::descriptor_binding(2, 0, aInSubtrahend),
-		avk::descriptor_binding(3, 0, aOutDifference),
-		avk::descriptor_binding(4, 0, aInIndexListLength)
-	}));
-	dispatch_indirect();
-}
-
-void shader_provider::float_to_uint(const avk::buffer& aInFloatBuffer, const avk::buffer& aOutUintBuffer, const avk::buffer& aInFloatBufferLength, float aFactor)
-{
-	struct push_constants { float mFactor; } pushConstants{ aFactor };
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/float_to_uint.comp",
-		avk::descriptor_binding(0, 0, aInFloatBuffer),
-		avk::descriptor_binding(1, 0, aOutUintBuffer),
-		avk::descriptor_binding(2, 0, aInFloatBufferLength),
-		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
-	));
-	prepare_dispatch_indirect(aInFloatBufferLength);
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInFloatBuffer),
-		avk::descriptor_binding(1, 0, aOutUintBuffer),
-		avk::descriptor_binding(2, 0, aInFloatBufferLength),
-	}));
-	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
-	dispatch_indirect();
-}
-
 void shader_provider::uint_to_float(const avk::buffer& aInUintBuffer, const avk::buffer& aOutFloatBuffer, const avk::buffer& aInUintBufferLength, float aFactor)
 {
 	struct push_constants { float mFactor; } pushConstants{ aFactor };
@@ -422,26 +341,6 @@ void shader_provider::vec3_to_length(const avk::buffer& aInVec4Buffer, const avk
 		avk::descriptor_binding(0, 0, aInVec4Buffer),
 		avk::descriptor_binding(1, 0, aOutFloatBuffer),
 		avk::descriptor_binding(2, 0, aInVec4BufferLength)
-	}));
-	dispatch_indirect();
-}
-
-void shader_provider::generate_new_index_list(const avk::buffer& aInRangeEnd, const avk::buffer& aOutBuffer, const avk::buffer& aInRangeEndLength, const avk::buffer& aOutBufferLength)
-{
-	prepare_dispatch_indirect(aInRangeEndLength);
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/generate_new_index_list.comp",
-		avk::descriptor_binding(0, 0, aInRangeEnd),
-		avk::descriptor_binding(1, 0, aOutBuffer),
-		avk::descriptor_binding(2, 0, aInRangeEndLength),
-		avk::descriptor_binding(3, 0, aOutBufferLength)
-	));
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInRangeEnd),
-		avk::descriptor_binding(1, 0, aOutBuffer),
-		avk::descriptor_binding(2, 0, aInRangeEndLength),
-		avk::descriptor_binding(3, 0, aOutBufferLength)
 	}));
 	dispatch_indirect();
 }

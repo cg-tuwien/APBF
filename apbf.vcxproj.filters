@@ -37,16 +37,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\red.frag">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\roundandround.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\append_list.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\point.vert">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\dispatch_indirect.comp">
@@ -82,12 +73,6 @@
     <None Include="shaders\write_sequence.comp">
       <Filter>shaders</Filter>
     </None>
-    <None Include="shaders\indexed_subtract.comp">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\generate_new_index_list.comp">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="shaders\scattered_write.comp">
       <Filter>shaders</Filter>
     </None>
@@ -117,9 +102,6 @@
     </None>
     <None Include="shaders\inter_particle_collision.comp">
       <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\mask_neighborhood.comp">
-      <Filter>shaders</Filter>
     </None>
     <None Include="shaders\color.frag">
       <Filter>shaders</Filter>
@@ -191,9 +173,6 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\render_boxes.vert">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="shaders\float_to_uint.comp">
       <Filter>shaders</Filter>
     </None>
     <None Include="shaders\find_split_and_merge_0.comp">
