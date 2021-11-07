@@ -1,5 +1,4 @@
-# APBF
-Adaptive Position-Based Fluid Simulation
+# Neighbor Particle Search
 
 ## Project Description
 
@@ -9,11 +8,11 @@ TBD.
 
 1. Clone the repository with all submodules recursively:       
 `git clone https://github.com/cg-tuwien/APBF.git . --recursive` (to check out into `.`)
-2. Open `apbf.sln` with Visual Studio 2019, set `apbf` as the startup project, build and run
+2. Open `neighborhood.sln` with Visual Studio 2019, set `neighborhood` as the startup project, build and run
 
 You might want to have all submodules checked-out to their `master` branch. You can do so using:      
 `git submodule foreach --recursive git checkout master`.       
-There are two submodules: One under `gears_vk/` (referencing https://github.com/cg-tuwien/Gears-Vk) and another under `gears_vk/auto_vk/` (referencing https://github.com/cg-tuwien/Auto-Vk).    
+There are two submodules: One under `gears_vk/` (referencing https://github.com/cg-tuwien/Gears-Vk) and another under `gears_vk/auto_vk/` (referencing https://github.com/cg-tuwien/Auto-Vk).
 
 To update the submodules on a daily basis, use one of the following commands:
 * `git submodule update --recursive`
