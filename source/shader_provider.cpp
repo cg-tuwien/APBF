@@ -394,6 +394,29 @@ void shader_provider::generate_new_index_and_edit_list(const avk::buffer& aInEdi
 	dispatch_indirect();
 }
 
+void shader_provider::neighbor_list_to_particle_mask(const avk::buffer& aInIndexList, const avk::buffer& aInNeighbors, const avk::buffer& aOutMask, const avk::buffer& aInNeighborListLength, glm::uint aFocusParticleId)
+{
+	struct push_constants { glm::uint mFocusParticleId; } pushConstants{ aFocusParticleId };
+	prepare_dispatch_indirect(aInNeighborListLength);
+	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
+		"shaders/misc/neighbor_list_to_particle_mask.comp",
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInNeighbors),
+		avk::descriptor_binding(2, 0, aOutMask),
+		avk::descriptor_binding(3, 0, aInNeighborListLength),
+		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
+	));
+	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
+	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
+		avk::descriptor_binding(0, 0, aInIndexList),
+		avk::descriptor_binding(1, 0, aInNeighbors),
+		avk::descriptor_binding(2, 0, aOutMask),
+		avk::descriptor_binding(3, 0, aInNeighborListLength)
+	}));
+	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
+	dispatch_indirect();
+}
+
 void shader_provider::prefix_sum_apply_on_block_level(const avk::buffer& aInBuffer, const avk::buffer& aOutBuffer, const avk::buffer& aOutGroupSumBuffer, const avk::buffer& aLengthsAndOffsets, uint32_t aLengthsAndOffsetsOffset, uint32_t aRecursionDepth)
 {
 	struct push_constants { uint32_t mLengthsAndOffsetsOffset, mRecursionDepth; } pushConstants{ aLengthsAndOffsetsOffset, aRecursionDepth };

@@ -139,6 +139,9 @@
     <None Include="shaders\neighborhood_rtx.comp">
       <Filter>shaders\neighborhood</Filter>
     </None>
+    <None Include="shaders\neighbor_list_to_particle_mask.comp">
+      <Filter>shaders\misc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\stdafx.cpp">

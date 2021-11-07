@@ -5,9 +5,9 @@
 
 #define POS_RESOLUTION 262144.0f
 
-#define PARTICLE_COUNT 50000
+#define PARTICLE_COUNT 1000
 #define AREA_MIN glm::vec3(0, 0, 0)
-#define AREA_MAX glm::vec3(80, 80, 80)
+#define AREA_MAX glm::vec3(40, 40, 40)
 #define MIN_RADIUS 1.0f
 #define MAX_RADIUS 10.0f
 #define GREEN_RESOLUTION_LOG_2 4

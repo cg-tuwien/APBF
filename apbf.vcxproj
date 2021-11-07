@@ -39,6 +39,7 @@
     <None Include="shaders\neighbor_add.glsl" />
     <None Include="shaders\append_list.comp" />
     <None Include="shaders\dispatch_indirect.comp" />
+    <None Include="shaders\neighbor_list_to_particle_mask.comp" />
     <None Include="shaders\prefix_sum_apply_on_block_level.comp" />
     <None Include="shaders\prefix_sum_spread_from_block_level.comp" />
     <None Include="shaders\radix_sort_apply_on_block_level.comp" />

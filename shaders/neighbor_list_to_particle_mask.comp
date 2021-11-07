@@ -1,0 +1,33 @@
+#version 460
+#extension GL_ARB_separate_shader_objects : enable
+
+// ---------------------- lists -----------------------
+layout(set =  0, binding = 0) buffer InIndexList { uint  inIndexList[]; };
+layout(set =  1, binding = 0) buffer InNeighbors { uvec2 inNeighbors[]; };
+layout(set =  2, binding = 0) buffer OutMask     { float     outMask[]; };
+// ----------------------------------------------------
+
+// ------------------- list lengths -------------------
+layout(set =  3, binding = 0) buffer InNeighborListLength { uint inNeighborListLength; };
+// ----------------------------------------------------
+
+// ------------------ push constants ------------------
+layout(push_constant) uniform PushConstants {
+	uint mFocusParticleId;
+};
+// ----------------------------------------------------
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+void main()
+{
+	uint id = gl_GlobalInvocationID.x;
+
+	if (id >= inNeighborListLength) return;
+
+	uvec2 neighbors = inNeighbors[id];
+	if (neighbors.x == mFocusParticleId) {
+		outMask[inIndexList[neighbors.y]] = 1.0f;
+//		outMask[neighbors.y] = 1.0f;
+	}
+	outMask[inIndexList[mFocusParticleId]] = 0.5f;
+}

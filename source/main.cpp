@@ -53,7 +53,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		mScene.init(PARTICLE_COUNT, AREA_MIN, AREA_MAX);
 		mNeighborhoodRtx.init();
 		auto& range = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		mNeighbors = &mNeighborsBruteForce;
 		mNeighborsBruteForce  .request_length(NEIGHBOR_LIST_MAX_LENGTH);
 		mNeighborsRtx         .request_length(NEIGHBOR_LIST_MAX_LENGTH);
 		mNeighborsGreen       .request_length(NEIGHBOR_LIST_MAX_LENGTH);
@@ -133,7 +132,16 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 				ImGui::Separator();
 
+				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Active:");
+				ImGui::Checkbox("Brute Force"  , &mBruteForceActive  );
+				ImGui::Checkbox("RTX"          , &mRtxActive         );
+				ImGui::Checkbox("Green"        , &mGreenActive       );
+				ImGui::Checkbox("Binary Search", &mBinarySearchActive);
+
+				ImGui::Separator();
+
 				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");
+				ImGui::SliderInt("Focus Particle", &mFocusParticleId, 0, PARTICLE_COUNT - 1);
 				pbd::settings::add_apbf_settings_im_gui_entries();
 				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
@@ -190,10 +198,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			mFreezeParticleAnimation = true;
 		}
 
-		measurements::record_timing_interval_start("bf" ); mNeighborhoodBruteForce  .apply(); measurements::record_timing_interval_end("bf" );
-		measurements::record_timing_interval_start("rtx"); mNeighborhoodRtx         .apply(); measurements::record_timing_interval_end("rtx");
-//		measurements::record_timing_interval_start("gr" ); mNeighborhoodGreen       .apply(); measurements::record_timing_interval_end("gr" );
-		measurements::record_timing_interval_start("bs" ); mNeighborhoodBinarySearch.apply(); measurements::record_timing_interval_end("bs" );
+		measurements::record_timing_interval_start("bf" ); if (mBruteForceActive  ) mNeighborhoodBruteForce  .apply(); measurements::record_timing_interval_end("bf" );
+		measurements::record_timing_interval_start("rtx"); if (mRtxActive         ) mNeighborhoodRtx         .apply(); measurements::record_timing_interval_end("rtx");
+		measurements::record_timing_interval_start("gr" ); if (mGreenActive       ) mNeighborhoodGreen       .apply(); measurements::record_timing_interval_end("gr" );
+		measurements::record_timing_interval_start("bs" ); if (mBinarySearchActive) mNeighborhoodBinarySearch.apply(); measurements::record_timing_interval_end("bs" );
 
 		measurements::record_timing_interval_end("neighborhood");
 		shader_provider::end_recording();
@@ -205,16 +213,28 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		measurements::debug_label_start("Rendering", glm::vec4(0, 0.5, 0, 1));
 
-		auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
 		auto result = &mImages[ifi].mColor;
 		auto position = mScene.particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius  >();
 		auto floatForColor = radius;
+		auto neighbors = mNeighborsBruteForce;
+
+		shader_provider::write_sequence(floatForColor.write().buffer(), position.length(), 0u, 0u);
+		shader_provider::neighbor_list_to_particle_mask(mScene.particles().index_buffer(), neighbors.buffer(), floatForColor.write().buffer(), neighbors.length(), mFocusParticleId);
+
+//		shader_provider::cmd_bfr()->establish_global_memory_barrier(
+//			avk::pipeline_stage::compute_shader,                      /* -> */ avk::pipeline_stage::vertex_shader,
+//			avk::memory_access::shader_buffers_and_images_any_access, /* -> */ avk::memory_access::shader_buffers_and_images_read_access
+//		);
+		shader_provider::cmd_bfr()->establish_global_memory_barrier(
+			avk::pipeline_stage::all_commands, /* -> */ avk::pipeline_stage::all_commands,
+			avk::memory_access::any_access,    /* -> */ avk::memory_access::any_access
+		);
 
 		auto color1      = glm::vec3(1, 0, 0);
 		auto color2      = glm::vec3(0, 0, 1);
-		auto color1Float = 1.0f;
-		auto color2Float = 10.0f;
+		auto color1Float = 0.0f;
+		auto color2Float = 1.0f;
 
 		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 		blit_image           (          (*result)->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), avk::sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
@@ -258,11 +278,10 @@ private: // v== Member variables ==v
 	pbd::neighborhood_green         mNeighborhoodGreen;
 	pbd::neighborhood_binary_search mNeighborhoodBinarySearch;
 
-	pbd::neighbors  mNeighborsBruteForce;
-	pbd::neighbors  mNeighborsRtx;
-	pbd::neighbors  mNeighborsGreen;
-	pbd::neighbors  mNeighborsBinarySearch;
-	pbd::neighbors* mNeighbors;
+	pbd::neighbors mNeighborsBruteForce;
+	pbd::neighbors mNeighborsRtx;
+	pbd::neighbors mNeighborsGreen;
+	pbd::neighbors mNeighborsBinarySearch;
 
 	bool mImGuiHovered = false;
 	
@@ -276,6 +295,11 @@ private: // v== Member variables ==v
 	bool mSetUniformParticleRadius = false;
 	bool mPerformSingleSimulationStep = false;
 	int mIntersectionType = 0;
+	bool mBruteForceActive   = true;
+	bool mRtxActive          = true;
+	bool mGreenActive        = false;
+	bool mBinarySearchActive = true;
+	int mFocusParticleId = 0u;
 	
 }; // class apbf
 
