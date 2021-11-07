@@ -14,9 +14,6 @@
     <Filter Include="source">
       <UniqueIdentifier>{1864a082-1e1c-4d66-82ea-437cc786ede4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="shaders\particle manipulation">
-      <UniqueIdentifier>{1883c467-6242-4d4b-91b9-a755debf29e1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shader_includes">
       <UniqueIdentifier>{1f74b116-ce97-4400-9f4b-d94659189245}</UniqueIdentifier>
     </Filter>
@@ -55,104 +52,8 @@
     <None Include="gears_vk\assets\1st_party\models\icosahedron.obj">
       <Filter>assets</Filter>
     </None>
-    <None Include="shaders\apply_acceleration.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\apply_velocity.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\infer_velocity.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\initialize_box.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\box_collision.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\neighborhood_brute_force.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\inter_particle_collision.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\kernel_width.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\calculate_position_hash.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\neighborhood_green.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\particle_transfer.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\generate_acceleration_structure_instances.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\initialize_split_particles.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\neighborhood_rtx.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\incompressibility_2.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\incompressibility_1.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\incompressibility_3.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\incompressibility_0.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\find_split_and_merge_1.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\find_split_and_merge_2.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\find_split_and_merge_3.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\remove_impossible_splits.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\find_split_and_merge_0.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\kernel_width_init.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\neighborhood_binary_search.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\calculate_position_code.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
     <None Include="shaders\neighbor_add.glsl">
       <Filter>shader_includes</Filter>
-    </None>
-    <None Include="shaders\initialize_sphere.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\sphere_collision.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\generate_glue.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\glue.comp">
-      <Filter>shaders\particle manipulation</Filter>
-    </None>
-    <None Include="shaders\ao.frag">
-      <Filter>shaders\rendering</Filter>
-    </None>
-    <None Include="shaders\ao.vert">
-      <Filter>shaders\rendering</Filter>
     </None>
     <None Include="shaders\append_list.comp">
       <Filter>shaders\gpu_lists</Filter>
@@ -160,16 +61,7 @@
     <None Include="shaders\color.frag">
       <Filter>shaders\rendering</Filter>
     </None>
-    <None Include="shaders\darken_image.comp">
-      <Filter>shaders\rendering</Filter>
-    </None>
     <None Include="shaders\instanced.vert">
-      <Filter>shaders\rendering</Filter>
-    </None>
-    <None Include="shaders\render_boxes.frag">
-      <Filter>shaders\rendering</Filter>
-    </None>
-    <None Include="shaders\render_boxes.vert">
       <Filter>shaders\rendering</Filter>
     </None>
     <None Include="shaders\atomic_swap.comp">
@@ -214,15 +106,6 @@
     <None Include="shaders\uint_to_float.comp">
       <Filter>shaders\misc</Filter>
     </None>
-    <None Include="shaders\uint_to_float_but_gradual.comp">
-      <Filter>shaders\misc</Filter>
-    </None>
-    <None Include="shaders\uint_to_float_with_indexed_lower_bound.comp">
-      <Filter>shaders\misc</Filter>
-    </None>
-    <None Include="shaders\vec3_to_length.comp">
-      <Filter>shaders\misc</Filter>
-    </None>
     <None Include="shaders\write_increasing_sequence.comp">
       <Filter>shaders\gpu_lists</Filter>
     </None>
@@ -234,6 +117,27 @@
     </None>
     <None Include="shaders\write_sequence_float.comp">
       <Filter>shaders\misc</Filter>
+    </None>
+    <None Include="shaders\calculate_position_code.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\calculate_position_hash.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\generate_acceleration_structure_instances.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\neighborhood_binary_search.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\neighborhood_brute_force.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\neighborhood_green.comp">
+      <Filter>shaders\neighborhood</Filter>
+    </None>
+    <None Include="shaders\neighborhood_rtx.comp">
+      <Filter>shaders\neighborhood</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
