@@ -661,7 +661,7 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 		avk::descriptor_binding(3, 0, aOutNeighbors),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(6, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -673,7 +673,7 @@ void shader_provider::neighborhood_brute_force(const avk::buffer& aInIndexList, 
 		avk::descriptor_binding(3, 0, aOutNeighbors),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(6, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -692,7 +692,7 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(5, 0, aOutNeighbors),
 		avk::descriptor_binding(6, 0, aInIndexListLength),
 		avk::descriptor_binding(7, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(8, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -706,7 +706,7 @@ void shader_provider::neighborhood_green(const avk::buffer& aInIndexList, const 
 		avk::descriptor_binding(5, 0, aOutNeighbors),
 		avk::descriptor_binding(6, 0, aInIndexListLength),
 		avk::descriptor_binding(7, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(8, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -726,7 +726,7 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 		avk::descriptor_binding(6, 0, aOutNeighbors),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
 		avk::descriptor_binding(8, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(9, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -741,7 +741,7 @@ void shader_provider::neighborhood_binary_search(const avk::buffer& aInIndexList
 		avk::descriptor_binding(6, 0, aOutNeighbors),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
 		avk::descriptor_binding(8, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(9, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -759,7 +759,7 @@ void shader_provider::neighborhood_rtx(const avk::buffer& aInIndexList, const av
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
 		avk::descriptor_binding(6, 0, aInTlas),
-		avk::descriptor_binding(7, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(7, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -772,7 +772,7 @@ void shader_provider::neighborhood_rtx(const avk::buffer& aInIndexList, const av
 		avk::descriptor_binding(4, 0, aInIndexListLength),
 		avk::descriptor_binding(5, 0, aInOutNeighborsLength),
 		avk::descriptor_binding(6, 0, aInTlas),
-		avk::descriptor_binding(7, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(7, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -855,7 +855,7 @@ void shader_provider::kernel_width_init(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(2, 0, aInTargetRadius),
 		avk::descriptor_binding(3, 0, aOutKernelWidth),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(5, 0, pbd::settings::settings_buffer())
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -865,7 +865,7 @@ void shader_provider::kernel_width_init(const avk::buffer& aInIndexList, const a
 		avk::descriptor_binding(2, 0, aInTargetRadius),
 		avk::descriptor_binding(3, 0, aOutKernelWidth),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(5, 0, pbd::settings::settings_buffer())
 	}));
 	dispatch_indirect();
 }
@@ -884,7 +884,7 @@ void shader_provider::kernel_width(const avk::buffer& aInIndexList, const avk::b
 		avk::descriptor_binding(7, 0, aOutNeighbors),
 		avk::descriptor_binding(8, 0, aInNeighborsLength),
 		avk::descriptor_binding(9, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(10, 0, pbd::settings::settings_buffer())
 	));
 	prepare_dispatch_indirect(aInNeighborsLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -899,7 +899,7 @@ void shader_provider::kernel_width(const avk::buffer& aInIndexList, const avk::b
 		avk::descriptor_binding(7, 0, aOutNeighbors),
 		avk::descriptor_binding(8, 0, aInNeighborsLength),
 		avk::descriptor_binding(9, 0, aInOutNeighborsLength),
-		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(10, 0, pbd::settings::settings_buffer())
 	}));
 	dispatch_indirect();
 }
@@ -997,7 +997,7 @@ void shader_provider::incompressibility_0(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(2, 0, aInKernelWidth),
 		avk::descriptor_binding(3, 0, aOutIncompData),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(5, 0, pbd::settings::settings_buffer())
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1007,7 +1007,7 @@ void shader_provider::incompressibility_0(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(2, 0, aInKernelWidth),
 		avk::descriptor_binding(3, 0, aOutIncompData),
 		avk::descriptor_binding(4, 0, aInIndexListLength),
-		avk::descriptor_binding(5, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(5, 0, pbd::settings::settings_buffer())
 	}));
 	dispatch_indirect();
 }
@@ -1025,7 +1025,7 @@ void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(6, 0, aInOutIncompData),
 		avk::descriptor_binding(7, 0, aOutScaledGradient),
 		avk::descriptor_binding(8, 0, aInNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(9, 0, pbd::settings::settings_buffer())
 	));
 	prepare_dispatch_indirect(aInNeighborsLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1039,7 +1039,7 @@ void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(6, 0, aInOutIncompData),
 		avk::descriptor_binding(7, 0, aOutScaledGradient),
 		avk::descriptor_binding(8, 0, aInNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(9, 0, pbd::settings::settings_buffer())
 	}));
 	dispatch_indirect();
 }
@@ -1056,7 +1056,7 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(5, 0, aOutLambda),
 		avk::descriptor_binding(6, 0, aInOutPosition),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(8, 0, pbd::settings::settings_buffer())
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1069,7 +1069,7 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(5, 0, aOutLambda),
 		avk::descriptor_binding(6, 0, aInOutPosition),
 		avk::descriptor_binding(7, 0, aInIndexListLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(8, 0, pbd::settings::settings_buffer())
 	}));
 	dispatch_indirect();
 }
@@ -1193,7 +1193,7 @@ void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, co
 		avk::descriptor_binding(13, 0, aInIndexListLength),
 		avk::descriptor_binding(14, 0, aInOutTransferLength),
 		avk::descriptor_binding(15, 0, aInOutSplitLength),
-		avk::descriptor_binding(16, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(16, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -1215,7 +1215,7 @@ void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, co
 		avk::descriptor_binding(13, 0, aInIndexListLength),
 		avk::descriptor_binding(14, 0, aInOutTransferLength),
 		avk::descriptor_binding(15, 0, aInOutSplitLength),
-		avk::descriptor_binding(16, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(16, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
@@ -1232,7 +1232,7 @@ const avk::buffer& shader_provider::remove_impossible_splits(const avk::buffer& 
 		avk::descriptor_binding(3, 0, aInParticleLength),
 		avk::descriptor_binding(4, 0, aInSplitLength),
 		avk::descriptor_binding(5, 0, length_result_buffer()),
-		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(6, 0, pbd::settings::settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInSplitLength, 0, 1, 1);
@@ -1244,7 +1244,7 @@ const avk::buffer& shader_provider::remove_impossible_splits(const avk::buffer& 
 		avk::descriptor_binding(3, 0, aInParticleLength),
 		avk::descriptor_binding(4, 0, aInSplitLength),
 		avk::descriptor_binding(5, 0, length_result_buffer()),
-		avk::descriptor_binding(6, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(6, 0, pbd::settings::settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();

@@ -17,8 +17,8 @@ layout(set =  6, binding = 0) buffer InIndexListLength    { uint inIndexListLeng
 layout(set =  7, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsLength; };
 // ----------------------------------------------------
 
-// ------------------ apbf settings -------------------
-layout(set =  8, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+// ------------------- gpu settings -------------------
+layout(set =  8, binding = 0) uniform GpuSettings { gpu_settings gpuSettings; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

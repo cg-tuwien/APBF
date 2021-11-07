@@ -72,7 +72,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
-    <ClInclude Include="shaders\kernels.glsl" />
     <ClInclude Include="source\algorithms.h" />
     <ClInclude Include="source\gpu_list_data.h" />
     <ClInclude Include="source\measurements.h" />

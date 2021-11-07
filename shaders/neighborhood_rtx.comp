@@ -20,8 +20,8 @@ layout(set =  5, binding = 0) buffer InOutNeighborsLength { uint inOutNeighborsL
 layout(set =  6, binding = 0) uniform accelerationStructureEXT topLevelAS;
 // ----------------------------------------------------
 
-// ------------------ apbf settings -------------------
-layout(set =  7, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+// ------------------- gpu settings -------------------
+layout(set =  7, binding = 0) uniform GpuSettings { gpu_settings gpuSettings; };
 // ----------------------------------------------------
 
 // ------------------ push constants ------------------

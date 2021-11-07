@@ -14,7 +14,7 @@
 #include "neighborhood_binary_search.h"
 #include "neighborhood_green.h"
 
-class apbf : public gvk::invokee
+class neighborhood : public gvk::invokee
 {
 	struct camera_data {
 		/** Camera's view matrix */
@@ -33,7 +33,7 @@ class apbf : public gvk::invokee
 	};
 
 public: // v== gvk::invokee overrides which will be invoked by the framework ==v
-	apbf(avk::queue& aQueue)
+	neighborhood(avk::queue& aQueue)
 		: mQueue{ &aQueue }
 	{
 		shader_provider::set_queue(aQueue);
@@ -132,18 +132,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 				ImGui::Separator();
 
-				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Active:");
-				ImGui::Checkbox("Brute Force"  , &mBruteForceActive  );
-				ImGui::Checkbox("RTX"          , &mRtxActive         );
-				ImGui::Checkbox("Green"        , &mGreenActive       );
-				ImGui::Checkbox("Binary Search", &mBinarySearchActive);
-
-				ImGui::Separator();
-
-				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");
-				ImGui::SliderInt("Focus Particle", &mFocusParticleId, 0, PARTICLE_COUNT - 1);
-				pbd::settings::add_apbf_settings_im_gui_entries();
-				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+				pbd::settings::add_settings_im_gui_entries();
 
 				ImGui::End();
 			});
@@ -185,23 +174,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			mQuakeCam.projection_matrix()
 		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, avk::sync::not_required());
-		//pbd::settings::update_apbf_settings_buffer();
+		pbd::settings::update_settings_buffer();
 
 		shader_provider::start_recording();
 		measurements::record_timing_interval_start("neighborhood");
 
-		if (!mFreezeParticleAnimation || mPerformSingleSimulationStep) {
-			//mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
-		}
-		if (mPerformSingleSimulationStep) {
-			mPerformSingleSimulationStep = false;
-			mFreezeParticleAnimation = true;
-		}
-
-		measurements::record_timing_interval_start("bf" ); if (mBruteForceActive  ) mNeighborhoodBruteForce  .apply(); measurements::record_timing_interval_end("bf" );
-		measurements::record_timing_interval_start("rtx"); if (mRtxActive         ) mNeighborhoodRtx         .apply(); measurements::record_timing_interval_end("rtx");
-		measurements::record_timing_interval_start("gr" ); if (mGreenActive       ) mNeighborhoodGreen       .apply(); measurements::record_timing_interval_end("gr" );
-		measurements::record_timing_interval_start("bs" ); if (mBinarySearchActive) mNeighborhoodBinarySearch.apply(); measurements::record_timing_interval_end("bs" );
+		measurements::record_timing_interval_start("bf" ); if (pbd::settings::bruteForceActive  ) mNeighborhoodBruteForce  .apply(); measurements::record_timing_interval_end("bf" );
+		measurements::record_timing_interval_start("rtx"); if (pbd::settings::rtxActive         ) mNeighborhoodRtx         .apply(); measurements::record_timing_interval_end("rtx");
+		measurements::record_timing_interval_start("gr" ); if (pbd::settings::greenActive       ) mNeighborhoodGreen       .apply(); measurements::record_timing_interval_end("gr" );
+		measurements::record_timing_interval_start("bs" ); if (pbd::settings::binarySearchActive) mNeighborhoodBinarySearch.apply(); measurements::record_timing_interval_end("bs" );
 
 		measurements::record_timing_interval_end("neighborhood");
 		shader_provider::end_recording();
@@ -220,16 +201,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto neighbors = mNeighborsBruteForce;
 
 		shader_provider::write_sequence(floatForColor.write().buffer(), position.length(), 0u, 0u);
-		shader_provider::neighbor_list_to_particle_mask(mScene.particles().index_buffer(), neighbors.buffer(), floatForColor.write().buffer(), neighbors.length(), mFocusParticleId);
-
-//		shader_provider::cmd_bfr()->establish_global_memory_barrier(
-//			avk::pipeline_stage::compute_shader,                      /* -> */ avk::pipeline_stage::vertex_shader,
-//			avk::memory_access::shader_buffers_and_images_any_access, /* -> */ avk::memory_access::shader_buffers_and_images_read_access
-//		);
-		shader_provider::cmd_bfr()->establish_global_memory_barrier(
-			avk::pipeline_stage::all_commands, /* -> */ avk::pipeline_stage::all_commands,
-			avk::memory_access::any_access,    /* -> */ avk::memory_access::any_access
-		);
+		shader_provider::neighbor_list_to_particle_mask(mScene.particles().index_buffer(), neighbors.buffer(), floatForColor.write().buffer(), neighbors.length(), pbd::settings::focusParticleId);
 
 		auto color1      = glm::vec3(1, 0, 0);
 		auto color2      = glm::vec3(0, 0, 1);
@@ -282,31 +254,13 @@ private: // v== Member variables ==v
 	pbd::neighbors mNeighborsRtx;
 	pbd::neighbors mNeighborsGreen;
 	pbd::neighbors mNeighborsBinarySearch;
-
-	bool mImGuiHovered = false;
 	
-	// Settings from the UI:
-	int mRenderingMethod = 3;
-	int mRenderNeighbors = 1;
-	int mNeighborhoodOriginParticleId = 0;
-	bool mFreezeParticleAnimation = true;
-	bool mAddAmbientOcclusion = true;
-	bool mResetParticlePositions = false;
-	bool mSetUniformParticleRadius = false;
-	bool mPerformSingleSimulationStep = false;
-	int mIntersectionType = 0;
-	bool mBruteForceActive   = true;
-	bool mRtxActive          = true;
-	bool mGreenActive        = false;
-	bool mBinarySearchActive = true;
-	int mFocusParticleId = 0u;
-	
-}; // class apbf
+}; // class neighborhood
 
 int main() // <== Starting point ==
 {
 	try {
-		auto mainWnd = gvk::context().create_window("APBF");
+		auto mainWnd = gvk::context().create_window("Neighborhood");
 		mainWnd->set_resolution({ 1920, 1080 });
 		mainWnd->set_additional_back_buffer_attachments({ 
 			avk::attachment::declare(vk::Format::eD32Sfloat, avk::on_load::clear, avk::depth_stencil(), avk::on_store::dont_care)
@@ -319,11 +273,11 @@ int main() // <== Starting point ==
 		mainWnd->add_queue_family_ownership(singleQueue);
 		mainWnd->set_present_queue(singleQueue);
 		
-		auto app = apbf(singleQueue);
+		auto app = neighborhood(singleQueue);
 		auto ui = gvk::imgui_manager(singleQueue);
 
 		start(
-			gvk::application_name("APBF"),
+			gvk::application_name("Neighborhood"),
 			gvk::required_device_extensions()
 				.add_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME)
 				.add_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME)

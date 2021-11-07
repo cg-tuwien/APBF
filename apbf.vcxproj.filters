@@ -233,9 +233,6 @@
     <ClInclude Include="shaders\cpu_gpu_shared_config.h">
       <Filter>shader_includes</Filter>
     </ClInclude>
-    <ClInclude Include="shaders\kernels.glsl">
-      <Filter>shader_includes</Filter>
-    </ClInclude>
     <ClInclude Include="source\neighborhood_binary_search.h">
       <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClInclude>
