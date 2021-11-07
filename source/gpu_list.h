@@ -7,7 +7,7 @@ namespace pbd
 {
 	/// <summary><para>A list with its elements stored only in GPU memory.</para>
 	/// <para>Copying this class is cheap as it does not immediately duplicate the GPU memory (lazy copy).</para>
-	/// <para>Use <seealso cref="gpu_list::read_buffer"/> for read-access to the GPU memory, but use <seealso cref="gpu_list::write_buffer"/> if you need write-access.</para></summary>
+	/// <para>Use buffer() for read-access to the GPU memory, but use write().buffer() if you need write-access.</para></summary>
 	template<size_t Stride>
 	class gpu_list :
 		public list_interface<pbd::gpu_list<4ui64>>

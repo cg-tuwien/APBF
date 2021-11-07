@@ -83,27 +83,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\algorithms.cpp" />
-    <ClCompile Include="source\box_collision.cpp" />
-    <ClCompile Include="source\glue.cpp" />
     <ClCompile Include="source\gpu_list_data.cpp" />
-    <ClCompile Include="source\incompressibility.cpp" />
-    <ClCompile Include="source\initialize.cpp" />
-    <ClCompile Include="source\inter_particle_collision.cpp" />
     <ClCompile Include="source\measurements.cpp" />
     <ClCompile Include="source\neighborhood_binary_search.cpp" />
     <ClCompile Include="source\neighborhood_brute_force.cpp" />
     <ClCompile Include="source\neighborhood_green.cpp" />
     <ClCompile Include="source\neighborhood_rtx.cpp" />
-    <ClCompile Include="source\particle_transfer.cpp" />
-    <ClCompile Include="source\pool.cpp" />
-    <ClCompile Include="source\save_particle_info.cpp" />
+    <ClCompile Include="source\randomParticles.cpp" />
     <ClCompile Include="source\settings.cpp" />
-    <ClCompile Include="source\sphere_collision.cpp" />
-    <ClCompile Include="source\spherical_pool.cpp" />
-    <ClCompile Include="source\spread_kernel_width.cpp" />
-    <ClCompile Include="source\update_transfers.cpp" />
-    <ClCompile Include="source\user_controlled_boxes.cpp" />
-    <ClCompile Include="source\velocity_handling.cpp" />
     <ClCompile Include="source\shader_provider.cpp" />
     <ClCompile Include="source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Publish_Vulkan|x64'">Create</PrecompiledHeader>
@@ -112,35 +99,19 @@
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\test.cpp" />
-    <ClCompile Include="source\waterdrop.cpp" />
-    <ClCompile Include="source\waterfall.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
     <ClInclude Include="shaders\kernels.glsl" />
     <ClInclude Include="source\algorithms.h" />
-    <ClInclude Include="source\box_collision.h" />
-    <ClInclude Include="source\glue.h" />
     <ClInclude Include="source\gpu_list_data.h" />
-    <ClInclude Include="source\incompressibility.h" />
-    <ClInclude Include="source\initialize.h" />
-    <ClInclude Include="source\inter_particle_collision.h" />
     <ClInclude Include="source\measurements.h" />
     <ClInclude Include="source\neighborhood_binary_search.h" />
     <ClInclude Include="source\neighborhood_brute_force.h" />
     <ClInclude Include="source\neighborhood_green.h" />
     <ClInclude Include="source\neighborhood_rtx.h" />
-    <ClInclude Include="source\particle_transfer.h" />
-    <ClInclude Include="source\pool.h" />
-    <ClInclude Include="source\save_particle_info.h" />
+    <ClInclude Include="source\randomParticles.h" />
     <ClInclude Include="source\settings.h" />
-    <ClInclude Include="source\sphere_collision.h" />
-    <ClInclude Include="source\spherical_pool.h" />
-    <ClInclude Include="source\spread_kernel_width.h" />
-    <ClInclude Include="source\time_machine.h" />
-    <ClInclude Include="source\update_transfers.h" />
-    <ClInclude Include="source\user_controlled_boxes.h" />
-    <ClInclude Include="source\velocity_handling.h" />
     <ClInclude Include="source\gpu_list.h" />
     <ClInclude Include="source\indexed_list.h" />
     <ClInclude Include="source\list_definitions.h" />
@@ -150,8 +121,6 @@
     <ClInclude Include="source\targetver.hpp" />
     <ClInclude Include="source\test.h" />
     <ClInclude Include="source\uninterleaved_list.h" />
-    <ClInclude Include="source\waterdrop.h" />
-    <ClInclude Include="source\waterfall.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="gears_vk\assets\1st_party\models\sphere.obj">
@@ -169,7 +138,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>apbf</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>apbf</ProjectName>
+    <ProjectName>neighborhood</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Vulkan|x64'" Label="Configuration">

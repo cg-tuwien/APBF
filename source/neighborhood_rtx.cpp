@@ -85,7 +85,7 @@ void pbd::neighborhood_rtx::build_acceleration_structure()
 
 	if (mStepsUntilNextRebuild-- == 0u) {
 		mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
-		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u; // occasional rebuilds cause huge variations in required time && fluctuations in time steps not handled well => bad behavior (fluid explosions)
+		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u;
 	} else {
 		mTlas->update(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
 	}

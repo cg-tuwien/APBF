@@ -1,11 +1,10 @@
 #include "../shaders/cpu_gpu_shared_config.h"
 #include <gvk.hpp>
 #include <imgui.h>
-#include <random>
 #include "shader_provider.h"
-#include SCENE_FILENAME
 #include "measurements.h"
 #include "settings.h"
+#include "randomParticles.h"
 
 #ifdef _DEBUG
 #include "Test.h"
@@ -13,7 +12,7 @@
 
 class apbf : public gvk::invokee
 {
-	struct application_data {
+	struct camera_data {
 		/** Camera's view matrix */
 		glm::mat4 mViewMatrix;
 		/** Camera's projection matrix */
@@ -46,6 +45,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto* mainWnd = gvk::context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 
+		shader_provider::start_recording();
+		mScene.init(1000u, glm::vec3(0, 0, 0), glm::vec3(50, 50, 50));
+		shader_provider::end_recording();
+
 		// Create the camera and buffers that will contain camera data:
 		mQuakeCam.set_translation({ 0.0f, 0.0f, 0.0f });
 		mQuakeCam.set_perspective_projection(glm::radians(60.0f), mainWnd->aspect_ratio(), 0.5f, 500.0f);
@@ -55,17 +58,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		for (gvk::window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			mCameraDataBuffer.emplace_back(gvk::context().create_buffer(
 				avk::memory_usage::host_coherent, {},
-				avk::uniform_buffer_meta::create_from_data(application_data{})
+				avk::uniform_buffer_meta::create_from_data(camera_data{})
 			));
 		}
-
-#if SCENE == 0 || SCENE == 2
-		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80), glm::vec3(40, 30, -40), mQuakeCam, 1.0f);
-#elif SCENE == 1
-		mPool = std::make_unique<spherical_pool>(glm::vec3(0, 10, -60), 100.0f, mQuakeCam, 1.0f);
-#elif SCENE == 3
-		mPool = std::make_unique<SCENE_NAME>(glm::vec3(-40, -10, -80) * 2.0f, glm::vec3(40, 30, -40) * 2.0f, glm::vec3(30, 60, -60) * 2.0f, 6.0f, mQuakeCam, 1.0f);
-#endif
 
 		for (gvk::window::frame_id_t i = 0; i < framesInFlight; ++i) {
 			auto imColor     = gvk::context().create_image(mainWnd->resolution().x, mainWnd->resolution().y,          vk::Format::eR16G16B16A16Sfloat, 1, avk::memory_usage::device, avk::image_usage::general_color_attachment | avk::image_usage::shader_storage);
@@ -97,7 +92,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("PBD"));
 				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
 				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
@@ -107,25 +101,13 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 					values.erase(values.begin());
 				}
 				ImGui::PlotLines("ms/frame", values.data(), static_cast<int>(values.size()), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
-				ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
-				ImGui::Text("%d Neighbor Pairs", mPool->neighbors().empty() ? 0 : measurements::async_read_uint("neighbor count", mPool->neighbors().length()));
+				//ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
+				//ImGui::Text("%d Neighbor Pairs", mPool->neighbors().empty() ? 0 : measurements::async_read_uint("neighbor count", mPool->neighbors().length()));
 
 				ImGui::Separator();
 
-				ImGui::TextColored(ImVec4(0.f, 0.8f, 0.5f, 1.0f), "Rendering:");
-				ImGui::Checkbox("Freeze Particle Animation", &mFreezeParticleAnimation);
-				ImGui::Checkbox("Render Boxes", &pbd::settings::renderBoxes);
-				ImGui::Checkbox("Ambient Occlusion", &mAddAmbientOcclusion);
-				ImGui::Combo("Color", &pbd::settings::color, pbd::settings::colorNames.data(), static_cast<int>(pbd::settings::colorNames.size()));
 				ImGui::SliderFloat("Render Scale", &pbd::settings::particleRenderScale, 0.0f, 1.0f, "%.1f");
-				ImGui::SliderInt("Render Limit", &pbd::settings::particleRenderLimit, 0, 1000);
-
-				ImGui::Separator();
-
-				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Simulation:");
-				ImGui::SliderFloat("Max Delta Time", &mMaxDeltaTime, 0.0f, 0.1f, "%.2f ms");
 				pbd::settings::add_apbf_settings_im_gui_entries();
-//				ImGui::Separator();
 				mImGuiHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup | ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
 
 				ImGui::End();
@@ -142,38 +124,17 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 
 		if (gvk::input().key_pressed(gvk::key_code::space)) {
-			mFreezeParticleAnimation = !mFreezeParticleAnimation;
+			//mFreezeParticleAnimation = !mFreezeParticleAnimation;
 		}
 
 		if (gvk::input().key_pressed(gvk::key_code::enter)) {
-			mPerformSingleSimulationStep = true;
-		}
-
-		if (gvk::input().key_pressed(gvk::key_code::backspace)) {
-			mPool->time_machine().jump_back();
-		}
-
-		if (gvk::input().key_pressed(gvk::key_code::t)) {
-			mPool->time_machine().toggle_enabled();
-		}
-
-		if (gvk::input().key_pressed(gvk::key_code::c)) {
-			if (gvk::input().key_down(gvk::key_code::left_shift)) {
-				pbd::settings::previousColor();
-			}
-			else {
-				pbd::settings::nextColor();
-			}
+			//mPerformSingleSimulationStep = true;
 		}
 		
 		// On Esc pressed,
 		if (gvk::input().key_pressed(gvk::key_code::escape)) {
 			// stop the current composition:
 			gvk::current_composition()->stop();
-		}
-
-		if (!mQuakeCam.is_enabled() && !mImGuiHovered) {
-			mPool->handle_input(glm::inverse(mQuakeCam.projection_and_view_matrix()), mQuakeCam.translation());
 		}
 	}
 
@@ -182,74 +143,24 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto* mainWnd = gvk::context().main_window();
 		const auto ifi = mainWnd->current_in_flight_index();
 
-		static float sTimeSinceStartForAnimation = 0.0f;
-		if (!mFreezeParticleAnimation) {
-			sTimeSinceStartForAnimation = gvk::time().time_since_start();
-		}
-		application_data cd{
+		camera_data cd{
 			// Camera's view matrix
 			mQuakeCam.view_matrix(),
 			// Camera's projection matrix
 			mQuakeCam.projection_matrix()
 		};
 		mCameraDataBuffer[ifi]->fill(&cd, 0, avk::sync::not_required());
-		pbd::settings::update_apbf_settings_buffer();
+		//pbd::settings::update_apbf_settings_buffer();
 
 		shader_provider::start_recording();
-		measurements::record_timing_interval_start("PBD");
+		//measurements::record_timing_interval_start("PBD");
 
 		if (!mFreezeParticleAnimation || mPerformSingleSimulationStep) {
-			mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
+			//mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
 		}
 		if (mPerformSingleSimulationStep) {
 			mPerformSingleSimulationStep = false;
 			mFreezeParticleAnimation = true;
-		}
-
-		// workaround to have position and radius match floatForColor: apply the particle resorting given by the index list in fluid
-		// deletes non-fluid particles from display!
-		auto& pos = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
-		auto& rad = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		auto& idx = mPool->fluid().get<pbd::fluid::id::particle>();
-		auto position = pbd::gpu_list<16>().request_length(idx.requested_length()).set_length(idx.length());
-		auto radius   = pbd::gpu_list< 4>().request_length(idx.requested_length()).set_length(idx.length());
-		shader_provider::copy_scattered_read(pos.buffer(), position.write().buffer(), idx.index_buffer(), idx.length(), 16);
-		shader_provider::copy_scattered_read(rad.buffer(),   radius.write().buffer(), idx.index_buffer(), idx.length(),  4);
-
-		// use this instead if floatForColor doesn't have to match (or is not a fluid property):
-//		auto position = mPool->particles().hidden_list().get<pbd::hidden_particles::id::position>();
-//		auto radius   = mPool->particles().hidden_list().get<pbd::hidden_particles::id::radius>();
-		auto transferring = mPool->particles().hidden_list().get<pbd::hidden_particles::id::transferring>();
-
-		pbd::gpu_list<4> floatForColor;
-		auto color1 = glm::vec3(0, 0, 1);
-		auto color2 = glm::vec3(0.62, 0.96, 0.83);
-		auto color1Float = 0.0f;
-		auto color2Float = 1.0f;
-		auto isUint = false;
-		auto isParticleProperty = false;
-		auto maxBd = mPool->max_expected_boundary_distance();
-		auto minRad = pbd::settings::smallestTargetRadius;
-		auto maxRad = pbd::settings::targetRadiusScaleFactor * maxBd / (KERNEL_SCALE + KERNEL_SCALE * pbd::settings::targetRadiusScaleFactor);
-//		auto minKer = minRad * KERNEL_SCALE;
-//		auto maxKer = pbd::settings::targetRadiusScaleFactor * maxBd;
-		switch (pbd::settings::color) {
-			case 0: floatForColor = mPool->fluid().get<pbd::fluid::id::boundariness     >();        color2 = glm::vec3(1, 0, 0);                                break;
-			case 1: floatForColor = mPool->fluid().get<pbd::fluid::id::boundary_distance>();        color2Float = POS_RESOLUTION * maxBd * 0.8f; isUint = true; break;
-			case 2: floatForColor = transferring;                        isParticleProperty = true;                                              isUint = true; break;
-//			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = minKer; color2Float = maxKer     ; break;
-			case 3: floatForColor = mPool->fluid().get<pbd::fluid::id::kernel_width     >();        color1Float = minRad; color2Float = maxRad     ; break; //same color mapping as radius for better comparability
-			case 4: floatForColor = mPool->fluid().get<pbd::fluid::id::target_radius    >();        color1Float = minRad; color2Float = maxRad     ; break;
-			case 5: floatForColor = radius;                                                         color1Float = minRad; color2Float = maxRad     ; break;
-			case 6: floatForColor = mPool->scalar_particle_velocities(); isParticleProperty = true; color1Float = 0     ; color2Float = minRad * 10; break;
-		}
-		if (isParticleProperty) {
-			auto old = floatForColor;
-			shader_provider::copy_scattered_read(old.buffer(), floatForColor.write().buffer(), idx.index_buffer(), idx.length(), 4);
-			floatForColor.set_length(mPool->fluid().length());
-		}
-		if (isUint) {
-			shader_provider::uint_to_float(floatForColor.write().buffer(), floatForColor.write().buffer(), floatForColor.write().length(), 1.0f);
 		}
 
 		measurements::record_timing_interval_end("PBD");
@@ -262,20 +173,19 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		auto fragToVS = glm::inverse(mQuakeCam.projection_matrix()) * glm::translate(glm::vec3(-1, -1, 0)) * glm::scale(glm::vec3(2.0f / glm::vec2(mainWnd->resolution()), 1.0f));
 		auto result = &mImages[ifi].mColor;
-		static auto lengthLimit = pbd::gpu_list<4>().request_length(1); // TODO maybe more elegant solution? Or just remove this debug functionality
-		if (pbd::settings::particleRenderLimit != 0) lengthLimit.set_length(pbd::settings::particleRenderLimit);
-		auto& particleCount = pbd::settings::particleRenderLimit == 0 ? position.length() : lengthLimit.length();
+		auto position = mScene.particles().hidden_list().get<pbd::hidden_particles::id::position>();
+		auto radius   = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius  >();
+		auto floatForColor = radius;
 
-		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), particleCount, mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
-		if (mAddAmbientOcclusion) {
-			shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
-			shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7f);
-			result = &mImages[ifi].mResult;
-		}
+		auto color1      = glm::vec3(1, 0, 0);
+		auto color2      = glm::vec3(0, 0, 1);
+		auto color1Float = 1.0f;
+		auto color2Float = 10.0f;
+
+		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 		blit_image           (          (*result)->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), avk::sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
 		copy_image_to_another(mImages[ifi].mDepth->get_image(), mainWnd->current_backbuffer()->image_view_at(1)->get_image(), avk::sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
 		shader_provider::sync_after_transfer();
-		mPool->render(mQuakeCam.projection_and_view_matrix());
 
 		measurements::debug_label_end();
 		
@@ -294,7 +204,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 	void finalize() override
 	{
-		// TODO let all templated classes use the same buffer cache
 		pbd::gpu_list_data::cleanup();
 		measurements::clean_up_resources();
 	}
@@ -307,33 +216,12 @@ private: // v== Member variables ==v
 	gvk::quake_camera mQuakeCam;
 	std::vector<avk::buffer> mCameraDataBuffer;
 
-	std::unique_ptr<SCENE_NAME> mPool;
-
-	uint32_t mNumParticles = 0u;
-	std::vector<avk::buffer> mParticlesBuffer;
-#if BLAS_CENTRIC
-	std::vector<avk::buffer> mAabbsBuffer;
-#endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
-
-#if BLAS_CENTRIC
-	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
-#else
-	static_assert(INST_CENTRIC);
-	avk::bottom_level_acceleration_structure mSingleBlas;
-	std::vector<avk::buffer> mGeometryInstanceBuffers;
-#endif
-	std::vector<avk::top_level_acceleration_structure> mTopLevelAS;
-
-	//avk::compute_pipeline mComputePipeline;
-	avk::graphics_pipeline mGraphicsPipelineInstanced;
-	avk::graphics_pipeline mGraphicsPipelineInstanced2;
-	avk::graphics_pipeline mGraphicsPipelinePoint;
-	avk::ray_tracing_pipeline mRayTracingPipeline;
 	
-	std::vector<avk::image_view> mOffscreenImageViews;
 	std::vector<images> mImages;
+
+	randomParticles mScene;
 
 	bool mImGuiHovered = false;
 	
@@ -347,7 +235,6 @@ private: // v== Member variables ==v
 	bool mSetUniformParticleRadius = false;
 	bool mPerformSingleSimulationStep = false;
 	int mIntersectionType = 0;
-	float mMaxDeltaTime = 0.1f;
 	
 }; // class apbf
 

@@ -14,26 +14,11 @@
     <Filter Include="source">
       <UniqueIdentifier>{1864a082-1e1c-4d66-82ea-437cc786ede4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\pbd">
-      <UniqueIdentifier>{d2e114be-3178-475a-a8b1-3079bf59f7ce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\pbd\gpu_lists">
-      <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\pbd\particle manipulation">
-      <UniqueIdentifier>{8f7903e4-29e4-445a-aa3d-86d35e50b6e3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shaders\particle manipulation">
       <UniqueIdentifier>{1883c467-6242-4d4b-91b9-a755debf29e1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\scenes">
-      <UniqueIdentifier>{cd48ffe5-1275-46bd-99b5-ca9c603f420f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shader_includes">
       <UniqueIdentifier>{1f74b116-ce97-4400-9f4b-d94659189245}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\pbd\debug">
-      <UniqueIdentifier>{ba90d786-8222-4fb1-aea1-473fb1b37ec0}</UniqueIdentifier>
     </Filter>
     <Filter Include="shaders\rendering">
       <UniqueIdentifier>{014cd3d9-227a-4b80-9634-2f901bf4e552}</UniqueIdentifier>
@@ -49,6 +34,18 @@
     </Filter>
     <Filter Include="shaders\misc">
       <UniqueIdentifier>{04c65b15-30d4-4fc9-bcfc-9566fe501014}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\neighborhood">
+      <UniqueIdentifier>{d2e114be-3178-475a-a8b1-3079bf59f7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\neighborhood\gpu_lists">
+      <UniqueIdentifier>{246668e9-445f-450e-a499-63aefa6de76d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\neighborhood\neighborhood_variants">
+      <UniqueIdentifier>{8f7903e4-29e4-445a-aa3d-86d35e50b6e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\scenes">
+      <UniqueIdentifier>{8ac2a7ab-125d-46d2-8d10-526b307dacf5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -247,81 +244,36 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\shader_provider.cpp">
-      <Filter>source\pbd</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClCompile>
     <ClCompile Include="source\test.cpp">
-      <Filter>source\pbd</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClCompile>
     <ClCompile Include="source\algorithms.cpp">
-      <Filter>source\pbd</Filter>
-    </ClCompile>
-    <ClCompile Include="source\velocity_handling.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\pool.cpp">
-      <Filter>source\scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="source\initialize.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\box_collision.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClCompile>
     <ClCompile Include="source\neighborhood_brute_force.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\inter_particle_collision.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClCompile>
     <ClCompile Include="source\measurements.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\incompressibility.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
     <ClCompile Include="source\neighborhood_green.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\particle_transfer.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClCompile>
     <ClCompile Include="source\neighborhood_rtx.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\spread_kernel_width.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\update_transfers.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClCompile>
     <ClCompile Include="source\settings.cpp">
-      <Filter>source\pbd</Filter>
-    </ClCompile>
-    <ClCompile Include="source\user_controlled_boxes.cpp">
-      <Filter>source</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClCompile>
     <ClCompile Include="source\neighborhood_binary_search.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClCompile>
     <ClCompile Include="source\gpu_list_data.cpp">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClCompile>
-    <ClCompile Include="source\spherical_pool.cpp">
-      <Filter>source\scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="source\sphere_collision.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\glue.cpp">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClCompile>
-    <ClCompile Include="source\save_particle_info.cpp">
-      <Filter>source\pbd\debug</Filter>
-    </ClCompile>
-    <ClCompile Include="source\waterfall.cpp">
-      <Filter>source\scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="source\waterdrop.cpp">
+    <ClCompile Include="source\randomParticles.cpp">
       <Filter>source\scenes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -333,70 +285,43 @@
       <Filter>precompiled_headers</Filter>
     </ClInclude>
     <ClInclude Include="source\shader_provider.h">
-      <Filter>source\pbd</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClInclude>
     <ClInclude Include="source\gpu_list.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
     <ClInclude Include="source\list_definitions.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
     <ClInclude Include="source\list_interface.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
     <ClInclude Include="source\test.h">
-      <Filter>source\pbd</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClInclude>
     <ClInclude Include="source\uninterleaved_list.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
     <ClInclude Include="source\indexed_list.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
     <ClInclude Include="source\algorithms.h">
-      <Filter>source\pbd</Filter>
-    </ClInclude>
-    <ClInclude Include="source\velocity_handling.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\pool.h">
-      <Filter>source\scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="source\initialize.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\box_collision.h">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClInclude>
     <ClInclude Include="source\neighborhood_brute_force.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\inter_particle_collision.h">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClInclude>
     <ClInclude Include="source\measurements.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\incompressibility.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
     <ClInclude Include="source\neighborhood_green.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\particle_transfer.h">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClInclude>
     <ClInclude Include="source\neighborhood_rtx.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\spread_kernel_width.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\update_transfers.h">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClInclude>
     <ClInclude Include="source\settings.h">
-      <Filter>source\pbd</Filter>
+      <Filter>source\neighborhood</Filter>
     </ClInclude>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h">
       <Filter>shader_includes</Filter>
@@ -404,34 +329,13 @@
     <ClInclude Include="shaders\kernels.glsl">
       <Filter>shader_includes</Filter>
     </ClInclude>
-    <ClInclude Include="source\time_machine.h">
-      <Filter>source\pbd</Filter>
-    </ClInclude>
-    <ClInclude Include="source\user_controlled_boxes.h">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="source\neighborhood_binary_search.h">
-      <Filter>source\pbd\particle manipulation</Filter>
+      <Filter>source\neighborhood\neighborhood_variants</Filter>
     </ClInclude>
     <ClInclude Include="source\gpu_list_data.h">
-      <Filter>source\pbd\gpu_lists</Filter>
+      <Filter>source\neighborhood\gpu_lists</Filter>
     </ClInclude>
-    <ClInclude Include="source\spherical_pool.h">
-      <Filter>source\scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="source\sphere_collision.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\glue.h">
-      <Filter>source\pbd\particle manipulation</Filter>
-    </ClInclude>
-    <ClInclude Include="source\save_particle_info.h">
-      <Filter>source\pbd\debug</Filter>
-    </ClInclude>
-    <ClInclude Include="source\waterfall.h">
-      <Filter>source\scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="source\waterdrop.h">
+    <ClInclude Include="source\randomParticles.h">
       <Filter>source\scenes</Filter>
     </ClInclude>
   </ItemGroup>
