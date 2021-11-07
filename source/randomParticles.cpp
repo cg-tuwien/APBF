@@ -22,7 +22,9 @@ void randomParticles::init(unsigned int aParticleCount, const glm::vec3& aMin, c
 		radii    .push_back(distributionR(generator));
 	}
 	
-	mParticles.hidden_list().set_length(aParticleCount);
+	mParticles              .request_length(aParticleCount);
+	mParticles.hidden_list().request_length(aParticleCount);
+	mParticles.increase_length(aParticleCount);
 	auto& gpuPositions = mParticles.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto& gpuRadii     = mParticles.hidden_list().get<pbd::hidden_particles::id::radius  >();
 	pbd::algorithms::copy_bytes(positions.data(), gpuPositions.write().buffer(), aParticleCount * sizeof(glm::ivec4));

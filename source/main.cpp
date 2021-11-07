@@ -9,6 +9,7 @@
 #ifdef _DEBUG
 #include "Test.h"
 #endif
+#include "neighborhood_brute_force.h"
 
 class apbf : public gvk::invokee
 {
@@ -47,6 +48,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 
 		shader_provider::start_recording();
 		mScene.init(1000u, glm::vec3(0, 0, 0), glm::vec3(50, 50, 50));
+		auto& range = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius>();
+		mNeighbors = &mNeighborsBruteForce;
+		mNeighborsBruteForce.request_length(NEIGHBOR_LIST_MAX_LENGTH);
+		mNeighborhoodBruteForce.set_data(&mScene.particles(), &range, &mNeighborsBruteForce).set_range_scale(1.0f);
 		shader_provider::end_recording();
 
 		// Create the camera and buffers that will contain camera data:
@@ -92,7 +97,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
+				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("neighborhood"));
 				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
 				static std::vector<float> values;
@@ -102,7 +107,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				}
 				ImGui::PlotLines("ms/frame", values.data(), static_cast<int>(values.size()), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
 				//ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
-				//ImGui::Text("%d Neighbor Pairs", mPool->neighbors().empty() ? 0 : measurements::async_read_uint("neighbor count", mPool->neighbors().length()));
+				ImGui::Text("%d Neighbor Pairs", mNeighbors->empty() ? 0 : measurements::async_read_uint("neighbor count", mNeighbors->length()));
 
 				ImGui::Separator();
 
@@ -153,7 +158,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		//pbd::settings::update_apbf_settings_buffer();
 
 		shader_provider::start_recording();
-		//measurements::record_timing_interval_start("PBD");
+		measurements::record_timing_interval_start("neighborhood");
 
 		if (!mFreezeParticleAnimation || mPerformSingleSimulationStep) {
 			//mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
@@ -163,11 +168,15 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			mFreezeParticleAnimation = true;
 		}
 
-		measurements::record_timing_interval_end("PBD");
+		mNeighborhoodBruteForce.apply();
 
-		auto& cmdBfr = shader_provider::cmd_bfr();
+		measurements::record_timing_interval_end("neighborhood");
+		shader_provider::end_recording();
 
 		// GRAPHICS
+
+		shader_provider::start_recording();
+		auto& cmdBfr = shader_provider::cmd_bfr();
 
 		measurements::debug_label_start("Rendering", glm::vec4(0, 0.5, 0, 1));
 
@@ -188,16 +197,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		shader_provider::sync_after_transfer();
 
 		measurements::debug_label_end();
-		
-		cmdBfr->end_recording();
 
 		// The swap chain provides us with an "image available semaphore" for the current frame.
 		// Only after the swapchain image has become available, we may start rendering into it.
 		auto imageAvailableSemaphore = mainWnd->consume_current_image_available_semaphore();
 		
-		// Submit the draw call and take care of the command buffer's lifetime:
-		mQueue->submit(cmdBfr, imageAvailableSemaphore);
-		mainWnd->handle_lifetime(std::move(cmdBfr));
+		shader_provider::end_recording(imageAvailableSemaphore);
 
 		pbd::gpu_list_data::garbage_collection();
 	}
@@ -222,6 +227,11 @@ private: // v== Member variables ==v
 	std::vector<images> mImages;
 
 	randomParticles mScene;
+
+	pbd::neighborhood_brute_force mNeighborhoodBruteForce;
+
+	pbd::neighbors  mNeighborsBruteForce;
+	pbd::neighbors* mNeighbors;
 
 	bool mImGuiHovered = false;
 	
