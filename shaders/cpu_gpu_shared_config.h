@@ -2,11 +2,12 @@
 #define DIMENSIONS 3
 //#define RTX_ACCELERATION_STRUCTURE_REBUILD_INTERVAL 60
 #define RTX_ACCELERATION_STRUCTURE_REBUILD_INTERVAL 0
-
 #define POS_RESOLUTION 262144.0f
+//#define PARTICLE_MESH "assets/icosahedron.obj"
+#define PARTICLE_MESH "assets/sphere.obj"
 
-#define PARTICLE_COUNT 1000
-#define AREA_MIN glm::vec3(0, 0, 0)
+#define PARTICLE_COUNT 10000
+#define AREA_MIN glm::vec3(-40, -40, -40)
 #define AREA_MAX glm::vec3(40, 40, 40)
 #define MIN_RADIUS 1.0f
 #define MAX_RADIUS 10.0f
@@ -23,7 +24,10 @@
 
 struct gpu_settings
 {
-	int mNeighborListSorted;
+	int   mNeighborListSorted;                 // bool
+	int   mShowFocusParticleNeighborhoodRange; // bool
+	int   mFocusParticleId;
+	float mParticleRenderScale;
 };
 #endif
 // ----------------------------------------------------

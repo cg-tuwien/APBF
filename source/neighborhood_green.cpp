@@ -47,7 +47,6 @@ void pbd::neighborhood_green::apply()
 		mNeighbors->set_length(0);
 	}
 
-	// TODO only hash particles selected by index list!
 	shader_provider::write_sequence(unsortedIndexList.write().buffer(), positionList.length(), 0u, 1u);
 	shader_provider::calculate_position_hash(positionList.buffer(), unsortedHashList.write().buffer(), positionList.length(), mMinPos, mMaxPos, mResolutionLog2);
 	algorithms::sort(unsortedHashList.write().buffer(), unsortedIndexList.write().buffer(), sortHelper.write().buffer(), positionList.length(), unsortedHashList.requested_length(), sortedHashList.write().buffer(), sortedIndexList.write().buffer(), maxHash);
@@ -62,6 +61,7 @@ void pbd::neighborhood_green::apply()
 	shader_provider::write_sequence(  cellEndList.write().buffer(),   cellEndList.write().length(), 0u, 0u);
 	shader_provider::find_value_ranges(mParticles->index_buffer(), sortedHashList.buffer(), cellStartList.write().buffer(), cellEndList.write().buffer(), mParticles->length());
 	shader_provider::neighborhood_green(mParticles->index_buffer(), positionList.buffer(), mRange->buffer(), cellStartList.buffer(), cellEndList.buffer(), mNeighbors->write().buffer(), mParticles->length(), mNeighbors->write().length(), mRangeScale, mMinPos, mMaxPos, mResolutionLog2);
+//	auto debug = mNeighbors->read<glm::uvec2>();
 
 	if (settings::neighborListSorted) {
 		auto neighborCount = gpu_list<4>().request_length(mParticles->requested_length());

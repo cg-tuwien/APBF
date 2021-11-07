@@ -3,7 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
-layout(location = 0) in vec3 inPosition;
+layout(location = 0) in  vec3 inPosition;
 layout(location = 1) in ivec4 inParticlePosition;
 layout(location = 2) in float inParticleRadius;
 layout(location = 3) in float inFloatForColor;
@@ -19,19 +19,25 @@ layout(set = 0, binding = 0) uniform camera_data
 	mat4 mProjMatrix;
 } camData;
 
+// ------------------- gpu settings -------------------
+layout(set =  1, binding = 0) uniform GpuSettings { gpu_settings gpuSettings; };
+// ----------------------------------------------------
+
 // ------------------ push constants ------------------
 layout(push_constant) uniform PushConstants {
 	vec3  mColor1;
 	float mColor1Float;
 	vec3  mColor2;
 	float mColor2Float;
-	float mParticleRenderScale;
 };
 // ----------------------------------------------------
 
 void main() {
 	vec3 translation = vec3(inParticlePosition) / POS_RESOLUTION;
-	float scale = inParticleRadius * mParticleRenderScale;
+	float scale = inParticleRadius * gpuSettings.mParticleRenderScale;
+	if (bool(gpuSettings.mShowFocusParticleNeighborhoodRange) && gl_InstanceIndex == gpuSettings.mFocusParticleId) {
+		scale = inParticleRadius;
+	}
 
 	vec3 posWS  = inPosition * scale + translation;
 	gl_Position = camData.mProjMatrix * camData.mViewMatrix * vec4(posWS, 1.0);

@@ -6,9 +6,6 @@
 #include "settings.h"
 #include "randomParticles.h"
 
-#ifdef _DEBUG
-#include "Test.h"
-#endif
 #include "neighborhood_brute_force.h"
 #include "neighborhood_rtx.h"
 #include "neighborhood_binary_search.h"
@@ -43,9 +40,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 	{
 		shader_provider::set_updater(&mUpdater.emplace());
 
-#ifdef _DEBUG
-		pbd::test::test_all();
-#endif
 		auto* mainWnd = gvk::context().main_window();
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 
@@ -64,7 +58,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		shader_provider::end_recording();
 
 		// Create the camera and buffers that will contain camera data:
-		mQuakeCam.set_translation({ 0.0f, 0.0f, 0.0f });
+		mQuakeCam.set_translation({ 0.0f, 0.0f, 80.0f });
 		mQuakeCam.set_perspective_projection(glm::radians(60.0f), mainWnd->aspect_ratio(), 0.5f, 500.0f);
 		mQuakeCam.set_move_speed(30.0f);
 		mQuakeCam.disable();
@@ -96,7 +90,7 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 		
 		// Load a sphere model for drawing a single particle:
-		auto sphere = gvk::model_t::load_from_file("assets/icosahedron.obj");
+		auto sphere = gvk::model_t::load_from_file(PARTICLE_MESH);
 		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
 		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
@@ -197,18 +191,26 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		auto result = &mImages[ifi].mColor;
 		auto position = mScene.particles().hidden_list().get<pbd::hidden_particles::id::position>();
 		auto radius   = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius  >();
-		auto floatForColor = radius;
-		auto neighbors = mNeighborsBruteForce;
+		auto floatForColor = pbd::gpu_list<sizeof(float)>().request_length(position.requested_length());
+		auto neighbors     = pbd::neighbors();
+		
+		switch (pbd::settings::renderedNeighborhoodMethod) {
+			case 0: neighbors = mNeighborsBruteForce  ; break;
+			case 1: neighbors = mNeighborsRtx         ; break;
+			case 2: neighbors = mNeighborsGreen       ; break;
+			case 3: neighbors = mNeighborsBinarySearch; break;
+		}
 
-		shader_provider::write_sequence(floatForColor.write().buffer(), position.length(), 0u, 0u);
+		shader_provider::write_sequence_float(floatForColor.write().buffer(), position.length(), 0.0f, 0.0f); // init floatForColor with zeros
 		shader_provider::neighbor_list_to_particle_mask(mScene.particles().index_buffer(), neighbors.buffer(), floatForColor.write().buffer(), neighbors.length(), pbd::settings::focusParticleId);
 
+		// linear color gradient for the value range [0.0f; 1.0f] to visualize the property stored in floatForColor (currently the neighbor mask)
 		auto color1      = glm::vec3(1, 0, 0);
 		auto color2      = glm::vec3(0, 0, 1);
 		auto color1Float = 0.0f;
 		auto color2Float = 1.0f;
 
-		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
+		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float);
 		blit_image           (          (*result)->get_image(), mainWnd->current_backbuffer()->image_view_at(0)->get_image(), avk::sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
 		copy_image_to_another(mImages[ifi].mDepth->get_image(), mainWnd->current_backbuffer()->image_view_at(1)->get_image(), avk::sync::with_barriers_into_existing_command_buffer(*cmdBfr, {}, {}));
 		shader_provider::sync_after_transfer();

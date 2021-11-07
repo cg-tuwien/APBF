@@ -68,7 +68,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release_Vulkan|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="source\main.cpp" />
-    <ClCompile Include="source\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaders\cpu_gpu_shared_config.h" />
@@ -88,7 +87,6 @@
     <ClInclude Include="source\shader_provider.h" />
     <ClInclude Include="source\stdafx.hpp" />
     <ClInclude Include="source\targetver.hpp" />
-    <ClInclude Include="source\test.h" />
     <ClInclude Include="source\uninterleaved_list.h" />
   </ItemGroup>
   <ItemGroup>

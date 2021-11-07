@@ -153,9 +153,6 @@
     <ClCompile Include="source\shader_provider.cpp">
       <Filter>source\neighborhood</Filter>
     </ClCompile>
-    <ClCompile Include="source\test.cpp">
-      <Filter>source\neighborhood</Filter>
-    </ClCompile>
     <ClCompile Include="source\algorithms.cpp">
       <Filter>source\neighborhood</Filter>
     </ClCompile>
@@ -202,9 +199,6 @@
     </ClInclude>
     <ClInclude Include="source\list_interface.h">
       <Filter>source\neighborhood\gpu_lists</Filter>
-    </ClInclude>
-    <ClInclude Include="source\test.h">
-      <Filter>source\neighborhood</Filter>
     </ClInclude>
     <ClInclude Include="source\uninterleaved_list.h">
       <Filter>source\neighborhood\gpu_lists</Filter>
