@@ -1,46 +1,23 @@
-// -------- neighborhood RTX proof of concept ---------
-#define NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT 0
-
-#define BLAS_CENTRIC 0
-#if !BLAS_CENTRIC
-#define INST_CENTRIC 1
-#else
-#define INST_CENTRIC 0
-#endif
-
-#define NOT_NEIGHBOR_MASK  0x01
-#define NEIGHBOR_MASK      0x02
-#define ORIGIN_MASK        0x06
-
-#define RTX_NEIGHBORHOOD_RADIUS_FACTOR 30
-
-#define UNIFORM_PARTICLE_RADIUS 0.07
-// ----------------------------------------------------
-
-
-
-
-
-
-// ----------------------- PBD ------------------------
-#define DIMENSIONS 2 // currently only supporting 2 or 3
-
-#define SCENE 0 // 0: pool, 1: spherical_pool, 2: waterfall, 3: waterdrop
-#define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
+#define NEIGHBOR_LIST_MAX_LENGTH 10000000
+#define DIMENSIONS 3
+//#define RTX_ACCELERATION_STRUCTURE_REBUILD_INTERVAL 60
+#define RTX_ACCELERATION_STRUCTURE_REBUILD_INTERVAL 0
 
 #define POS_RESOLUTION 262144.0f
-#define KERNEL_WIDTH_RESOLUTION 262144.0f
-#define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0f
-#define BOUNDARINESS_RESOLUTION 262144.0f
-#define NEIGHBOR_LIST_MAX_LENGTH 10000
 
-#define FIXED_TIME_STEP (1.0f / 60.0f) // 0 for variable timestep
+#define PARTICLE_COUNT 50000
+#define AREA_MIN glm::vec3(0, 0, 0)
+#define AREA_MAX glm::vec3(80, 80, 80)
+#define MIN_RADIUS 1.0f
+#define MAX_RADIUS 10.0f
+#define GREEN_RESOLUTION_LOG_2 4
 
-#define KERNEL_SCALE 4.0f
-#define KERNEL_WIDTH_PROPAGATION_FACTOR 0.5f
 
-#define MAX_TRANSFERS 10000
-// ----------------------------------------------------
+
+
+
+
+#define NEIGHBORHOOD_TYPE 3 // 0: brute force, 1: Green, 2: RTX, 3: binary search
 
 
 

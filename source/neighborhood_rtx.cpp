@@ -6,9 +6,13 @@
 pbd::neighborhood_rtx::neighborhood_rtx()
 {
 	mStepsUntilNextRebuild = 0u;
+}
+
+void pbd::neighborhood_rtx::init()
+{
 	mBlas = gvk::context().create_bottom_level_acceleration_structure({ avk::acceleration_structure_size_requirements::from_aabbs(1u) }, false, [](avk::bottom_level_acceleration_structure_t& blas) {
 		//blas.config().flags = vk::BuildAccelerationStructureFlagBitsKHR::ePreferFastBuild; // TODO: Test performance of FastTrace
-	});
+		});
 	mBlas->build({ VkAabbPositionsKHR{ /* min: */ -1.f, -1.f, -1.f,  /* max: */ 1.f,  1.f,  1.f } });
 }
 
@@ -85,7 +89,7 @@ void pbd::neighborhood_rtx::build_acceleration_structure()
 
 	if (mStepsUntilNextRebuild-- == 0u) {
 		mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
-		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u;
+		mStepsUntilNextRebuild = RTX_ACCELERATION_STRUCTURE_REBUILD_INTERVAL;
 	} else {
 		mTlas->update(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
 	}

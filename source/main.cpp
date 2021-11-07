@@ -10,6 +10,9 @@
 #include "Test.h"
 #endif
 #include "neighborhood_brute_force.h"
+#include "neighborhood_rtx.h"
+#include "neighborhood_binary_search.h"
+#include "neighborhood_green.h"
 
 class apbf : public gvk::invokee
 {
@@ -47,11 +50,18 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		const auto framesInFlight = mainWnd->number_of_frames_in_flight();
 
 		shader_provider::start_recording();
-		mScene.init(1000u, glm::vec3(0, 0, 0), glm::vec3(50, 50, 50));
+		mScene.init(PARTICLE_COUNT, AREA_MIN, AREA_MAX);
+		mNeighborhoodRtx.init();
 		auto& range = mScene.particles().hidden_list().get<pbd::hidden_particles::id::radius>();
 		mNeighbors = &mNeighborsBruteForce;
-		mNeighborsBruteForce.request_length(NEIGHBOR_LIST_MAX_LENGTH);
-		mNeighborhoodBruteForce.set_data(&mScene.particles(), &range, &mNeighborsBruteForce).set_range_scale(1.0f);
+		mNeighborsBruteForce  .request_length(NEIGHBOR_LIST_MAX_LENGTH);
+		mNeighborsRtx         .request_length(NEIGHBOR_LIST_MAX_LENGTH);
+		mNeighborsGreen       .request_length(NEIGHBOR_LIST_MAX_LENGTH);
+		mNeighborsBinarySearch.request_length(NEIGHBOR_LIST_MAX_LENGTH);
+		mNeighborhoodBruteForce  .set_data(&mScene.particles(), &range, &mNeighborsBruteForce  ).set_range_scale(1.0f);
+		mNeighborhoodRtx         .set_data(&mScene.particles(), &range, &mNeighborsRtx         ).set_range_scale(1.0f);
+		mNeighborhoodGreen       .set_data(&mScene.particles(), &range, &mNeighborsGreen       ).set_range_scale(1.0f).set_position_range(AREA_MIN, AREA_MAX, GREEN_RESOLUTION_LOG_2);
+		mNeighborhoodBinarySearch.set_data(&mScene.particles(), &range, &mNeighborsBinarySearch).set_range_scale(1.0f);
 		shader_provider::end_recording();
 
 		// Create the camera and buffers that will contain camera data:
@@ -106,8 +116,20 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 					values.erase(values.begin());
 				}
 				ImGui::PlotLines("ms/frame", values.data(), static_cast<int>(values.size()), 0, nullptr, 0.0f, FLT_MAX, ImVec2(0.0f, 100.0f));
-				//ImGui::Text("%d Particles", measurements::async_read_uint("particle count", mPool->particles().length()));
-				ImGui::Text("%d Neighbor Pairs", mNeighbors->empty() ? 0 : measurements::async_read_uint("neighbor count", mNeighbors->length()));
+				
+				ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.5f, 1.0f), "Neighbor Count:");
+				ImGui::Text("%d Brute Force"  , mNeighborsBruteForce  .empty() ? 0 : measurements::async_read_uint("bf" , mNeighborsBruteForce  .length()));
+				ImGui::Text("%d RTX"          , mNeighborsRtx         .empty() ? 0 : measurements::async_read_uint("rtx", mNeighborsRtx         .length()));
+				ImGui::Text("%d Green"        , mNeighborsGreen       .empty() ? 0 : measurements::async_read_uint("gr" , mNeighborsGreen       .length()));
+				ImGui::Text("%d Binary Search", mNeighborsBinarySearch.empty() ? 0 : measurements::async_read_uint("bs" , mNeighborsBinarySearch.length()));
+
+				ImGui::Separator();
+
+				ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "Computation Time:");
+				ImGui::Text("%.3f ms Brute Force"  , measurements::get_timing_interval_in_ms("bf" ));
+				ImGui::Text("%.3f ms RTX"          , measurements::get_timing_interval_in_ms("rtx"));
+				ImGui::Text("%.3f ms Green"        , measurements::get_timing_interval_in_ms("gr" ));
+				ImGui::Text("%.3f ms Binary Search", measurements::get_timing_interval_in_ms("bs" ));
 
 				ImGui::Separator();
 
@@ -168,7 +190,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			mFreezeParticleAnimation = true;
 		}
 
-		mNeighborhoodBruteForce.apply();
+		measurements::record_timing_interval_start("bf" ); mNeighborhoodBruteForce  .apply(); measurements::record_timing_interval_end("bf" );
+		measurements::record_timing_interval_start("rtx"); mNeighborhoodRtx         .apply(); measurements::record_timing_interval_end("rtx");
+//		measurements::record_timing_interval_start("gr" ); mNeighborhoodGreen       .apply(); measurements::record_timing_interval_end("gr" );
+		measurements::record_timing_interval_start("bs" ); mNeighborhoodBinarySearch.apply(); measurements::record_timing_interval_end("bs" );
 
 		measurements::record_timing_interval_end("neighborhood");
 		shader_provider::end_recording();
@@ -228,9 +253,15 @@ private: // v== Member variables ==v
 
 	randomParticles mScene;
 
-	pbd::neighborhood_brute_force mNeighborhoodBruteForce;
+	pbd::neighborhood_brute_force   mNeighborhoodBruteForce;
+	pbd::neighborhood_rtx           mNeighborhoodRtx;
+	pbd::neighborhood_green         mNeighborhoodGreen;
+	pbd::neighborhood_binary_search mNeighborhoodBinarySearch;
 
 	pbd::neighbors  mNeighborsBruteForce;
+	pbd::neighbors  mNeighborsRtx;
+	pbd::neighbors  mNeighborsGreen;
+	pbd::neighbors  mNeighborsBinarySearch;
 	pbd::neighbors* mNeighbors;
 
 	bool mImGuiHovered = false;

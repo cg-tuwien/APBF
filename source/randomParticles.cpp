@@ -10,7 +10,7 @@ void randomParticles::init(unsigned int aParticleCount, const glm::vec3& aMin, c
 	auto distributionX = std::uniform_real_distribution<float>(aMin.x, aMax.x);
 	auto distributionY = std::uniform_real_distribution<float>(aMin.y, aMax.y);
 	auto distributionZ = std::uniform_real_distribution<float>(aMin.z, aMax.z);
-	auto distributionR = std::uniform_real_distribution<float>(  1.0f,  10.0f);
+	auto distributionR = std::uniform_real_distribution<float>(MIN_RADIUS, MAX_RADIUS);
 
 	generator.seed(10);
 	positions.reserve(aParticleCount);

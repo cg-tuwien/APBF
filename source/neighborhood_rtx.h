@@ -8,6 +8,7 @@ namespace pbd
 	{
 	public:
 		neighborhood_rtx();
+		void init();
 		neighborhood_rtx& set_data(particles* aParticles, const gpu_list<sizeof(float)>* aRange, neighbors* aNeighbors);
 		neighborhood_rtx& set_range_scale(float aScale);
 		void apply();
