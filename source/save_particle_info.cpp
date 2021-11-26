@@ -159,6 +159,18 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		auto toFile = std::ofstream(std::format("particles_{}.svg", aSvgId));
 		toFile << svg;
 	}
+
+	{
+		auto toFile = std::ofstream("particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+		toFile << indices.size() << std::endl;
+	}
+
+	{
+		auto len = 0u;
+		mNeighbors->length()->read(&len, 0, avk::sync::wait_idle(true));
+		auto toFile = std::ofstream("neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+		toFile << len << std::endl;
+	}
 }
 
 std::string pbd::save_particle_info::boxes_to_svg()

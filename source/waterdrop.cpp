@@ -20,10 +20,10 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
 	pbd::initialize::add_sphere_shape(mFluid.get<pbd::fluid::id::particle>(), aDropCenter, aDropRadius, 0, false, aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aRadius * static_cast<float>(KERNEL_SCALE), 0);
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness>().write().buffer(), mFluid.length(), 1, 0);
-	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aRadius * POS_RESOLUTION), 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width     >().write().buffer(), mFluid.length(), aRadius * static_cast<float>(KERNEL_SCALE), 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius    >().write().buffer(), mFluid.length(), aRadius, 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness     >().write().buffer(), mFluid.length(), 1, 0);
+	shader_provider::write_sequence      (mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aRadius * POS_RESOLUTION), 0);
 
 	mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
 	mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));

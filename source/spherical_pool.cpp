@@ -19,10 +19,10 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
 	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_sphere_shape(mParticles, aCenter, aPoolRadius, 0.0f, true, aParticleRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.length(), aParticleRadius * static_cast<float>(KERNEL_SCALE), 0);
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius>().write().buffer(), mFluid.length(), 1, 0);
-	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness>().write().buffer(), mFluid.length(), 1, 0);
-	shader_provider::write_sequence(mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aParticleRadius * POS_RESOLUTION), 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width     >().write().buffer(), mFluid.length(), aParticleRadius * static_cast<float>(KERNEL_SCALE), 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius    >().write().buffer(), mFluid.length(), aParticleRadius, 0);
+	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::boundariness     >().write().buffer(), mFluid.length(), 1, 0);
+	shader_provider::write_sequence      (mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aParticleRadius * POS_RESOLUTION), 0);
 
 	mVelocityHandling .set_data(&mParticles                           ).set_acceleration(glm::vec3(0, -10, 0));
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid             );
@@ -42,7 +42,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	pbd::settings::smallestTargetRadius = aParticleRadius;
 	mMaxExpectedBoundaryDistance = aPoolRadius;
 	mViewBoxMin = glm::vec2(aCenter) - (aPoolRadius * 1.1f);
-	mViewBoxMin = glm::vec2(aCenter) + (aPoolRadius * 1.1f);
+	mViewBoxMax = glm::vec2(aCenter) + (aPoolRadius * 1.1f);
 }
 
 spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, gvk::camera& aCamera, float aParticleRadius) :

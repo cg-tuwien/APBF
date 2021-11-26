@@ -309,44 +309,17 @@ private: // v== Member variables ==v
 
 	std::unique_ptr<SCENE_NAME> mPool;
 
-	uint32_t mNumParticles = 0u;
-	std::vector<avk::buffer> mParticlesBuffer;
-#if BLAS_CENTRIC
-	std::vector<avk::buffer> mAabbsBuffer;
-#endif
 	avk::buffer mSphereVertexBuffer;
 	avk::buffer mSphereIndexBuffer;
 
-#if BLAS_CENTRIC
-	std::vector<avk::bottom_level_acceleration_structure> mBottomLevelAS;
-#else
-	static_assert(INST_CENTRIC);
-	avk::bottom_level_acceleration_structure mSingleBlas;
-	std::vector<avk::buffer> mGeometryInstanceBuffers;
-#endif
-	std::vector<avk::top_level_acceleration_structure> mTopLevelAS;
-
-	//avk::compute_pipeline mComputePipeline;
-	avk::graphics_pipeline mGraphicsPipelineInstanced;
-	avk::graphics_pipeline mGraphicsPipelineInstanced2;
-	avk::graphics_pipeline mGraphicsPipelinePoint;
-	avk::ray_tracing_pipeline mRayTracingPipeline;
-	
-	std::vector<avk::image_view> mOffscreenImageViews;
 	std::vector<images> mImages;
 
 	bool mImGuiHovered = false;
 	
 	// Settings from the UI:
-	int mRenderingMethod = 3;
-	int mRenderNeighbors = 1;
-	int mNeighborhoodOriginParticleId = 0;
 	bool mFreezeParticleAnimation = true;
 	bool mAddAmbientOcclusion = true;
-	bool mResetParticlePositions = false;
-	bool mSetUniformParticleRadius = false;
 	bool mPerformSingleSimulationStep = false;
-	int mIntersectionType = 0;
 	float mMaxDeltaTime = 0.1f;
 	
 }; // class apbf

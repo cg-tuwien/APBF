@@ -1,27 +1,3 @@
-// -------- neighborhood RTX proof of concept ---------
-#define NEIGHBORHOOD_RTX_PROOF_OF_CONCEPT 0
-
-#define BLAS_CENTRIC 0
-#if !BLAS_CENTRIC
-#define INST_CENTRIC 1
-#else
-#define INST_CENTRIC 0
-#endif
-
-#define NOT_NEIGHBOR_MASK  0x01
-#define NEIGHBOR_MASK      0x02
-#define ORIGIN_MASK        0x06
-
-#define RTX_NEIGHBORHOOD_RADIUS_FACTOR 30
-
-#define UNIFORM_PARTICLE_RADIUS 0.07
-// ----------------------------------------------------
-
-
-
-
-
-
 // ----------------------- PBD ------------------------
 #define DIMENSIONS 2 // currently only supporting 2 or 3
 
@@ -32,7 +8,6 @@
 #define KERNEL_WIDTH_RESOLUTION 262144.0f
 #define INCOMPRESSIBILITY_DATA_RESOLUTION 262144.0f
 #define BOUNDARINESS_RESOLUTION 262144.0f
-#define NEIGHBOR_LIST_MAX_LENGTH 2048                            // TODO delete
 
 #define FIXED_TIME_STEP (1.0f / 60.0f) // 0 for variable timestep
 
