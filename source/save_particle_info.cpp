@@ -33,11 +33,13 @@ void pbd::save_particle_info::apply()
 	auto boundaryDist = boundaryDistList.read<glm:: uint>();
 	auto     nbrPairs =      mNeighbors->read<glm::uvec2>();
 	auto     nbrCount = std::vector<unsigned int>();
+	auto    sortedIdx = std::vector<unsigned int>();
 	auto       radius = std::vector<float>();
 	auto   centerDist = std::vector<float>();
 	auto    centerPos = glm::vec3(0, 10, -60);
 
 	nbrCount  .resize(indices.size());
+	sortedIdx .resize(indices.size());
 	radius    .resize(indices.size());
 	centerDist.resize(indices.size());
 
@@ -55,6 +57,7 @@ void pbd::save_particle_info::apply()
 
 		centerDist[i] = glm::distance(pos, centerPos);
 		radius    [i] = radii[id];
+		sortedIdx [i] = i;
 	}
 
 	// write files
@@ -87,6 +90,22 @@ void pbd::save_particle_info::apply()
 	{
 		auto toFile = std::ofstream("boundaryDistance.txt");
 		for (auto& data : boundaryDist) toFile << (data / POS_RESOLUTION) << ";";
+	}
+
+	{
+		std::sort(sortedIdx.begin(), sortedIdx.end(), [&](unsigned int a, unsigned int b) { return centerDist[a] < centerDist[b]; });
+
+		auto toFile = std::ofstream("data.csv");
+		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius" << std::endl;
+		for (auto i = 0u; i < indices.size(); i++) {
+			auto idx = sortedIdx[i];
+			toFile << centerDist  [idx] << ","
+			       << (boundaryDist[idx] / POS_RESOLUTION) << ","
+			       << kernelWidth [idx] << ","
+			       << nbrCount    [idx] << ","
+			       << radius      [idx] << ","
+			       << targetRadius[idx] << std::endl;
+		}
 	}
 }
 

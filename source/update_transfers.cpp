@@ -31,6 +31,9 @@ void pbd::update_transfers::apply()
 	auto  nearestNeighborList     = gpu_list<4>().request_length(mFluid->requested_length());
 	auto  uintBoundarinessList    = gpu_list<8>().request_length(mFluid->requested_length());
 
+	// find_split_and_merge_1 uses atomicMin() to write into boundaryDistanceList; initialize it with max value
+	shader_provider::write_sequence(boundaryDistanceList.write().buffer(), boundaryDistanceList.length(), std::numeric_limits<uint32_t>::max(), 0u);
+
 	// find_split_and_merge_0: initialization for boundariness filter (it turned out that the filter doesn't help that much -> TODO remove?)
 	// find_split_and_merge_1: one iteration of boundary distance "flood-fill", find shortest neighbor-distance
 	// find_split_and_merge_2: get the closest neighbor using the shortest neighbor-distance, boundariness filter calculations
