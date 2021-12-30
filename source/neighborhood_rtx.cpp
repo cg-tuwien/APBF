@@ -36,8 +36,8 @@ void pbd::neighborhood_rtx::apply()
 {
 	measurements::debug_label_start("neighborhood RTX", glm::vec4(1, 0.5, 0, 1));
 
-	auto& positionList     = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
-	auto  blasReference   = mBlas->device_address();
+	auto& positionList  = mParticles->hidden_list().get<pbd::hidden_particles::id::position>();
+	auto  blasReference = mBlas->device_address();
 
 	if (settings::neighborListSorted) {
 		mNeighbors->set_length(mParticles->length());
@@ -80,12 +80,13 @@ void pbd::neighborhood_rtx::build_acceleration_structure()
 {
 	shader_provider::cmd_bfr()->establish_global_memory_barrier(
 		avk::pipeline_stage::compute_shader,                        /* -> */ avk::pipeline_stage::acceleration_structure_build,
-		avk::memory_access::shader_buffers_and_images_write_access, /* -> */ avk::memory_access::acceleration_structure_any_access
+		avk::memory_access::shader_buffers_and_images_write_access, /* -> */ avk::memory_access::shader_buffers_and_images_read_access
 	);
 
 	if (mStepsUntilNextRebuild-- == 0u) {
 		mTlas->build(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
-		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u; // occasional rebuilds cause huge variations in required time && fluctuations in time steps not handled well => bad behavior (fluid explosions)
+//		mStepsUntilNextRebuild = FIXED_TIME_STEP == 0 ? 0u : 60u; // occasional rebuilds cause huge variations in required time && fluctuations in time steps are not handled well => bad behavior (fluid explosions)
+		mStepsUntilNextRebuild = 0u;                              // TODO is it true that update() requires unchanged geometry instance count?
 	} else {
 		mTlas->update(mGeometryInstances, {}, avk::sync::with_barriers_into_existing_command_buffer(*shader_provider::cmd_bfr(), {}, {}));
 	}

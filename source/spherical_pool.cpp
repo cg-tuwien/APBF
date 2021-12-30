@@ -60,9 +60,11 @@ void spherical_pool::update(float aDeltaTime)
 	if (!mTimeMachine.step_forward()) {
 		mVelocityHandling.apply(mDeltaTime);
 
+		measurements::record_timing_interval_start("Split/Merge Transfer");
 		if (pbd::settings::merge || pbd::settings::split) {
 			mParticleTransfer.apply(mDeltaTime);
 		}
+		measurements::record_timing_interval_end("Split/Merge Transfer");
 
 		if (pbd::settings::baseKernelWidthOnBoundaryDistance) {
 			shader_provider::uint_to_float_with_indexed_lower_bound(mFluid.get<pbd::fluid::id::boundary_distance>().buffer(), mFluid.get<pbd::fluid::id::kernel_width>().write().buffer(), mFluid.get<pbd::fluid::id::particle>().index_buffer(), mFluid.get<pbd::fluid::id::particle>().hidden_list().get<pbd::hidden_particles::id::radius>().buffer(), mFluid.length(), pbd::settings::targetRadiusScaleFactor / static_cast<float>(POS_RESOLUTION), static_cast<float>(KERNEL_SCALE), pbd::settings::kernelWidthAdaptionSpeed);
@@ -73,14 +75,18 @@ void spherical_pool::update(float aDeltaTime)
 		mNeighborhoodFluid.apply();
 		measurements::record_timing_interval_end("Neighborhood");
 
+		measurements::record_timing_interval_start("Propagate Kernel Width");
 		if (!pbd::settings::baseKernelWidthOnBoundaryDistance) {
 			mSpreadKernelWidth.apply();
 		}
+		measurements::record_timing_interval_end("Propagate Kernel Width");
 
+		measurements::record_timing_interval_start("Constraint Solver");
 		for (auto i = 0; i < pbd::settings::solverIterations; i++) {
 			mSphereCollision.apply();
 			mIncompressibility.apply();
 		}
+		measurements::record_timing_interval_end("Constraint Solver");
 
 		//if (pbd::settings::merge || pbd::settings::split || pbd::settings::baseKernelWidthOnTargetRadius || pbd::settings::color == 1 || pbd::settings::color == 2) // TODO reactivate?
 		{

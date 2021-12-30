@@ -29,14 +29,14 @@ void measurements::record_timing_interval_start(const std::string& aName)
 	auto& queryPool = add_timing_interval_and_get_query_pool(aName);
 	auto query = static_cast<uint32_t>(gvk::context().main_window()->current_in_flight_index()) * 2u;
 	shader_provider::cmd_bfr()->handle().resetQueryPool(queryPool, query, 2u);
-	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllGraphics, queryPool, query);
+	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllCommands, queryPool, query);
 }
 
 void measurements::record_timing_interval_end(const std::string& aName)
 {
 	auto& queryPool = add_timing_interval_and_get_query_pool(aName);
 	auto query = static_cast<uint32_t>(gvk::context().main_window()->current_in_flight_index()) * 2u + 1u;
-	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllGraphics, queryPool, query);
+	shader_provider::cmd_bfr()->handle().writeTimestamp(vk::PipelineStageFlagBits::eAllCommands, queryPool, query);
 }
 
 float measurements::get_timing_interval_in_ms(const std::string& aName)
@@ -77,6 +77,13 @@ void measurements::debug_label_start(const std::string& aName, const glm::vec4& 
 void measurements::debug_label_end()
 {
 	shader_provider::cmd_bfr()->handle().endDebugUtilsLabelEXT();
+}
+
+void measurements::add_timing_interval_gui()
+{
+	for (const auto& [key, value] : mIntervals) {
+		ImGui::Text(std::format("%.3f ms/{}", key).c_str(), get_timing_interval_in_ms(key));
+	}
 }
 
 vk::QueryPool& measurements::add_timing_interval_and_get_query_pool(const std::string& aName)

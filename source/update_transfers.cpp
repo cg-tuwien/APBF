@@ -1,4 +1,5 @@
 #include "update_transfers.h"
+#include "measurements.h"
 #include "settings.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
@@ -12,6 +13,8 @@ pbd::update_transfers& pbd::update_transfers::set_data(fluid* aFluid, neighbors*
 
 void pbd::update_transfers::apply()
 {
+	measurements::record_timing_interval_start("Find Splits/Merges");
+
 	auto& targetRadiusList        = mFluid->get<fluid::id::target_radius>();
 	auto& particleList            = mFluid->get<fluid::id::particle>();
 	auto& boundarinessList        = mFluid->get<fluid::id::boundariness>();
@@ -50,8 +53,11 @@ void pbd::update_transfers::apply()
 	// target list also has the correct length assigned, so that particle edits (e.g. deletion) affect the list correctly.
 	mTransfers->hidden_list().set_length(mTransfers->hidden_list().length()); // TODO find cleaner solution
 
+	measurements::record_timing_interval_end("Find Splits/Merges");
+
 	// perform split
 
+	measurements::record_timing_interval_start("Start Split");
 	if (settings::split) {
 		splitList.set_length(shader_provider::remove_impossible_splits(splitList.index_buffer(), transferringList.write().buffer(), mTransfers->hidden_list().length(), particleList.hidden_list().length(), splitList.length(), static_cast<uint32_t>(mTransfers->hidden_list().requested_length()), static_cast<uint32_t>(particleList.hidden_list().requested_length())));
 		timeLeftList.set_length(splitList.length());
@@ -63,4 +69,5 @@ void pbd::update_transfers::apply()
 		transferTargetList += duplicates;
 		transferTimeLeftList += timeLeftList;
 	}
+	measurements::record_timing_interval_end("Start Split");
 }

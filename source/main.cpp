@@ -97,8 +97,9 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 				ImGui::Begin("Info & Settings");
 				ImGui::SetWindowPos(ImVec2(1.0f, 1.0f), ImGuiCond_FirstUseEver);
 				ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
-				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("PBD"));
-				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
+//				ImGui::Text("%.3f ms/Simulation Step", measurements::get_timing_interval_in_ms("Simulation Step"));
+//				ImGui::Text("%.3f ms/Neighborhood", measurements::get_timing_interval_in_ms("Neighborhood"));
+				measurements::add_timing_interval_gui();
 				ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 
 				static std::vector<float> values;
@@ -196,10 +197,11 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		pbd::settings::update_apbf_settings_buffer();
 
 		shader_provider::start_recording();
-		measurements::record_timing_interval_start("PBD");
 
 		if (!mFreezeParticleAnimation || mPerformSingleSimulationStep) {
+			measurements::record_timing_interval_start("Simulation Step");
 			mPool->update(std::min(gvk::time().delta_time(), mMaxDeltaTime));
+			measurements::record_timing_interval_end("Simulation Step");
 		}
 		if (mPerformSingleSimulationStep) {
 			mPerformSingleSimulationStep = false;
@@ -251,8 +253,6 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		if (isUint) {
 			shader_provider::uint_to_float(floatForColor.write().buffer(), floatForColor.write().buffer(), floatForColor.write().length(), 1.0f);
 		}
-
-		measurements::record_timing_interval_end("PBD");
 
 		auto& cmdBfr = shader_provider::cmd_bfr();
 
