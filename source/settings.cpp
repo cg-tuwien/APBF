@@ -14,6 +14,7 @@ bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::neighborListSorted                = false;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
 bool  pbd::settings::renderBoxes                       = true;
+bool  pbd::settings::basicPbf                          = false;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
 float pbd::settings::boundarinessSelfGradLengthFactor  = 8.0f;
@@ -39,6 +40,7 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Combo(  "Kernel", &pbd::settings::heightKernelId  , sHeightKernels  , IM_ARRAYSIZE(sHeightKernels)  );
 	ImGui::Combo("Gradient", &pbd::settings::gradientKernelId, sGradientKernels, IM_ARRAYSIZE(sGradientKernels));
 	ImGui::Checkbox("Match Gradient to Kernel", &pbd::settings::matchGradientToHeightKernel);
+	ImGui::Checkbox("Basic PBF", &pbd::settings::basicPbf);
 	ImGui::Checkbox("Split", &pbd::settings::split);
 	ImGui::Checkbox("Merge", &pbd::settings::merge);
 	ImGui::SliderFloat("Split Duration", &pbd::settings::splitDuration, 0.0f, 4.0f, "%.1f");
