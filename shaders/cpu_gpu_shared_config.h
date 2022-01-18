@@ -17,6 +17,11 @@
 #define MAX_TRANSFERS 10000
 // ----------------------------------------------------
 
+// ---------------------- OTHER -----------------------
+#define PARTICLE_INFO_FOLDER_NAME "particle_data"
+#define SVG_FOLDER_NAME "particle_svg"
+// ----------------------------------------------------
+
 
 
 

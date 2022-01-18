@@ -62,40 +62,41 @@ void pbd::save_particle_info::apply()
 
 	// write files
 
+	std::filesystem::create_directories(PARTICLE_INFO_FOLDER_NAME);
 	{
-		auto toFile = std::ofstream("centerDist.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/centerDist.txt");
 		for (auto& dist : centerDist) toFile << dist << ";";
 	}
 
 	{
-		auto toFile = std::ofstream("radius.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/radius.txt");
 		for (auto& data : radius) toFile << data << ";";
 	}
 
 	{
-		auto toFile = std::ofstream("neighborCount.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/neighborCount.txt");
 		for (auto& data : nbrCount) toFile << data << ";";
 	}
 
 	{
-		auto toFile = std::ofstream("kernelWidth.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/kernelWidth.txt");
 		for (auto& data : kernelWidth) toFile << data << ";";
 	}
 
 	{
-		auto toFile = std::ofstream("targetRadius.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/targetRadius.txt");
 		for (auto& data : targetRadius) toFile << data << ";";
 	}
 
 	{
-		auto toFile = std::ofstream("boundaryDistance.txt");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/boundaryDistance.txt");
 		for (auto& data : boundaryDist) toFile << (data / POS_RESOLUTION) << ";";
 	}
 
 	{
 		std::sort(sortedIdx.begin(), sortedIdx.end(), [&](unsigned int a, unsigned int b) { return centerDist[a] < centerDist[b]; });
 
-		auto toFile = std::ofstream("data.csv");
+		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/data.csv");
 		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius" << std::endl;
 		for (auto i = 0u; i < indices.size(); i++) {
 			auto idx = sortedIdx[i];
@@ -174,20 +175,21 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	svg += std::format("<g id=\"particles\">{}</g>", svgParticles);
 	svg = std::format("<svg viewBox=\"{} {} {} {}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svg=\"http://www.w3.org/2000/svg\">{}</svg>", aViewBoxMin.x, -aViewBoxMax.y, aViewBoxMax.x - aViewBoxMin.x, aViewBoxMax.y - aViewBoxMin.y, svg);
 
+	std::filesystem::create_directories(SVG_FOLDER_NAME);
 	{
-		auto toFile = std::ofstream(std::format("particles_{}.svg", aSvgId));
+		auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/particles_{}.svg", aSvgId));
 		toFile << svg;
 	}
 
 	{
-		auto toFile = std::ofstream("particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+		auto toFile = std::ofstream(SVG_FOLDER_NAME "/particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
 		toFile << indices.size() << std::endl;
 	}
 
 	{
 		auto len = 0u;
 		mNeighbors->length()->read(&len, 0, avk::sync::wait_idle(true));
-		auto toFile = std::ofstream("neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+		auto toFile = std::ofstream(SVG_FOLDER_NAME "/neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
 		toFile << len << std::endl;
 	}
 }
