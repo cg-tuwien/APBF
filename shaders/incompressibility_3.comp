@@ -3,17 +3,32 @@
 #extension GL_GOOGLE_include_directive : enable
 #include "cpu_gpu_shared_config.h"
 
+struct incomp_data {
+	ivec3 mWeightedGradSum;
+	uint  mDensity;
+	uint  mSquaredGradSum;
+	uint  padding0;
+	uint  padding1;
+	uint  padding2;
+};
+
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
 layout(set =  1, binding = 0) buffer InInverseMass       { float       inInverseMass[]; };
 layout(set =  2, binding = 0) buffer InNeighbors         { uvec2         inNeighbors[]; };
 layout(set =  3, binding = 0) buffer InScaledGradient    { vec4     inScaledGradient[]; };
 layout(set =  4, binding = 0) buffer InLambda            { float            inLambda[]; };
-layout(set =  5, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
+layout(set =  5, binding = 0) buffer InIncompData        { incomp_data  inIncompData[]; };
+layout(set =  6, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
+layout(set =  7, binding = 0) buffer OutBoundariness     { float     outBoundariness[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  6, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
+layout(set =  8, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
+// ----------------------------------------------------
+
+// ------------------ apbf settings -------------------
+layout(set =  9, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 void add_to_pos(uint particleId, ivec3 posShift)
@@ -21,6 +36,13 @@ void add_to_pos(uint particleId, ivec3 posShift)
 	atomicAdd(inOutPosition[particleId].x, posShift.x);
 	atomicAdd(inOutPosition[particleId].y, posShift.y);
 	atomicAdd(inOutPosition[particleId].z, posShift.z);
+}
+
+void filter_boundariness(uint id, vec3 neighborDirection)
+{
+	vec3 emptyDirection = -normalize(inIncompData[id].mWeightedGradSum);
+	neighborDirection = normalize(neighborDirection);
+	if (dot(emptyDirection, neighborDirection) > 0.6f) outBoundariness[id] = 0.0f;
 }
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -35,6 +57,8 @@ void main()
 	float invMassN       = inInverseMass[idxN]; // TODO move multiplication with invMassN into incompressibility_1
 	float lambda         = inLambda[n[0]];
 	vec3  scaledGradient = inScaledGradient[id].xyz;
+
+	if (apbfSettings.mBoundarinessCalculationMethod == 2) filter_boundariness(n[0], scaledGradient);
 
 	// if the density is already lower than the rest density, do nothing
 	if (lambda >= 0) return;

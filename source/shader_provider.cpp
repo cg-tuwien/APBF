@@ -1057,7 +1057,7 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility_3(const avk::buffer& aInIndexList, const avk::buffer& aInInverseMass, const avk::buffer& aInNeighbors, const avk::buffer& aInScaledGradient, const avk::buffer& aInLambda, const avk::buffer& aInOutPosition, const avk::buffer& aInNeighborsLength)
+void shader_provider::incompressibility_3(const avk::buffer& aInIndexList, const avk::buffer& aInInverseMass, const avk::buffer& aInNeighbors, const avk::buffer& aInScaledGradient, const avk::buffer& aInLambda, const avk::buffer& aInIncompData, const avk::buffer& aInOutPosition, const avk::buffer& aOutBoundariness, const avk::buffer& aInNeighborsLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility_3.comp",
@@ -1066,8 +1066,11 @@ void shader_provider::incompressibility_3(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(2, 0, aInNeighbors),
 		avk::descriptor_binding(3, 0, aInScaledGradient),
 		avk::descriptor_binding(4, 0, aInLambda),
-		avk::descriptor_binding(5, 0, aInOutPosition),
-		avk::descriptor_binding(6, 0, aInNeighborsLength)
+		avk::descriptor_binding(5, 0, aInIncompData),
+		avk::descriptor_binding(6, 0, aInOutPosition),
+		avk::descriptor_binding(7, 0, aOutBoundariness),
+		avk::descriptor_binding(8, 0, aInNeighborsLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
 	));
 	prepare_dispatch_indirect(aInNeighborsLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1077,8 +1080,11 @@ void shader_provider::incompressibility_3(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(2, 0, aInNeighbors),
 		avk::descriptor_binding(3, 0, aInScaledGradient),
 		avk::descriptor_binding(4, 0, aInLambda),
-		avk::descriptor_binding(5, 0, aInOutPosition),
-		avk::descriptor_binding(6, 0, aInNeighborsLength)
+		avk::descriptor_binding(5, 0, aInIncompData),
+		avk::descriptor_binding(6, 0, aInOutPosition),
+		avk::descriptor_binding(7, 0, aOutBoundariness),
+		avk::descriptor_binding(8, 0, aInNeighborsLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	dispatch_indirect();
 }

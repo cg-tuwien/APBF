@@ -62,7 +62,7 @@ void main()
 	atomicAdd(inOutIncompData[n[0]].mSquaredGradSum,   uint(        dot(scaledGradient, scaledGradient) * INCOMPRESSIBILITY_DATA_RESOLUTION));
 	outScaledGradient[id].xyz = scaledGradient;
 
-	if (!bool(apbfSettings.mComputeBoundarinessUsingGradient)) {
+	if (apbfSettings.mBoundarinessCalculationMethod == 1) {
 		ivec3 weightedDiff = ivec3((posN - pos) / (invMassN * kernelWidth));
 		atomicAdd(inOutCenterOfMassDiff[n[0]].x, weightedDiff.x);
 		atomicAdd(inOutCenterOfMassDiff[n[0]].y, weightedDiff.y);

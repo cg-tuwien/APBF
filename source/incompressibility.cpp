@@ -24,9 +24,9 @@ void pbd::incompressibility::apply()
 	auto  lambdaList           = pbd::gpu_list< 4>().request_length(mFluid->requested_length());
 	auto  centerOfMassList     = pbd::gpu_list<16>().request_length(mFluid->requested_length());
 
-	// optimization: centerOfMassList not needed if gradient is used; avoid write() allocation and just pass some other buffer
+	// optimization: centerOfMassList only needed for one boundariness calc method; avoid write() allocation and just pass some other buffer
 	auto centerOfMassBuffer = &kernelWidthList.buffer();
-	if (!settings::computeBoundarinessUsingGradient) {
+	if (settings::boundarinessCalculationMethod == 1) {
 		centerOfMassBuffer = &centerOfMassList.write().buffer();
 		shader_provider::write_sequence(*centerOfMassBuffer, particleList.length(), 0u, 0u, 4u);
 	}
@@ -39,7 +39,7 @@ void pbd::incompressibility::apply()
 	measurements::debug_label_start("0"); shader_provider::incompressibility_0(particleList.index_buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), incompDataList.write().buffer(), particleList.length());                                                                                                                            measurements::debug_label_end();
 	measurements::debug_label_start("1"); shader_provider::incompressibility_1(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), inverseMassList.buffer(), kernelWidthList.buffer(), mNeighbors->buffer(), incompDataList.write().buffer(), *centerOfMassBuffer, scaledGradientList.write().buffer(), mNeighbors->length()); measurements::debug_label_end();
 	measurements::debug_label_start("2"); shader_provider::incompressibility_2(particleList.index_buffer(), positionList.write().buffer(), radiusList.buffer(), inverseMassList.buffer(), incompDataList.buffer(), *centerOfMassBuffer, boundarinessList.write().buffer(), lambdaList.write().buffer(), particleList.length());                     measurements::debug_label_end();
-	measurements::debug_label_start("3"); shader_provider::incompressibility_3(particleList.index_buffer(), inverseMassList.buffer(), mNeighbors->buffer(), scaledGradientList.buffer(), lambdaList.buffer(), positionList.write().buffer(), mNeighbors->length());                                                                                 measurements::debug_label_end();
+	measurements::debug_label_start("3"); shader_provider::incompressibility_3(particleList.index_buffer(), inverseMassList.buffer(), mNeighbors->buffer(), scaledGradientList.buffer(), lambdaList.buffer(), incompDataList.buffer(), positionList.write().buffer(), boundarinessList.write().buffer(), mNeighbors->length());                     measurements::debug_label_end();
 
 	measurements::debug_label_end();
 }

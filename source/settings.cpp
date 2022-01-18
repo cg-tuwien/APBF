@@ -14,7 +14,6 @@ bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::neighborListSorted                = false;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
 bool  pbd::settings::renderBoxes                       = true;
-bool  pbd::settings::computeBoundarinessUsingGradient  = true;
 bool  pbd::settings::basicPbf                          = false;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
@@ -29,6 +28,7 @@ float pbd::settings::targetRadiusScaleFactor           = DIMENSIONS == 3 ? 0.3f 
 float pbd::settings::particleRenderScale               = 0.7f;
 int   pbd::settings::particleRenderLimit               = 0;
 int   pbd::settings::color                             = 0;
+int   pbd::settings::boundarinessCalculationMethod     = 0;
 int   pbd::settings::solverIterations                  = 3;
 
 const std::vector<const char*> pbd::settings::colorNames = std::vector<const char*>({ "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius", "Velocity" });
@@ -36,10 +36,12 @@ const std::vector<const char*> pbd::settings::colorNames = std::vector<const cha
 void pbd::settings::add_apbf_settings_im_gui_entries()
 {
 	ImGui::SliderInt("Solver Iterations", &pbd::settings::solverIterations, 0, 10);
+	static const char* const sBoundarinessMtd[] = { "Gradient", "Center of Mass", "Gradient + Filter" };
 	static const char* const   sHeightKernels[] = { "Cubic", "Gauss", "Poly6", "Cone", "Quadratic Spike" };
 	static const char* const sGradientKernels[] = { "Cubic", "Gauss", "Spiky", "Cone", "Quadratic Spike" };
-	ImGui::Combo(  "Kernel", &pbd::settings::heightKernelId  , sHeightKernels  , IM_ARRAYSIZE(sHeightKernels)  );
-	ImGui::Combo("Gradient", &pbd::settings::gradientKernelId, sGradientKernels, IM_ARRAYSIZE(sGradientKernels));
+	ImGui::Combo("Boundariness Calculation Method", &pbd::settings::boundarinessCalculationMethod, sBoundarinessMtd, IM_ARRAYSIZE(sBoundarinessMtd));
+	ImGui::Combo("Kernel"                         , &pbd::settings::heightKernelId               , sHeightKernels  , IM_ARRAYSIZE(sHeightKernels  ));
+	ImGui::Combo("Gradient"                       , &pbd::settings::gradientKernelId             , sGradientKernels, IM_ARRAYSIZE(sGradientKernels));
 	ImGui::Checkbox("Match Gradient to Kernel", &pbd::settings::matchGradientToHeightKernel);
 	ImGui::Checkbox("Basic PBF", &pbd::settings::basicPbf);
 	ImGui::Checkbox("Split", &pbd::settings::split);
@@ -52,7 +54,6 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Boundary Distance", &pbd::settings::baseKernelWidthOnBoundaryDistance);
 //	ImGui::Checkbox("Ground Truth for Boundary Distance", &pbd::settings::groundTruthBoundaryDistance);
-	ImGui::Checkbox("Use Gradient for Boundariness", &pbd::settings::computeBoundarinessUsingGradient);
 	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
 	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
@@ -72,6 +73,7 @@ void pbd::settings::update_apbf_settings_buffer()
 	apbf_settings apbfSettings;
 	apbfSettings.mHeightKernelId                    = heightKernelId;
 	apbfSettings.mGradientKernelId                  = gradientKernelId;
+	apbfSettings.mBoundarinessCalculationMethod     = boundarinessCalculationMethod;
 	apbfSettings.mMerge                             = merge;
 	apbfSettings.mSplit                             = split;
 	apbfSettings.mBaseKernelWidthOnTargetRadius     = baseKernelWidthOnTargetRadius;
@@ -80,7 +82,6 @@ void pbd::settings::update_apbf_settings_buffer()
 	apbfSettings.mUpdateBoundariness                = updateBoundariness;
 	apbfSettings.mNeighborListSorted                = neighborListSorted;
 	apbfSettings.mGroundTruthBoundaryDistance       = groundTruthBoundaryDistance;
-	apbfSettings.mComputeBoundarinessUsingGradient  = computeBoundarinessUsingGradient;
 	apbfSettings.mBoundarinessAdaptionSpeed         = boundarinessAdaptionSpeed;
 	apbfSettings.mKernelWidthAdaptionSpeed          = kernelWidthAdaptionSpeed;
 	apbfSettings.mBoundarinessSelfGradLengthFactor  = boundarinessSelfGradLengthFactor;

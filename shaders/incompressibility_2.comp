@@ -42,16 +42,25 @@ float move_towards(float oldValue, float newValue, float maxStep)
 void compute_boundariness(uint id, float invMass, float selfGradLength, float underpressure)
 {
 	float boundariness;
-	if (bool(apbfSettings.mComputeBoundarinessUsingGradient)) {
-		selfGradLength *= apbfSettings.mBoundarinessSelfGradLengthFactor;
-		underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
-		boundariness = selfGradLength + underpressure;
-//		boundariness = pow(min(1, selfGradLength + underpressure), 2);
-	} else {
-		float totalMass = float(inCenterOfMassDiff[id].w) / INCOMPRESSIBILITY_DATA_RESOLUTION + 1.0f / invMass;
-		float centerOfMassDeviation = length(inCenterOfMassDiff[id].xyz) / (POS_RESOLUTION * totalMass);
-		centerOfMassDeviation *= apbfSettings.mBoundarinessSelfGradLengthFactor; // TODO rename setting
-		boundariness = centerOfMassDeviation;
+	switch (apbfSettings.mBoundarinessCalculationMethod)
+	{
+		case 0:
+		case 2:
+		{
+			selfGradLength *= apbfSettings.mBoundarinessSelfGradLengthFactor;
+			underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
+			boundariness = selfGradLength + underpressure;
+//			boundariness = pow(min(1, selfGradLength + underpressure), 2);
+			break;
+		}
+		case 1:
+		{
+			float totalMass = float(inCenterOfMassDiff[id].w) / INCOMPRESSIBILITY_DATA_RESOLUTION + 1.0f / invMass;
+			float centerOfMassDeviation = length(inCenterOfMassDiff[id].xyz) / (POS_RESOLUTION * totalMass);
+			centerOfMassDeviation *= apbfSettings.mBoundarinessSelfGradLengthFactor; // TODO rename setting
+			boundariness = centerOfMassDeviation;
+			break;
+		}
 	}
 	boundariness = boundariness >= 1.0f ? 1.0f : 0.0f;
 	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness; should boundariness only be computed in the last iteration if pbd::settings::solverIterations > 1?
