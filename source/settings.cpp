@@ -14,6 +14,7 @@ bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::neighborListSorted                = false;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
 bool  pbd::settings::renderBoxes                       = true;
+bool  pbd::settings::computeBoundarinessUsingGradient  = true;
 bool  pbd::settings::basicPbf                          = false;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
@@ -51,10 +52,11 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 	ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Boundary Distance", &pbd::settings::baseKernelWidthOnBoundaryDistance);
 //	ImGui::Checkbox("Ground Truth for Boundary Distance", &pbd::settings::groundTruthBoundaryDistance);
-	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", 2.0f);
-	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", 2.0f);
+	ImGui::Checkbox("Use Gradient for Boundariness", &pbd::settings::computeBoundarinessUsingGradient);
+	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
-	ImGui::SliderFloat("Smallest Target Radius", &pbd::settings::smallestTargetRadius, 0.1f, 8.0f, "%.1f", 2.0f);
+	ImGui::SliderFloat("Smallest Target Radius", &pbd::settings::smallestTargetRadius, 0.1f, 8.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
 	ImGui::SliderFloat("Target Radius Offset", &pbd::settings::targetRadiusOffset, 0.0f, 40.0f, "%.0f");
 	ImGui::SliderFloat("Target Radius Scale Factor", &pbd::settings::targetRadiusScaleFactor, 0.0f, 1.0f, "%.2f");
 
@@ -78,6 +80,7 @@ void pbd::settings::update_apbf_settings_buffer()
 	apbfSettings.mUpdateBoundariness                = updateBoundariness;
 	apbfSettings.mNeighborListSorted                = neighborListSorted;
 	apbfSettings.mGroundTruthBoundaryDistance       = groundTruthBoundaryDistance;
+	apbfSettings.mComputeBoundarinessUsingGradient  = computeBoundarinessUsingGradient;
 	apbfSettings.mBoundarinessAdaptionSpeed         = boundarinessAdaptionSpeed;
 	apbfSettings.mKernelWidthAdaptionSpeed          = kernelWidthAdaptionSpeed;
 	apbfSettings.mBoundarinessSelfGradLengthFactor  = boundarinessSelfGradLengthFactor;

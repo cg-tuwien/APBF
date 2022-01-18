@@ -76,6 +76,7 @@ struct apbf_settings
 	int mUpdateBoundariness;
 	int mNeighborListSorted;
 	int mGroundTruthBoundaryDistance;
+	int mComputeBoundarinessUsingGradient;
 	float mBoundarinessAdaptionSpeed;
 	float mKernelWidthAdaptionSpeed;
 	float mBoundarinessSelfGradLengthFactor;

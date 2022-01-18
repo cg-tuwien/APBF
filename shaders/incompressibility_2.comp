@@ -19,17 +19,18 @@ layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndex
 layout(set =  1, binding = 0) buffer InRadius            { float            inRadius[]; };
 layout(set =  2, binding = 0) buffer InInverseMass       { float       inInverseMass[]; };
 layout(set =  3, binding = 0) buffer InIncompData        { incomp_data  inIncompData[]; };
-layout(set =  4, binding = 0) buffer OutBoundariness     { float     outBoundariness[]; };
-layout(set =  5, binding = 0) buffer OutLambda           { float           outLambda[]; };
-layout(set =  6, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
+layout(set =  4, binding = 0) buffer InCenterOfMassDiff  { ivec4  inCenterOfMassDiff[]; };
+layout(set =  5, binding = 0) buffer OutBoundariness     { float     outBoundariness[]; };
+layout(set =  6, binding = 0) buffer OutLambda           { float           outLambda[]; };
+layout(set =  7, binding = 0) buffer InOutPosition       { ivec4       inOutPosition[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  7, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
+layout(set =  8, binding = 0) buffer InIndexListLength { uint inIndexListLength; };
 // ----------------------------------------------------
 
 // ------------------ apbf settings -------------------
-layout(set =  8, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
+layout(set =  9, binding = 0) uniform ApbfSettings { apbf_settings apbfSettings; };
 // ----------------------------------------------------
 
 float move_towards(float oldValue, float newValue, float maxStep)
@@ -38,12 +39,21 @@ float move_towards(float oldValue, float newValue, float maxStep)
 	return oldValue + min(maxStep, max(-maxStep, step));
 }
 
-void compute_boundariness(uint id, float selfGradLength, float underpressure)
+void compute_boundariness(uint id, float invMass, float selfGradLength, float underpressure)
 {
-	selfGradLength *= apbfSettings.mBoundarinessSelfGradLengthFactor;
-	underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
-	float boundariness = selfGradLength + underpressure;
-//	float boundariness = pow(min(1, selfGradLength + underpressure), 2);
+	float boundariness;
+	if (bool(apbfSettings.mComputeBoundarinessUsingGradient)) {
+		selfGradLength *= apbfSettings.mBoundarinessSelfGradLengthFactor;
+		underpressure = max(0, underpressure) * apbfSettings.mBoundarinessUnderpressureFactor;
+		boundariness = selfGradLength + underpressure;
+//		boundariness = pow(min(1, selfGradLength + underpressure), 2);
+	} else {
+		float totalMass = float(inCenterOfMassDiff[id].w) / INCOMPRESSIBILITY_DATA_RESOLUTION + 1.0f / invMass;
+		float centerOfMassDeviation = length(inCenterOfMassDiff[id].xyz) / (POS_RESOLUTION * totalMass);
+		centerOfMassDeviation *= apbfSettings.mBoundarinessSelfGradLengthFactor; // TODO rename setting
+		boundariness = centerOfMassDeviation;
+	}
+	boundariness = boundariness >= 1.0f ? 1.0f : 0.0f;
 	boundariness = move_towards(outBoundariness[id], boundariness, apbfSettings.mBoundarinessAdaptionSpeed); // TODO rename inOutBoundariness; should boundariness only be computed in the last iteration if pbd::settings::solverIterations > 1?
 	outBoundariness[id] = min(1, boundariness);
 }
@@ -69,7 +79,7 @@ void main()
 
 	float underpressure = 1 - density * invRestDensity;
 	if (bool(apbfSettings.mUpdateBoundariness)) {
-		compute_boundariness(id, radius * sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
+		compute_boundariness(id, invMass, radius * sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
 	}
 
 	float lambda = underpressure / (squaredGradSum + EPSILON);

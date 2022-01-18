@@ -137,10 +137,10 @@ void shader_provider::scattered_write(const avk::buffer& aInIndexList, const avk
 	dispatch_indirect();
 }
 
-void shader_provider::write_sequence(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, uint32_t aStartValue, uint32_t aSequenceValueStep)
+void shader_provider::write_sequence(const avk::buffer& aOutBuffer, const avk::buffer& aInBufferLength, uint32_t aStartValue, uint32_t aSequenceValueStep, uint32_t aLengthScaling)
 {
-	struct push_constants { uint32_t mStartValue, mSequenceValueStep; } pushConstants{ aStartValue, aSequenceValueStep };
-	prepare_dispatch_indirect(aInBufferLength);
+	struct push_constants { uint32_t mStartValue, mSequenceValueStep, mLengthScaling; } pushConstants{ aStartValue, aSequenceValueStep, aLengthScaling };
+	prepare_dispatch_indirect(aInBufferLength, 0u, aLengthScaling);
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/gpu_lists/write_sequence.comp",
 		avk::descriptor_binding(0, 0, aOutBuffer),
@@ -991,7 +991,7 @@ void shader_provider::incompressibility_0(const avk::buffer& aInIndexList, const
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aInNeighbors, const avk::buffer& aInOutIncompData, const avk::buffer& aOutScaledGradient, const avk::buffer& aInNeighborsLength)
+void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aInNeighbors, const avk::buffer& aInOutIncompData, const avk::buffer& aInOutCenterOfMassDiff, const avk::buffer& aOutScaledGradient, const avk::buffer& aInNeighborsLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility_1.comp",
@@ -1002,9 +1002,10 @@ void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(4, 0, aInKernelWidth),
 		avk::descriptor_binding(5, 0, aInNeighbors),
 		avk::descriptor_binding(6, 0, aInOutIncompData),
-		avk::descriptor_binding(7, 0, aOutScaledGradient),
-		avk::descriptor_binding(8, 0, aInNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(7, 0, aInOutCenterOfMassDiff),
+		avk::descriptor_binding(8, 0, aOutScaledGradient),
+		avk::descriptor_binding(9, 0, aInNeighborsLength),
+		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
 	));
 	prepare_dispatch_indirect(aInNeighborsLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1016,14 +1017,15 @@ void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(4, 0, aInKernelWidth),
 		avk::descriptor_binding(5, 0, aInNeighbors),
 		avk::descriptor_binding(6, 0, aInOutIncompData),
-		avk::descriptor_binding(7, 0, aOutScaledGradient),
-		avk::descriptor_binding(8, 0, aInNeighborsLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(7, 0, aInOutCenterOfMassDiff),
+		avk::descriptor_binding(8, 0, aOutScaledGradient),
+		avk::descriptor_binding(9, 0, aInNeighborsLength),
+		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInIncompData, const avk::buffer& aOutBoundariness, const avk::buffer& aOutLambda, const avk::buffer& aInIndexListLength)
+void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInIncompData, const avk::buffer& aInCenterOfMassDiff, const avk::buffer& aOutBoundariness, const avk::buffer& aOutLambda, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility_2.comp",
@@ -1031,11 +1033,12 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(1, 0, aInRadius),
 		avk::descriptor_binding(2, 0, aInInverseMass),
 		avk::descriptor_binding(3, 0, aInIncompData),
-		avk::descriptor_binding(4, 0, aOutBoundariness),
-		avk::descriptor_binding(5, 0, aOutLambda),
-		avk::descriptor_binding(6, 0, aInOutPosition),
-		avk::descriptor_binding(7, 0, aInIndexListLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(4, 0, aInCenterOfMassDiff),
+		avk::descriptor_binding(5, 0, aOutBoundariness),
+		avk::descriptor_binding(6, 0, aOutLambda),
+		avk::descriptor_binding(7, 0, aInOutPosition),
+		avk::descriptor_binding(8, 0, aInIndexListLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1044,11 +1047,12 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(1, 0, aInRadius),
 		avk::descriptor_binding(2, 0, aInInverseMass),
 		avk::descriptor_binding(3, 0, aInIncompData),
-		avk::descriptor_binding(4, 0, aOutBoundariness),
-		avk::descriptor_binding(5, 0, aOutLambda),
-		avk::descriptor_binding(6, 0, aInOutPosition),
-		avk::descriptor_binding(7, 0, aInIndexListLength),
-		avk::descriptor_binding(8, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(4, 0, aInCenterOfMassDiff),
+		avk::descriptor_binding(5, 0, aOutBoundariness),
+		avk::descriptor_binding(6, 0, aOutLambda),
+		avk::descriptor_binding(7, 0, aInOutPosition),
+		avk::descriptor_binding(8, 0, aInIndexListLength),
+		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	dispatch_indirect();
 }

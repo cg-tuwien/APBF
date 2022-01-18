@@ -13,6 +13,7 @@ layout(set =  1, binding = 0) buffer InBufferLength { uint inBufferLength; };
 layout(push_constant) uniform PushConstants {
 	uint mStartValue;
 	uint mSequenceValueStep;
+	uint mLengthScaling;
 };
 // ----------------------------------------------------
 
@@ -21,7 +22,7 @@ void main()
 {
 	uint id = gl_GlobalInvocationID.x;
 
-	if (id >= inBufferLength) return;
+	if (id >= inBufferLength * mLengthScaling) return;
 
 	outBuffer[id] = mStartValue + id * mSequenceValueStep;
 }

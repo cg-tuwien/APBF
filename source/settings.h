@@ -26,6 +26,7 @@ namespace pbd
 		static bool  neighborListSorted;                  // if enabled, the list of neighbor pairs is sorted by the first of the two ids; for reduced scatter in memory access
 		static bool  groundTruthBoundaryDistance;         // hardcoded boundary distance; outdated; TODO delete?
 		static bool  renderBoxes;                         // if the collision boxes (pool walls) should be rendered
+		static bool  computeBoundarinessUsingGradient;    // re-use the gradient computed for the incompressibility constraint for boundary classification (if false, use center of mass instead)
 		static bool  basicPbf;                            // if true, only run the basic PBF algorithm without split/merge etc. (will behave badly if particles already have varying sizes)
 		static float boundarinessAdaptionSpeed;           // maximum step width for updating boundariness (slow down to filter short occurrences of false positives)
 		static float kernelWidthAdaptionSpeed;            // maximum percent change for updating kernel width (fast kernel width changes can cause large changes in the density estimate and lead to erratic particle movement)
