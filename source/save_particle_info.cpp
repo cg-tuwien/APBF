@@ -24,24 +24,28 @@ void pbd::save_particle_info::apply()
 	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
 	auto&     positionList = particles.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto&       radiusList = particles.hidden_list().get<pbd::hidden_particles::id::radius>();
+	auto&  inverseMassList = particles.hidden_list().get<pbd::hidden_particles::id::inverse_mass>();
 
 	auto      indices =  particles.index_read();
 	auto    positions =     positionList.read<glm::ivec4>();
 	auto        radii =       radiusList.read<     float>();
 	auto  kernelWidth =  kernelWidthList.read<     float>();
 	auto targetRadius = targetRadiusList.read<     float>();
+	auto    invMasses =  inverseMassList.read<     float>();
 	auto boundaryDist = boundaryDistList.read<glm:: uint>();
 	auto     nbrPairs =      mNeighbors->read<glm::uvec2>();
 	auto     nbrCount = std::vector<unsigned int>();
 	auto    sortedIdx = std::vector<unsigned int>();
 	auto       radius = std::vector<float>();
+	auto  inverseMass = std::vector<float>();
 	auto   centerDist = std::vector<float>();
 	auto    centerPos = glm::vec3(0, 10, -60);
 
-	nbrCount  .resize(indices.size());
-	sortedIdx .resize(indices.size());
-	radius    .resize(indices.size());
-	centerDist.resize(indices.size());
+	nbrCount   .resize(indices.size());
+	sortedIdx  .resize(indices.size());
+	radius     .resize(indices.size());
+	inverseMass.resize(indices.size());
+	centerDist .resize(indices.size());
 
 	for (auto& count : nbrCount) {
 		count = 0;
@@ -55,9 +59,10 @@ void pbd::save_particle_info::apply()
 		auto id = indices[i];
 		auto pos = glm::vec3(positions[id]) / static_cast<float>(POS_RESOLUTION);
 
-		centerDist[i] = glm::distance(pos, centerPos);
-		radius    [i] = radii[id];
-		sortedIdx [i] = i;
+		centerDist [i] = glm::distance(pos, centerPos);
+		radius     [i] = radii[id];
+		inverseMass[i] = invMasses[id];
+		sortedIdx  [i] = i;
 	}
 
 	// write files
@@ -97,7 +102,7 @@ void pbd::save_particle_info::apply()
 		std::sort(sortedIdx.begin(), sortedIdx.end(), [&](unsigned int a, unsigned int b) { return centerDist[a] < centerDist[b]; });
 
 		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/data.csv");
-		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius" << std::endl;
+		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius,inverse mass" << std::endl;
 		for (auto i = 0u; i < indices.size(); i++) {
 			auto idx = sortedIdx[i];
 			toFile << centerDist  [idx] << ","
@@ -105,7 +110,8 @@ void pbd::save_particle_info::apply()
 			       << kernelWidth [idx] << ","
 			       << nbrCount    [idx] << ","
 			       << radius      [idx] << ","
-			       << targetRadius[idx] << std::endl;
+			       << targetRadius[idx] << ","
+			       <<  inverseMass[idx] << std::endl;
 		}
 	}
 }
