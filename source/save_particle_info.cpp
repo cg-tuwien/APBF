@@ -39,6 +39,8 @@ void pbd::save_particle_info::apply()
 	auto       radius = std::vector<float>();
 	auto  inverseMass = std::vector<float>();
 	auto   centerDist = std::vector<float>();
+	auto      bdrDist = std::vector<float>();
+	auto     position = std::vector<glm::vec3>();
 	auto    centerPos = glm::vec3(0, 10, -60);
 
 	nbrCount   .resize(indices.size());
@@ -46,6 +48,8 @@ void pbd::save_particle_info::apply()
 	radius     .resize(indices.size());
 	inverseMass.resize(indices.size());
 	centerDist .resize(indices.size());
+	bdrDist    .resize(indices.size());
+	position   .resize(indices.size());
 
 	for (auto& count : nbrCount) {
 		count = 0;
@@ -59,9 +63,11 @@ void pbd::save_particle_info::apply()
 		auto id = indices[i];
 		auto pos = glm::vec3(positions[id]) / static_cast<float>(POS_RESOLUTION);
 
+		bdrDist    [i] = boundaryDist[i] / static_cast<float>(POS_RESOLUTION);
 		centerDist [i] = glm::distance(pos, centerPos);
 		radius     [i] = radii[id];
 		inverseMass[i] = invMasses[id];
+		position   [i] = pos;
 		sortedIdx  [i] = i;
 	}
 
@@ -95,23 +101,26 @@ void pbd::save_particle_info::apply()
 
 	{
 		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/boundaryDistance.txt");
-		for (auto& data : boundaryDist) toFile << (data / POS_RESOLUTION) << ";";
+		for (auto& data : bdrDist) toFile << data << ";";
 	}
 
 	{
 		std::sort(sortedIdx.begin(), sortedIdx.end(), [&](unsigned int a, unsigned int b) { return centerDist[a] < centerDist[b]; });
 
 		auto toFile = std::ofstream(PARTICLE_INFO_FOLDER_NAME "/data.csv");
-		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius,inverse mass" << std::endl;
+		toFile << "center distance,boundary distance,kernel width,neighbor count,radius,target radius,inverse mass,x,y,z" << std::endl;
 		for (auto i = 0u; i < indices.size(); i++) {
 			auto idx = sortedIdx[i];
 			toFile << centerDist  [idx] << ","
-			       << (boundaryDist[idx] / POS_RESOLUTION) << ","
+			       << bdrDist     [idx] << ","
 			       << kernelWidth [idx] << ","
 			       << nbrCount    [idx] << ","
 			       << radius      [idx] << ","
 			       << targetRadius[idx] << ","
-			       <<  inverseMass[idx] << std::endl;
+			       << inverseMass [idx] << ","
+			       << position    [idx].x << ","
+			       << position    [idx].y << ","
+			       << position    [idx].z << std::endl;
 		}
 	}
 }
