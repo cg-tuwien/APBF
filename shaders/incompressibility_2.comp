@@ -93,6 +93,7 @@ void main()
 	}
 
 	float lambda = underpressure / (invRestDensity * invRestDensity * (squaredGradSum + EPSILON));
+	lambda /= pow(2.0f * apbfSettings.mSmallestTargetRadius, DIMENSIONS) / invRestDensity * invMass;
 	outLambda[id] = lambda;
 
 
