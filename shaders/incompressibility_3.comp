@@ -14,7 +14,7 @@ struct incomp_data {
 
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList         { uint          inIndexList[]; };
-layout(set =  1, binding = 0) buffer InInverseMass       { float       inInverseMass[]; };
+layout(set =  1, binding = 0) buffer InInverseMass       { float       inInverseMass[]; }; // TODO remove
 layout(set =  2, binding = 0) buffer InNeighbors         { uvec2         inNeighbors[]; };
 layout(set =  3, binding = 0) buffer InScaledGradient    { vec4     inScaledGradient[]; };
 layout(set =  4, binding = 0) buffer InLambda            { float            inLambda[]; };
@@ -54,7 +54,6 @@ void main()
 	uvec2 n = inNeighbors[id];
 
 	uint  idxN           = inIndexList[n[1]];
-	float invMassN       = inInverseMass[idxN]; // TODO move multiplication with invMassN into incompressibility_1
 	float lambda         = inLambda[n[0]];
 	vec3  scaledGradient = inScaledGradient[id].xyz;
 
@@ -64,5 +63,5 @@ void main()
 	if (lambda >= 0) return;
 
 	// now we can shift the neighbor n[1] so that the density is decreased towards the rest density at the n[0] particle's position:
-	add_to_pos(idxN, ivec3(scaledGradient * (lambda * sqrt(invMassN) * POS_RESOLUTION)));
+	add_to_pos(idxN, ivec3(scaledGradient * (lambda * POS_RESOLUTION)));
 }

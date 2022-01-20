@@ -42,25 +42,22 @@ void main()
 
 	uvec2 n = inNeighbors[id];
 
-	uint  idx              = inIndexList[n[0]];
-	uint  idxN             = inIndexList[n[1]];
-	ivec3 pos              = inPosition[idx ].xyz;
-	ivec3 posN             = inPosition[idxN].xyz;
-	float radius           = inRadius[idx];
-	float invMass          = inInverseMass[idx ];
+	uint  idx              = inIndexList  [n[0]];
+	uint  idxN             = inIndexList  [n[1]];
+	ivec3 pos              = inPosition   [idx ].xyz;
+	ivec3 posN             = inPosition   [idxN].xyz;
 	float invMassN         = inInverseMass[idxN];
 	float kernelWidth      = inKernelWidth[n[0]];
-	float invRestDensity   = pow(2 * radius, DIMENSIONS) * invMass;
 	vec3  diff             = vec3(posN - pos) / POS_RESOLUTION;
-	vec3  weightedGradient = kernel_gradient(diff, kernelWidth) * invRestDensity / invMassN;
-	vec3  scaledGradient   = weightedGradient * sqrt(invMassN); // scale gradients by inverse mass so that moving lighter particles gets preferred
+	vec3  gradient         = kernel_gradient(diff, kernelWidth);
+	vec3  weightedGradient = gradient / invMassN;
 
 	atomicAdd(inOutIncompData[n[0]].mDensity,          uint(kernel_height(diff, kernelWidth) / invMassN * INCOMPRESSIBILITY_DATA_RESOLUTION));
 	atomicAdd(inOutIncompData[n[0]].mWeightedGradSum.x, int(                         weightedGradient.x * INCOMPRESSIBILITY_DATA_RESOLUTION));
 	atomicAdd(inOutIncompData[n[0]].mWeightedGradSum.y, int(                         weightedGradient.y * INCOMPRESSIBILITY_DATA_RESOLUTION));
 	atomicAdd(inOutIncompData[n[0]].mWeightedGradSum.z, int(                         weightedGradient.z * INCOMPRESSIBILITY_DATA_RESOLUTION));
-	atomicAdd(inOutIncompData[n[0]].mSquaredGradSum,   uint(        dot(scaledGradient, scaledGradient) * INCOMPRESSIBILITY_DATA_RESOLUTION));
-	outScaledGradient[id].xyz = scaledGradient;
+	atomicAdd(inOutIncompData[n[0]].mSquaredGradSum,   uint(         dot(gradient, gradient) / invMassN * INCOMPRESSIBILITY_DATA_RESOLUTION));
+	outScaledGradient[id].xyz = gradient;
 
 	if (apbfSettings.mBoundarinessCalculationMethod == 1) {
 		ivec3 weightedDiff = ivec3((posN - pos) / (invMassN * kernelWidth));

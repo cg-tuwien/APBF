@@ -82,16 +82,17 @@ void main()
 	float squaredGradSum  = float(inIncompData[id].mSquaredGradSum ) / INCOMPRESSIBILITY_DATA_RESOLUTION;
 	float sqrtInvMass     = sqrt(invMass);
 
-	vec3 selfGrad = weightedGradSum * (-sqrtInvMass);
-	float selfGradLengthSquared = dot(selfGrad, selfGrad);
-	squaredGradSum += selfGradLengthSquared;
+	vec3 selfGrad = -weightedGradSum * invRestDensity;
+	float weightedGradSumSquared = dot(weightedGradSum, weightedGradSum);
+	float selfGradLength = sqrt(weightedGradSumSquared) * invRestDensity;
+	squaredGradSum += weightedGradSumSquared * invMass;
 
 	float underpressure = 1 - density * invRestDensity;
 	if (bool(apbfSettings.mUpdateBoundariness)) {
-		compute_boundariness(id, invMass, radius * sqrt(selfGradLengthSquared) / sqrtInvMass, underpressure);
+		compute_boundariness(id, invMass, selfGradLength, underpressure);
 	}
 
-	float lambda = underpressure / (squaredGradSum + EPSILON);
+	float lambda = underpressure / (invRestDensity * invRestDensity * (squaredGradSum + EPSILON));
 	outLambda[id] = lambda;
 
 
@@ -102,5 +103,5 @@ void main()
 	if (lambda >= 0) return;
 
 	// now we can shift the particle so that the density is decreased towards the rest density:
-	inOutPosition[idx].xyz += ivec3(selfGrad * (lambda * sqrtInvMass * POS_RESOLUTION));
+	inOutPosition[idx].xyz += ivec3(selfGrad * (lambda * invMass * POS_RESOLUTION));
 }
