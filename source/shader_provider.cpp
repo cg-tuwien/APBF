@@ -1025,20 +1025,21 @@ void shader_provider::incompressibility_1(const avk::buffer& aInIndexList, const
 	dispatch_indirect();
 }
 
-void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInIncompData, const avk::buffer& aInCenterOfMassDiff, const avk::buffer& aOutBoundariness, const avk::buffer& aOutLambda, const avk::buffer& aInIndexListLength)
+void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const avk::buffer& aInOutPosition, const avk::buffer& aInRadius, const avk::buffer& aInInverseMass, const avk::buffer& aInKernelWidth, const avk::buffer& aInIncompData, const avk::buffer& aInCenterOfMassDiff, const avk::buffer& aOutBoundariness, const avk::buffer& aOutLambda, const avk::buffer& aInIndexListLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/incompressibility_2.comp",
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInRadius),
 		avk::descriptor_binding(2, 0, aInInverseMass),
-		avk::descriptor_binding(3, 0, aInIncompData),
-		avk::descriptor_binding(4, 0, aInCenterOfMassDiff),
-		avk::descriptor_binding(5, 0, aOutBoundariness),
-		avk::descriptor_binding(6, 0, aOutLambda),
-		avk::descriptor_binding(7, 0, aInOutPosition),
-		avk::descriptor_binding(8, 0, aInIndexListLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(3, 0, aInKernelWidth),
+		avk::descriptor_binding(4, 0, aInIncompData),
+		avk::descriptor_binding(5, 0, aInCenterOfMassDiff),
+		avk::descriptor_binding(6, 0, aOutBoundariness),
+		avk::descriptor_binding(7, 0, aOutLambda),
+		avk::descriptor_binding(8, 0, aInOutPosition),
+		avk::descriptor_binding(9, 0, aInIndexListLength),
+		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1046,13 +1047,14 @@ void shader_provider::incompressibility_2(const avk::buffer& aInIndexList, const
 		avk::descriptor_binding(0, 0, aInIndexList),
 		avk::descriptor_binding(1, 0, aInRadius),
 		avk::descriptor_binding(2, 0, aInInverseMass),
-		avk::descriptor_binding(3, 0, aInIncompData),
-		avk::descriptor_binding(4, 0, aInCenterOfMassDiff),
-		avk::descriptor_binding(5, 0, aOutBoundariness),
-		avk::descriptor_binding(6, 0, aOutLambda),
-		avk::descriptor_binding(7, 0, aInOutPosition),
-		avk::descriptor_binding(8, 0, aInIndexListLength),
-		avk::descriptor_binding(9, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(3, 0, aInKernelWidth),
+		avk::descriptor_binding(4, 0, aInIncompData),
+		avk::descriptor_binding(5, 0, aInCenterOfMassDiff),
+		avk::descriptor_binding(6, 0, aOutBoundariness),
+		avk::descriptor_binding(7, 0, aOutLambda),
+		avk::descriptor_binding(8, 0, aInOutPosition),
+		avk::descriptor_binding(9, 0, aInIndexListLength),
+		avk::descriptor_binding(10, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	dispatch_indirect();
 }
