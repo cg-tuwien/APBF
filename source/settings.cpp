@@ -28,7 +28,7 @@ float pbd::settings::targetRadiusScaleFactor           = DIMENSIONS == 3 ? 0.3f 
 float pbd::settings::particleRenderScale               = 0.7f;
 int   pbd::settings::particleRenderLimit               = 0;
 int   pbd::settings::color                             = 0;
-int   pbd::settings::boundarinessCalculationMethod     = 0;
+int   pbd::settings::boundarinessCalculationMethod     = 2;
 int   pbd::settings::solverIterations                  = 3;
 
 const std::vector<const char*> pbd::settings::colorNames = std::vector<const char*>({ "Boundariness", "Boundary Distance", "Transferring", "Kernel Width", "Target Radius", "Radius", "Velocity" });
