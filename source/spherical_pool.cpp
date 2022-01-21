@@ -36,7 +36,7 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aCenter - aPoolRadius, aCenter + aPoolRadius, 4u);
 #endif
-	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
+	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable(TIME_MACHINE_ENABLED_AT_START);
 	shader_provider::end_recording();
 	pbd::settings::smallestTargetRadius = aParticleRadius;
 	mMaxExpectedBoundaryDistance = aPoolRadius;

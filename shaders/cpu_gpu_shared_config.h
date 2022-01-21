@@ -20,6 +20,8 @@
 // ---------------------- OTHER -----------------------
 #define PARTICLE_INFO_FOLDER_NAME "particle_data"
 #define SVG_FOLDER_NAME "particle_svg"
+
+#define TIME_MACHINE_ENABLED_AT_START false
 // ----------------------------------------------------
 
 

@@ -44,7 +44,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 #if NEIGHBORHOOD_TYPE == 1
 	mNeighborhoodFluid.set_position_range(aMin, aMax, 4u);
 #endif
-	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable();
+	mTimeMachine.set_max_keyframes(4).set_keyframe_interval(120).enable(TIME_MACHINE_ENABLED_AT_START);
 	shader_provider::end_recording();
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;

@@ -22,6 +22,7 @@ namespace pbd {
 		auto history_index() { return std::min(mCurrentStep, mCurrentStep - oldest_history_keyframe_step()); }
 		auto sparse_history_index() { return history_index() / mKeyframeInterval; }
 		auto in_past() { return mCurrentStep != mPresentStep; }
+		auto& enable(bool aEnable) { return aEnable ? enable() : disable(); }
 		auto& enable() { mEnabled = true; return *this; }
 		auto& disable() { mEnabled = false; mCurrentStep = 0u; mPresentStep = 0u; return *this; }
 		auto& toggle_enabled() { mEnabled = !mEnabled; mCurrentStep = 0u; mPresentStep = 0u; return *this; }
@@ -59,6 +60,7 @@ namespace pbd {
 		auto history_index() { return mRest.history_index(); }
 		auto sparse_history_index() { return mRest.sparse_history_index(); }
 		auto in_past() { return mRest.in_past(); }
+		auto& enable(bool aEnable) { return aEnable ? enable() : disable(); }
 		auto& enable() { if (!mRest.enabled()) mData.mDataHistory.push_back(mData.mDataPointer); mRest.enable(); return *this; }
 		auto& disable() { mData.mDataHistory.clear(); mRest.disable(); return *this; }
 		auto& toggle_enabled() { enabled() ? disable() : enable(); return *this; }
