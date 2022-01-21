@@ -6,7 +6,7 @@
 // ---------------------- lists -----------------------
 layout(set =  0, binding = 0) buffer InIndexList    { uint     inIndexList[]; };
 layout(set =  1, binding = 0) buffer InOutPosition  { ivec4  inOutPosition[]; };
-layout(set =  2, binding = 0) buffer OutBackupPos   { ivec4   outBackupPos[]; };
+layout(set =  2, binding = 0) buffer OutBackupPos   { ivec4   outBackupPos[]; }; // TODO remove
 layout(set =  3, binding = 0) buffer OutInverseMass { float outInverseMass[]; };
 layout(set =  4, binding = 0) buffer InOutRadius    { float    inOutRadius[]; };
 // ----------------------------------------------------
@@ -26,7 +26,7 @@ void main()
 	ivec3 position          = inOutPosition[idx].xyz;
 	position               += ivec3(radius * POS_RESOLUTION * 0.1, 0, 0);
 	inOutPosition[idx].xyz  = position;
-	outBackupPos[idx].xyz   = position;
+//	outBackupPos[idx].xyz   = position;
 	inOutRadius[idx]        = 0;
 	outInverseMass[idx]     = 1 / 0;
 }
