@@ -82,13 +82,11 @@ struct apbf_settings
 	int mUpdateTargetRadius;
 	int mUpdateBoundariness;
 	int mNeighborListSorted;
-	int mGroundTruthBoundaryDistance;
 	int mBoundarinessCalculationMethod;
 	float mBoundarinessAdaptionSpeed;
 	float mKernelWidthAdaptionSpeed;
 	float mBoundarinessSelfGradLengthFactor;
 	float mBoundarinessUnderpressureFactor;
-	float mNeighborBoundarinessThreshold;
 	float mMergeDuration;
 	float mSmallestTargetRadius;
 	float mTargetRadiusOffset;

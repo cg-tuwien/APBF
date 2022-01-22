@@ -32,7 +32,6 @@ void pbd::update_transfers::apply()
 	auto  timeLeftList            = gpu_list<4>().request_length(splitList.requested_length());
 	auto  minNeighborDistList     = gpu_list<4>().request_length(mNeighbors->requested_length());
 	auto  nearestNeighborList     = gpu_list<4>().request_length(mFluid->requested_length());
-	auto  uintBoundarinessList    = gpu_list<8>().request_length(mFluid->requested_length());
 
 	// find_split_and_merge_1 uses atomicMin() to write into boundaryDistanceList; initialize it with max value
 	shader_provider::write_sequence(boundaryDistanceList.write().buffer(), boundaryDistanceList.length(), std::numeric_limits<uint32_t>::max(), 0u);
@@ -43,10 +42,9 @@ void pbd::update_transfers::apply()
 	// find_split_and_merge_3: compute target radius, boundary distance "decay", merge, split (preparation)
 
 	shader_provider::write_sequence(minNeighborDistList.write().buffer(), mNeighbors->length(), std::numeric_limits<uint32_t>::max(), 0u);
-	shader_provider::find_split_and_merge_0(boundarinessList.buffer(), uintBoundarinessList.write().buffer(), mFluid->length());
 	shader_provider::find_split_and_merge_1(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), oldBoundaryDistanceList.buffer(), boundaryDistanceList.write().buffer(), minNeighborDistList.write().buffer(), mNeighbors->length());
-	shader_provider::find_split_and_merge_2(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), minNeighborDistList.buffer(), nearestNeighborList.write().buffer(), boundarinessList.buffer(), uintBoundarinessList.write().buffer(), mNeighbors->length());
-	shader_provider::find_split_and_merge_3(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), uintBoundarinessList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), nearestNeighborList.buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), static_cast<uint32_t>(mTransfers->hidden_list().requested_length()), static_cast<uint32_t>(splitList.requested_length()));
+	shader_provider::find_split_and_merge_2(mNeighbors->buffer(), particleList.index_buffer(), positionList.buffer(), minNeighborDistList.buffer(), nearestNeighborList.write().buffer(), boundarinessList.buffer(), mNeighbors->length());
+	shader_provider::find_split_and_merge_3(particleList.index_buffer(), positionList.buffer(), radiusList.buffer(), boundarinessList.buffer(), boundaryDistanceList.write().buffer(), targetRadiusList.write().buffer(), nearestNeighborList.buffer(), transferSourceList.write().index_buffer(), transferTargetList.write().index_buffer(), transferTimeLeftList.write().buffer(), transferringList.write().buffer(), splitList.write().index_buffer(), mFluid->length(), mTransfers->hidden_list().write().length(), splitList.write().length(), static_cast<uint32_t>(mTransfers->hidden_list().requested_length()), static_cast<uint32_t>(splitList.requested_length()));
 
 	// the new length of the transfers list was written into mTransfers->hidden_list().length(), which is the length buffer
 	// of the first list in the uninterleaved_list bundle (the transfer source). It's important that at least the transfer

@@ -10,11 +10,10 @@ layout(set =  2, binding = 0) buffer InPosition            { ivec4            in
 layout(set =  3, binding = 0) buffer InMinNeighborDist     { uint      inMinNeighborDist[]; };
 layout(set =  4, binding = 0) buffer OutNearestNeighbor    { uint     outNearestNeighbor[]; };
 layout(set =  5, binding = 0) buffer InBoundariness        { float        inBoundariness[]; };
-layout(set =  6, binding = 0) buffer InOutUintBoundariness { uvec2 inOutUintBoundariness[]; };
 // ----------------------------------------------------
 
 // ------------------- list lengths -------------------
-layout(set =  7, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
+layout(set =  6, binding = 0) buffer InNeighborsLength { uint inNeighborsLength; };
 // ----------------------------------------------------
 
 layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
@@ -36,8 +35,4 @@ void main()
 	if (dist == minNeighborDist) {
 		outNearestNeighbor[n[0]] = n[1];
 	}
-
-	// stuff for boundariness filtering
-	atomicAdd(inOutUintBoundariness[n[0]].x, uint(BOUNDARINESS_RESOLUTION * inBoundariness[n[1]]));
-	atomicAdd(inOutUintBoundariness[n[0]].y, uint(BOUNDARINESS_RESOLUTION));
 }

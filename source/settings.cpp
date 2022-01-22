@@ -12,7 +12,6 @@ bool  pbd::settings::baseKernelWidthOnBoundaryDistance = true;
 bool  pbd::settings::updateTargetRadius                = true;
 bool  pbd::settings::updateBoundariness                = true;
 bool  pbd::settings::neighborListSorted                = false;
-bool  pbd::settings::groundTruthBoundaryDistance       = false;
 bool  pbd::settings::renderBoxes                       = true;
 bool  pbd::settings::basicPbf                          = false;
 bool  pbd::settings::useHighQualityModel               = false;
@@ -20,7 +19,6 @@ float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
 float pbd::settings::boundarinessSelfGradLengthFactor  = 2.0f;
 float pbd::settings::boundarinessUnderpressureFactor   = 4.0f;
-float pbd::settings::neighborBoundarinessThreshold     = 0.0f;
 float pbd::settings::mergeDuration                     = 2.0f;
 float pbd::settings::splitDuration                     = 0.0f;
 float pbd::settings::smallestTargetRadius              = 1.0f;
@@ -54,7 +52,6 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 //	ImGui::Checkbox("Update Target Radius", &pbd::settings::updateTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Target Radius", &pbd::settings::baseKernelWidthOnTargetRadius);
 	ImGui::Checkbox("Base Kernel Width on Boundary Distance", &pbd::settings::baseKernelWidthOnBoundaryDistance);
-//	ImGui::Checkbox("Ground Truth for Boundary Distance", &pbd::settings::groundTruthBoundaryDistance);
 	ImGui::SliderFloat("Boundariness Adaption Speed", &pbd::settings::boundarinessAdaptionSpeed, 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
 	ImGui::SliderFloat("Kernel Width Adaption Speed", &pbd::settings::kernelWidthAdaptionSpeed , 0.0f, 1.0f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
@@ -64,7 +61,6 @@ void pbd::settings::add_apbf_settings_im_gui_entries()
 
 	ImGui::SliderFloat("Self Gradient Length Factor", &pbd::settings::boundarinessSelfGradLengthFactor, 0.0f, 16.0f, "%.1f");
 	ImGui::SliderFloat("Underpressure Factor", &pbd::settings::boundarinessUnderpressureFactor, 0.0f, 16.0f, "%.1f");
-//	ImGui::SliderFloat("Neighbor Boundariness Threshold", &pbd::settings::neighborBoundarinessThreshold, 0.0f, 1.0f, "%.2f");
 }
 
 void pbd::settings::update_apbf_settings_buffer()
@@ -82,12 +78,10 @@ void pbd::settings::update_apbf_settings_buffer()
 	apbfSettings.mUpdateTargetRadius                = updateTargetRadius;
 	apbfSettings.mUpdateBoundariness                = updateBoundariness;
 	apbfSettings.mNeighborListSorted                = neighborListSorted;
-	apbfSettings.mGroundTruthBoundaryDistance       = groundTruthBoundaryDistance;
 	apbfSettings.mBoundarinessAdaptionSpeed         = boundarinessAdaptionSpeed;
 	apbfSettings.mKernelWidthAdaptionSpeed          = kernelWidthAdaptionSpeed;
 	apbfSettings.mBoundarinessSelfGradLengthFactor  = boundarinessSelfGradLengthFactor;
 	apbfSettings.mBoundarinessUnderpressureFactor   = boundarinessUnderpressureFactor;
-	apbfSettings.mNeighborBoundarinessThreshold     = neighborBoundarinessThreshold;
 	apbfSettings.mMergeDuration                     = mergeDuration;
 	apbfSettings.mSmallestTargetRadius              = smallestTargetRadius;
 	apbfSettings.mTargetRadiusOffset                = targetRadiusOffset;

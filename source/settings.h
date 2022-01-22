@@ -24,7 +24,6 @@ namespace pbd
 		static bool  updateTargetRadius;                  // allows to disable the update of the target radius for debugging; TODO delete?
 		static bool  updateBoundariness;                  // allows to disable the update of the boundariness  for debugging; TODO delete?
 		static bool  neighborListSorted;                  // if enabled, the list of neighbor pairs is sorted by the first of the two ids; for reduced scatter in memory access
-		static bool  groundTruthBoundaryDistance;         // hardcoded boundary distance; outdated; TODO delete?
 		static bool  renderBoxes;                         // if the collision boxes (pool walls) should be rendered
 		static bool  basicPbf;                            // if true, only run the basic PBF algorithm without split/merge etc. (will behave badly if particles already have varying sizes)
 		static bool  useHighQualityModel;                 // if true, particles are rendered with the sphere.obj model, otherwise the icosahedron.obj model is used
@@ -32,7 +31,6 @@ namespace pbd
 		static float kernelWidthAdaptionSpeed;            // maximum percent change for updating kernel width (fast kernel width changes can cause large changes in the density estimate and lead to erratic particle movement)
 		static float boundarinessSelfGradLengthFactor;    // for boundariness classification: influence of the gradient length for the particle itself
 		static float boundarinessUnderpressureFactor;     // for boundariness classification: influence of underpressure
-		static float neighborBoundarinessThreshold;       // for filtering false positives in boundariness classification: only keep if enough neighbors are also classified as boundary particle; did not really improve the results; TODO delete?
 		static float mergeDuration;                       // how long a gradual merge should take (0 for instant merge)
 		static float splitDuration;                       // how long a gradual split should take (0 for instant split)
 		static float smallestTargetRadius;                // smallest allowed particle radius

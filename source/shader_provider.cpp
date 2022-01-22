@@ -1091,24 +1091,6 @@ void shader_provider::incompressibility_3(const avk::buffer& aInIndexList, const
 	dispatch_indirect();
 }
 
-void shader_provider::find_split_and_merge_0(const avk::buffer& aInBoundariness, const avk::buffer& aOutUintBoundariness, const avk::buffer& aInBoundarinessLength)
-{
-	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
-		"shaders/particle manipulation/find_split_and_merge_0.comp",
-		avk::descriptor_binding(0, 0, aInBoundariness),
-		avk::descriptor_binding(1, 0, aOutUintBoundariness),
-		avk::descriptor_binding(2, 0, aInBoundarinessLength)
-	));
-	prepare_dispatch_indirect(aInBoundarinessLength);
-	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
-	cmd_bfr()->bind_descriptors(pipeline->layout(), descriptor_cache().get_or_create_descriptor_sets({
-		avk::descriptor_binding(0, 0, aInBoundariness),
-		avk::descriptor_binding(1, 0, aOutUintBoundariness),
-		avk::descriptor_binding(2, 0, aInBoundarinessLength)
-	}));
-	dispatch_indirect();
-}
-
 void shader_provider::find_split_and_merge_1(const avk::buffer& aInNeighbors, const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInOldBoundaryDist, const avk::buffer& aInOutBoundaryDist, const avk::buffer& aInOutMinNeighborSqDist, const avk::buffer& aInNeighborsLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
@@ -1135,7 +1117,7 @@ void shader_provider::find_split_and_merge_1(const avk::buffer& aInNeighbors, co
 	dispatch_indirect();
 }
 
-void shader_provider::find_split_and_merge_2(const avk::buffer& aInNeighbors, const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInMinNeighborSqDist, const avk::buffer& aOutNearestNeighbor, const avk::buffer& aInBoundariness, const avk::buffer& aInOutUintBoundariness, const avk::buffer& aInNeighborsLength)
+void shader_provider::find_split_and_merge_2(const avk::buffer& aInNeighbors, const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInMinNeighborSqDist, const avk::buffer& aOutNearestNeighbor, const avk::buffer& aInBoundariness, const avk::buffer& aInNeighborsLength)
 {
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
 		"shaders/particle manipulation/find_split_and_merge_2.comp",
@@ -1145,8 +1127,7 @@ void shader_provider::find_split_and_merge_2(const avk::buffer& aInNeighbors, co
 		avk::descriptor_binding(3, 0, aInMinNeighborSqDist),
 		avk::descriptor_binding(4, 0, aOutNearestNeighbor),
 		avk::descriptor_binding(5, 0, aInBoundariness),
-		avk::descriptor_binding(6, 0, aInOutUintBoundariness),
-		avk::descriptor_binding(7, 0, aInNeighborsLength)
+		avk::descriptor_binding(6, 0, aInNeighborsLength)
 	));
 	prepare_dispatch_indirect(aInNeighborsLength);
 	cmd_bfr()->bind_pipeline(avk::const_referenced(pipeline));
@@ -1157,13 +1138,12 @@ void shader_provider::find_split_and_merge_2(const avk::buffer& aInNeighbors, co
 		avk::descriptor_binding(3, 0, aInMinNeighborSqDist),
 		avk::descriptor_binding(4, 0, aOutNearestNeighbor),
 		avk::descriptor_binding(5, 0, aInBoundariness),
-		avk::descriptor_binding(6, 0, aInOutUintBoundariness),
-		avk::descriptor_binding(7, 0, aInNeighborsLength)
+		avk::descriptor_binding(6, 0, aInNeighborsLength)
 	}));
 	dispatch_indirect();
 }
 
-void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoundariness, const avk::buffer& aInUintBoundariness, const avk::buffer& aInOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNearestNeighbor, const avk::buffer& aOutTransferSource, const avk::buffer& aOutTransferTarget, const avk::buffer& aOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutSplit, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutTransferLength, const avk::buffer& aInOutSplitLength, uint32_t aMaxTransferLength, uint32_t aMaxSplitLength)
+void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, const avk::buffer& aInPosition, const avk::buffer& aInRadius, const avk::buffer& aInBoundariness, const avk::buffer& aInOutBoundaryDist, const avk::buffer& aOutTargetRadius, const avk::buffer& aInNearestNeighbor, const avk::buffer& aOutTransferSource, const avk::buffer& aOutTransferTarget, const avk::buffer& aOutTransferTimeLeft, const avk::buffer& aInOutTransferring, const avk::buffer& aOutSplit, const avk::buffer& aInIndexListLength, const avk::buffer& aInOutTransferLength, const avk::buffer& aInOutSplitLength, uint32_t aMaxTransferLength, uint32_t aMaxSplitLength)
 {
 	struct push_constants { uint32_t mMaxTransferLength, mMaxSplitLength; } pushConstants{ aMaxTransferLength, aMaxSplitLength };
 	static auto pipeline = with_hot_reload(gvk::context().create_compute_pipeline_for(
@@ -1172,19 +1152,18 @@ void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, co
 		avk::descriptor_binding(1, 0, aInPosition),
 		avk::descriptor_binding(2, 0, aInRadius),
 		avk::descriptor_binding(3, 0, aInBoundariness),
-		avk::descriptor_binding(4, 0, aInUintBoundariness),
-		avk::descriptor_binding(5, 0, aInOutBoundaryDist),
-		avk::descriptor_binding(6, 0, aOutTargetRadius),
-		avk::descriptor_binding(7, 0, aInNearestNeighbor),
-		avk::descriptor_binding(8, 0, aOutTransferSource),
-		avk::descriptor_binding(9, 0, aOutTransferTarget),
-		avk::descriptor_binding(10, 0, aOutTransferTimeLeft),
-		avk::descriptor_binding(11, 0, aInOutTransferring),
-		avk::descriptor_binding(12, 0, aOutSplit),
-		avk::descriptor_binding(13, 0, aInIndexListLength),
-		avk::descriptor_binding(14, 0, aInOutTransferLength),
-		avk::descriptor_binding(15, 0, aInOutSplitLength),
-		avk::descriptor_binding(16, 0, pbd::settings::apbf_settings_buffer()),
+		avk::descriptor_binding(4, 0, aInOutBoundaryDist),
+		avk::descriptor_binding(5, 0, aOutTargetRadius),
+		avk::descriptor_binding(6, 0, aInNearestNeighbor),
+		avk::descriptor_binding(7, 0, aOutTransferSource),
+		avk::descriptor_binding(8, 0, aOutTransferTarget),
+		avk::descriptor_binding(9, 0, aOutTransferTimeLeft),
+		avk::descriptor_binding(10, 0, aInOutTransferring),
+		avk::descriptor_binding(11, 0, aOutSplit),
+		avk::descriptor_binding(12, 0, aInIndexListLength),
+		avk::descriptor_binding(13, 0, aInOutTransferLength),
+		avk::descriptor_binding(14, 0, aInOutSplitLength),
+		avk::descriptor_binding(15, 0, pbd::settings::apbf_settings_buffer()),
 		avk::push_constant_binding_data{ avk::shader_type::compute, 0, sizeof(pushConstants) }
 	));
 	prepare_dispatch_indirect(aInIndexListLength);
@@ -1194,19 +1173,18 @@ void shader_provider::find_split_and_merge_3(const avk::buffer& aInIndexList, co
 		avk::descriptor_binding(1, 0, aInPosition),
 		avk::descriptor_binding(2, 0, aInRadius),
 		avk::descriptor_binding(3, 0, aInBoundariness),
-		avk::descriptor_binding(4, 0, aInUintBoundariness),
-		avk::descriptor_binding(5, 0, aInOutBoundaryDist),
-		avk::descriptor_binding(6, 0, aOutTargetRadius),
-		avk::descriptor_binding(7, 0, aInNearestNeighbor),
-		avk::descriptor_binding(8, 0, aOutTransferSource),
-		avk::descriptor_binding(9, 0, aOutTransferTarget),
-		avk::descriptor_binding(10, 0, aOutTransferTimeLeft),
-		avk::descriptor_binding(11, 0, aInOutTransferring),
-		avk::descriptor_binding(12, 0, aOutSplit),
-		avk::descriptor_binding(13, 0, aInIndexListLength),
-		avk::descriptor_binding(14, 0, aInOutTransferLength),
-		avk::descriptor_binding(15, 0, aInOutSplitLength),
-		avk::descriptor_binding(16, 0, pbd::settings::apbf_settings_buffer())
+		avk::descriptor_binding(4, 0, aInOutBoundaryDist),
+		avk::descriptor_binding(5, 0, aOutTargetRadius),
+		avk::descriptor_binding(6, 0, aInNearestNeighbor),
+		avk::descriptor_binding(7, 0, aOutTransferSource),
+		avk::descriptor_binding(8, 0, aOutTransferTarget),
+		avk::descriptor_binding(9, 0, aOutTransferTimeLeft),
+		avk::descriptor_binding(10, 0, aInOutTransferring),
+		avk::descriptor_binding(11, 0, aOutSplit),
+		avk::descriptor_binding(12, 0, aInIndexListLength),
+		avk::descriptor_binding(13, 0, aInOutTransferLength),
+		avk::descriptor_binding(14, 0, aInOutSplitLength),
+		avk::descriptor_binding(15, 0, pbd::settings::apbf_settings_buffer())
 	}));
 	cmd_bfr()->push_constants(pipeline->layout(), pushConstants);
 	dispatch_indirect();
