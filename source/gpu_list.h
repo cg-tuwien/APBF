@@ -153,9 +153,11 @@ template<size_t Stride>
 template<class T>
 inline std::vector<T> pbd::gpu_list<Stride>::read(bool aBeyondLength) const
 {
+	auto data = std::vector<T>();
+	if (empty()) return data;
+
 	auto wasRecording = shader_provider::is_recording();
 	if (wasRecording) shader_provider::end_recording();
-	auto data = std::vector<T>();
 	auto len = 0u;
 	data.resize(buffer()->meta_at_index<avk::buffer_meta>().total_size() / sizeof(T));
 	buffer()->read(data.data(), 0, avk::sync::wait_idle(true));
