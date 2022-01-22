@@ -25,23 +25,26 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	shader_provider::write_sequence      (mFluid.get<pbd::fluid::id::boundary_distance>().write().buffer(), mFluid.length(), static_cast<uint32_t>(aRadius * POS_RESOLUTION), 0);
 
 	// top pool
-	mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
-	mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
-	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
-	mUcb.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
+	auto wallThickness = 4.0f;
+	auto wMin = aMin - wallThickness;
+	auto wMax = aMax + wallThickness + glm::vec3(0, aRadius * 2, 0);
+	mUcb.add_box(wMin, glm::vec3(wMin.x + wallThickness, wMax.y, wMax.z));
+	mUcb.add_box(wMin, glm::vec3(wMax.x, wMin.y + wallThickness, wMax.z));
+	mUcb.add_box(glm::vec3(wMax.x - wallThickness, wMin.y, wMin.z), wMax);
+	mUcb.add_box(glm::vec3(wMin.x, wMax.y - wallThickness, wMin.z), wMax);
 	// bottom pool
-	auto shift = aMin - aMax;
+	auto shift = wMin - wMax;
 	shift.z = 0;
-	mUcb.add_box(shift + aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z) + shift);
-	mUcb.add_box(shift + aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z) + shift);
-	mUcb.add_box(shift + glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax + shift);
+	mUcb.add_box(shift + wMin, glm::vec3(wMin.x + wallThickness, wMax.y, wMax.z) + shift);
+	mUcb.add_box(shift + wMin, glm::vec3(wMax.x, wMin.y + wallThickness, wMax.z) + shift);
+	mUcb.add_box(shift + glm::vec3(wMax.x - wallThickness, wMin.y, wMin.z), wMax + shift);
 #if DIMENSIONS > 2
 	// top pool
-	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
-	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
+	mUcb.add_box(wMin, glm::vec3(wMax.x, wMax.y, wMin.z + wallThickness));
+	mUcb.add_box(glm::vec3(wMin.x, wMin.y, wMax.z - wallThickness), wMax);
 	// bottom pool
-	mUcb.add_box(shift + aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2) + shift);
-	mUcb.add_box(shift + glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax + shift);
+	mUcb.add_box(shift + wMin, glm::vec3(wMax.x, wMax.y, wMin.z + wallThickness) + shift);
+	mUcb.add_box(shift + glm::vec3(wMin.x, wMin.y, wMax.z - wallThickness), wMax + shift);
 #endif
 
 	mVelocityHandling .set_data(&mParticles                                  ).set_acceleration(glm::vec3(0, -10, 0));
@@ -60,8 +63,8 @@ waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius
 	shader_provider::end_recording();
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;  // TODO if DIMENSIONS < 3 ignore third dimension
-	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
-	mViewBoxMin = 2.0f * glm::vec2(aMin) - mViewBoxMax;
+	mViewBoxMax = glm::vec2(wMax) + (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMin = 2.0f * glm::vec2(wMin) - mViewBoxMax;
 }
 
 waterfall::waterfall(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :

@@ -17,7 +17,7 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin, aMax, aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width     >().write().buffer(), mFluid.length(), aRadius * static_cast<float>(KERNEL_SCALE), 0);
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::target_radius    >().write().buffer(), mFluid.length(), aRadius, 0);
@@ -27,13 +27,16 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	mVelocityHandling.set_data(&mParticles);
 	mVelocityHandling.set_acceleration(glm::vec3(0, -10, 0));
 	mBoxCollision.set_data(&mParticles, &mUcb.box_min(), &mUcb.box_max());
-	mUcb.add_box(aMin, glm::vec3(aMin.x + 2, aMax.y, aMax.z));
-	mUcb.add_box(aMin, glm::vec3(aMax.x, aMin.y + 2, aMax.z));
-	mUcb.add_box(glm::vec3(aMax.x - 2, aMin.y, aMin.z), aMax);
-	mUcb.add_box(glm::vec3(aMin.x, aMax.y - 2, aMin.z), aMax);
+	auto wallThickness = 4.0f;
+	auto wMin = aMin - wallThickness;
+	auto wMax = aMax + wallThickness + glm::vec3(0, aRadius * 2, 0);
+	mUcb.add_box(wMin, glm::vec3(wMin.x + wallThickness, wMax.y, wMax.z));
+	mUcb.add_box(wMin, glm::vec3(wMax.x, wMin.y + wallThickness, wMax.z));
+	mUcb.add_box(glm::vec3(wMax.x - wallThickness, wMin.y, wMin.z), wMax);
+	mUcb.add_box(glm::vec3(wMin.x, wMax.y - wallThickness, wMin.z), wMax);
 #if DIMENSIONS > 2
-	mUcb.add_box(aMin, glm::vec3(aMax.x, aMax.y, aMin.z + 2));
-	mUcb.add_box(glm::vec3(aMin.x, aMin.y, aMax.z - 2), aMax);
+	mUcb.add_box(wMin, glm::vec3(wMax.x, wMax.y, wMin.z + wallThickness));
+	mUcb.add_box(glm::vec3(wMin.x, wMin.y, wMax.z - wallThickness), wMax);
 #endif
 	mSpreadKernelWidth.set_data(&mFluid, &mNeighborsFluid);
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid);
@@ -48,8 +51,8 @@ pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, float aRadius) :
 	shader_provider::end_recording();
 	pbd::settings::smallestTargetRadius = aRadius;
 	mMaxExpectedBoundaryDistance = glm::compMin(aMax - aMin) / 2.0f;
-	mViewBoxMax = glm::vec2(aMax) + (mMaxExpectedBoundaryDistance * 0.1f);
-	mViewBoxMin = glm::vec2(aMin) - (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMax = glm::vec2(wMax) + (mMaxExpectedBoundaryDistance * 0.1f);
+	mViewBoxMin = glm::vec2(wMin) - (mMaxExpectedBoundaryDistance * 0.1f);
 }
 
 pool::pool(const glm::vec3& aMin, const glm::vec3& aMax, gvk::camera& aCamera, float aRadius) :
