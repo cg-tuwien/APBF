@@ -14,7 +14,7 @@ namespace pbd
 
 	private:
 		std::string boxes_to_svg();
-		void save_additional_info(uint32_t aSvgId, uint32_t aParticleCount, uint32_t aNeighborPairCount);
+		void save_additional_info(uint32_t aSvgId, size_t aParticleCount, size_t aNeighborPairCount);
 
 		fluid* mFluid;
 		neighbors* mNeighbors;

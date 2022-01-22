@@ -269,7 +269,7 @@ std::string pbd::save_particle_info::boxes_to_svg()
 	return std::format("<g id=\"boxes\">{}</g>", svg);
 }
 
-void pbd::save_particle_info::save_additional_info(uint32_t aSvgId, uint32_t aParticleCount, uint32_t aNeighborPairCount)
+void pbd::save_particle_info::save_additional_info(uint32_t aSvgId, size_t aParticleCount, size_t aNeighborPairCount)
 {
 	auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/measurements_{}.txt", aSvgId));
 	toFile << "Particle Count      : " << aParticleCount     << std::endl;
