@@ -29,8 +29,8 @@ spherical_pool::spherical_pool(const glm::vec3& aCenter, float aPoolRadius, floa
 	mIncompressibility.set_data(&mFluid, &mNeighborsFluid             );
 	mSphereCollision  .set_data(&mParticles                           ).set_sphere(aCenter, aPoolRadius, true);
 	mUpdateTransfers  .set_data(&mFluid, &mNeighborsFluid, &mTransfers);
-	mParticleTransfer .set_data(&mFluid, &mTransfers                  );
-	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid             );
+	mParticleTransfer .set_data(&mFluid,                   &mTransfers);
+	mSaveParticleInfo .set_data(&mFluid, &mNeighborsFluid, &mTransfers);
 
 	mNeighborhoodFluid.set_data(&mFluid.get<pbd::fluid::id::particle>(), &mFluid.get<pbd::fluid::id::kernel_width>(), &mNeighborsFluid);
 #if NEIGHBORHOOD_TYPE == 1

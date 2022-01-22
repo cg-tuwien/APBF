@@ -1,11 +1,13 @@
 #include "save_particle_info.h"
 #include "settings.h"
+#include "measurements.h"
 #include "../shaders/cpu_gpu_shared_config.h"
 
-pbd::save_particle_info& pbd::save_particle_info::set_data(fluid* aFluid, neighbors* aNeighbors)
+pbd::save_particle_info& pbd::save_particle_info::set_data(fluid* aFluid, neighbors* aNeighbors, transfers* aTransfers)
 {
 	mFluid     = aFluid;
 	mNeighbors = aNeighbors;
+	mTransfers = aTransfers;
 	return *this;
 }
 
@@ -129,8 +131,15 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 {
 	auto includeBoxes   = mBoxMin != nullptr && mBoxMax != nullptr && pbd::settings::renderBoxes;
 	auto includeKernels = pbd::settings::color == 3;
-	auto twoColors      = pbd::settings::color != 1;
+	auto colorGradient  = false;
+	auto colorCount     = 0u;
 	auto strokeWidth    = glm::compMin(aViewBoxMax - aViewBoxMin) / 1000.0f;
+
+	switch (pbd::settings::color) {
+		case  1: colorGradient =  true; colorCount =  0u; break;
+		case  2: colorGradient = false; colorCount = 10u; break;
+		default: colorGradient = false; colorCount =  2u; break;
+	}
 
 	auto& boundarinessList = mFluid->get<pbd::fluid::id::boundariness>();
 	auto& boundaryDistList = mFluid->get<pbd::fluid::id::boundary_distance>();
@@ -138,21 +147,47 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	auto&        particles = mFluid->get<pbd::fluid::id::particle>();
 	auto&     positionList = particles.hidden_list().get<pbd::hidden_particles::id::position>();
 	auto&       radiusList = particles.hidden_list().get<pbd::hidden_particles::id::radius>();
+	auto&  transferSrcList = mTransfers->hidden_list().get<hidden_transfers::id::source>();
+	auto&  transferTgtList = mTransfers->hidden_list().get<hidden_transfers::id::target>();
 
-	auto      indices =  particles.index_read();
+	auto      indices =       particles.index_read();
+	auto transfersSrc = transferSrcList.index_read();
+	auto transfersTgt = transferTgtList.index_read();
 	auto    positions =     positionList.read<glm::ivec4>();
 	auto        radii =       radiusList.read<     float>();
 	auto boundariness = boundarinessList.read<     float>();
 	auto boundaryDist = boundaryDistList.read<glm:: uint>();
 	auto  kernelWidth =  kernelWidthList.read<     float>();
 
-	auto svg = std::string();
+	auto particleColor = std::vector<unsigned int>();
+	particleColor.resize(positions.size());
+
+	if (pbd::settings::color == 2) {
+		for (auto i = 0u; i < particleColor.size(); i++) particleColor[i] = 0u;
+		for (auto i = 0u; i < transfersSrc.size(); i++) {
+			particleColor[transfersSrc[i]] = (i % (colorCount - 1u)) + 1u;
+			particleColor[transfersTgt[i]] = (i % (colorCount - 1u)) + 1u;
+		}
+	}
+	else if (pbd::settings::color != 1) {
+		for (auto i = 0u; i < particleColor.size(); i++) particleColor[indices[i]] = boundariness[i] >= 1.0f;
+	}
+
+	auto svg          = std::string();
 	auto svgOriginals = std::string();
 	auto svgParticles = std::string();
-	auto svgKernels = std::string();
+	auto svgKernels   = std::string();
 
-	if (twoColors     ) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p\" style=\"fill:#0000ff;stroke-width:1\" />", aRenderScale);
-	if (twoColors     ) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"b\" style=\"fill:#ff0000;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 0) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p0\" style=\"fill:#0000ff;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 1) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p1\" style=\"fill:#ff0000;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 2) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p2\" style=\"fill:#00ff00;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 3) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p3\" style=\"fill:#ff8000;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 4) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p4\" style=\"fill:#ffff00;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 5) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p5\" style=\"fill:#ff00ff;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 6) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p6\" style=\"fill:#00ffff;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 7) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p7\" style=\"fill:#008000;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 8) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p8\" style=\"fill:#800000;stroke-width:1\" />", aRenderScale);
+	if (colorCount > 9) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"{}\" id=\"p9\" style=\"fill:#ffaec8;stroke-width:1\" />", aRenderScale);
 	if (includeKernels) svgOriginals += std::format("<circle cx=\"0\" cy=\"0\" r=\"1\" id=\"k\" style=\"fill:none;stroke:#ff7f00;stroke-width:{};vector-effect:non-scaling-stroke\" />", strokeWidth);
 	if (includeBoxes  ) svgOriginals += "<rect x=\"0\" y=\"0\" width=\"1\" height=\"1\" id=\"box\" style=\"fill:#bffeff;stroke-width:1\" />";
 
@@ -163,11 +198,7 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		auto ker = kernelWidth[i];
 		pos.y = -pos.y;
 
-		if (twoColors) {
-			auto bdr = boundariness[i] >= 1.0f;
-			auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
-			svgParticles += std::format("<use transform=\"{}\" xlink:href=\"{}\" />", matrix, bdr ? "#b" : "#p");
-		} else {
+		if (colorGradient) {
 			// copied from main.cpp and instanced.vert
 			auto color1 = glm::vec3(0, 0, 1);
 			auto color2 = glm::vec3(0.62, 0.96, 0.83);
@@ -176,6 +207,10 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 			auto a = glm::clamp((boundaryDist[i] - color1Float) / (color2Float - color1Float), 0.0f, 1.0f);
 			auto col = glm::uvec3(glm::mix(color1, color2, a) * 255.0f);
 			svgParticles += std::format("<circle cx=\"{}\" cy=\"{}\" r=\"{}\" style=\"fill:#{:02x}{:02x}{:02x};stroke-width:1\" />", pos.x, pos.y, rad * aRenderScale, col.r, col.g, col.b);
+		} else {
+			auto color = particleColor[id];
+			auto matrix = std::format("matrix({},0,0,{},{},{})", rad, rad, pos.x, pos.y);
+			svgParticles += std::format("<use transform=\"{}\" xlink:href=\"#p{}\" />", matrix, color);
 		}
 
 		if (includeKernels) {
@@ -185,10 +220,13 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	}
 
 	if (!svgOriginals.empty()) svg += std::format("<g id=\"originals\" style=\"display:none\">{}</g>", svgOriginals);
-	if (includeBoxes  ) svg += boxes_to_svg();
-	if (includeKernels) svg += std::format("<g id=\"kernels\">{}</g>", svgKernels);
+	if (includeBoxes         ) svg += boxes_to_svg();
+	if (includeKernels       ) svg += std::format("<g id=\"kernels\">{}</g>", svgKernels);
 	svg += std::format("<g id=\"particles\">{}</g>", svgParticles);
 	svg = std::format("<svg viewBox=\"{} {} {} {}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svg=\"http://www.w3.org/2000/svg\">{}</svg>", aViewBoxMin.x, -aViewBoxMax.y, aViewBoxMax.x - aViewBoxMin.x, aViewBoxMax.y - aViewBoxMin.y, svg);
+
+	auto neighborPairCount = 0u;
+	mNeighbors->length()->read(&neighborPairCount, 0, avk::sync::wait_idle(true));
 
 	std::filesystem::create_directories(SVG_FOLDER_NAME);
 	{
@@ -197,15 +235,23 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	}
 
 	{
+		auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/measurements_{}.txt", aSvgId));
+		toFile << "Particle Count      : " << indices.size()    << std::endl;
+		toFile << "Neighbor Pair Count : " << neighborPairCount << std::endl;
+		toFile << "Simulation Step     : " << measurements::get_timing_interval_in_ms("Simulation Step"  ) << "ms" << std::endl;
+		toFile << "Neighborhood Search : " << measurements::get_timing_interval_in_ms("Neighborhood"     ) << "ms" << std::endl;
+		toFile << "Constraint Solver   : " << measurements::get_timing_interval_in_ms("Constraint Solver") << "ms" << std::endl;
+		toFile << "Neighbor Search Type: " << NEIGHBOR_SEARCH_FILENAME << std::endl;
+	}
+
+	{
 		auto toFile = std::ofstream(SVG_FOLDER_NAME "/particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
 		toFile << indices.size() << std::endl;
 	}
 
 	{
-		auto len = 0u;
-		mNeighbors->length()->read(&len, 0, avk::sync::wait_idle(true));
 		auto toFile = std::ofstream(SVG_FOLDER_NAME "/neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
-		toFile << len << std::endl;
+		toFile << neighborPairCount << std::endl;
 	}
 }
 
