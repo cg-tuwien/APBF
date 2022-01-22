@@ -173,6 +173,15 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 		for (auto i = 0u; i < particleColor.size(); i++) particleColor[indices[i]] = boundariness[i] >= 1.0f;
 	}
 
+	{
+		auto neighborPairCount = 0u;
+		mNeighbors->length()->read(&neighborPairCount, 0, avk::sync::wait_idle(true));
+
+		std::filesystem::create_directories(SVG_FOLDER_NAME);
+		save_additional_info(aSvgId, indices.size(), neighborPairCount);
+	}
+	if (DIMENSIONS > 2) return;
+
 	auto svg          = std::string();
 	auto svgOriginals = std::string();
 	auto svgParticles = std::string();
@@ -225,34 +234,20 @@ void pbd::save_particle_info::save_as_svg(uint32_t aSvgId, const glm::vec2& aVie
 	svg += std::format("<g id=\"particles\">{}</g>", svgParticles);
 	svg = std::format("<svg viewBox=\"{} {} {} {}\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:svg=\"http://www.w3.org/2000/svg\">{}</svg>", aViewBoxMin.x, -aViewBoxMax.y, aViewBoxMax.x - aViewBoxMin.x, aViewBoxMax.y - aViewBoxMin.y, svg);
 
-	auto neighborPairCount = 0u;
-	mNeighbors->length()->read(&neighborPairCount, 0, avk::sync::wait_idle(true));
-
-	std::filesystem::create_directories(SVG_FOLDER_NAME);
 	{
 		auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/particles_{}.svg", aSvgId));
 		toFile << svg;
 	}
 
-	{
-		auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/measurements_{}.txt", aSvgId));
-		toFile << "Particle Count      : " << indices.size()    << std::endl;
-		toFile << "Neighbor Pair Count : " << neighborPairCount << std::endl;
-		toFile << "Simulation Step     : " << measurements::get_timing_interval_in_ms("Simulation Step"  ) << "ms" << std::endl;
-		toFile << "Neighborhood Search : " << measurements::get_timing_interval_in_ms("Neighborhood"     ) << "ms" << std::endl;
-		toFile << "Constraint Solver   : " << measurements::get_timing_interval_in_ms("Constraint Solver") << "ms" << std::endl;
-		toFile << "Neighbor Search Type: " << NEIGHBOR_SEARCH_FILENAME << std::endl;
-	}
-
-	{
-		auto toFile = std::ofstream(SVG_FOLDER_NAME "/particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
-		toFile << indices.size() << std::endl;
-	}
-
-	{
-		auto toFile = std::ofstream(SVG_FOLDER_NAME "/neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
-		toFile << neighborPairCount << std::endl;
-	}
+//	{
+//		auto toFile = std::ofstream(SVG_FOLDER_NAME "/particleCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+//		toFile << indices.size() << std::endl;
+//	}
+//
+//	{
+//		auto toFile = std::ofstream(SVG_FOLDER_NAME "/neighborPairCount.txt", aSvgId == 0u ? std::ios_base::out : std::ios_base::app);
+//		toFile << neighborPairCount << std::endl;
+//	}
 }
 
 std::string pbd::save_particle_info::boxes_to_svg()
@@ -272,4 +267,15 @@ std::string pbd::save_particle_info::boxes_to_svg()
 	}
 
 	return std::format("<g id=\"boxes\">{}</g>", svg);
+}
+
+void pbd::save_particle_info::save_additional_info(uint32_t aSvgId, uint32_t aParticleCount, uint32_t aNeighborPairCount)
+{
+	auto toFile = std::ofstream(std::format(SVG_FOLDER_NAME "/measurements_{}.txt", aSvgId));
+	toFile << "Particle Count      : " << aParticleCount     << std::endl;
+	toFile << "Neighbor Pair Count : " << aNeighborPairCount << std::endl;
+	toFile << "Simulation Step     : " << measurements::get_timing_interval_in_ms("Simulation Step"  ) << "ms" << std::endl;
+	toFile << "Neighborhood Search : " << measurements::get_timing_interval_in_ms("Neighborhood"     ) << "ms" << std::endl;
+	toFile << "Constraint Solver   : " << measurements::get_timing_interval_in_ms("Constraint Solver") << "ms" << std::endl;
+	toFile << "Neighbor Search Type: " << NEIGHBOR_SEARCH_FILENAME << std::endl;
 }

@@ -27,6 +27,7 @@ namespace pbd
 		static bool  groundTruthBoundaryDistance;         // hardcoded boundary distance; outdated; TODO delete?
 		static bool  renderBoxes;                         // if the collision boxes (pool walls) should be rendered
 		static bool  basicPbf;                            // if true, only run the basic PBF algorithm without split/merge etc. (will behave badly if particles already have varying sizes)
+		static bool  useHighQualityModel;                 // if true, particles are rendered with the sphere.obj model, otherwise the icosahedron.obj model is used
 		static float boundarinessAdaptionSpeed;           // maximum step width for updating boundariness (slow down to filter short occurrences of false positives)
 		static float kernelWidthAdaptionSpeed;            // maximum percent change for updating kernel width (fast kernel width changes can cause large changes in the density estimate and lead to erratic particle movement)
 		static float boundarinessSelfGradLengthFactor;    // for boundariness classification: influence of the gradient length for the particle itself

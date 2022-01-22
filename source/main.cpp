@@ -87,8 +87,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		}
 		
 		// Load a sphere model for drawing a single particle:
-		auto sphere = gvk::model_t::load_from_file("assets/icosahedron.obj");
-		std::tie(mSphereVertexBuffer, mSphereIndexBuffer) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere, 0) );
+		auto sphere_lq = gvk::model_t::load_from_file("assets/icosahedron.obj");
+		auto sphere_hq = gvk::model_t::load_from_file("assets/sphere.obj");
+		std::tie(mSphereVertexBuffer_lq, mSphereIndexBuffer_lq) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere_lq, 0) );
+		std::tie(mSphereVertexBuffer_hq, mSphereIndexBuffer_hq) = create_vertex_and_index_buffers( make_models_and_meshes_selection(sphere_hq, 0) );
 		
 		// Get hold of the "ImGui Manager" and add a callback that draws UI elements:
 		auto imguiManager = gvk::current_composition()->element_by_type<gvk::imgui_manager>();
@@ -165,6 +167,10 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 			else {
 				pbd::settings::nextColor();
 			}
+		}
+
+		if (gvk::input().key_pressed(gvk::key_code::q) && !mQuakeCam.is_enabled()) {
+			pbd::settings::useHighQualityModel = !pbd::settings::useHighQualityModel;
 		}
 		
 		// On Esc pressed,
@@ -265,10 +271,12 @@ public: // v== gvk::invokee overrides which will be invoked by the framework ==v
 		static auto lengthLimit = pbd::gpu_list<4>().request_length(1); // TODO maybe more elegant solution? Or just remove this debug functionality
 		if (pbd::settings::particleRenderLimit != 0) lengthLimit.set_length(pbd::settings::particleRenderLimit);
 		auto& particleCount = pbd::settings::particleRenderLimit == 0 ? position.length() : lengthLimit.length();
+		auto& sphereVertexBuffer = pbd::settings::useHighQualityModel ? mSphereVertexBuffer_hq : mSphereVertexBuffer_lq;
+		auto& sphereIndexBuffer  = pbd::settings::useHighQualityModel ? mSphereIndexBuffer_hq  : mSphereIndexBuffer_lq;
 
-		shader_provider::render_particles(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), particleCount, mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
+		shader_provider::render_particles(mCameraDataBuffer[ifi], sphereVertexBuffer, sphereIndexBuffer, position.buffer(), radius.buffer(), floatForColor.buffer(), particleCount, mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mColor, static_cast<uint32_t>(sphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), color1, color2, color1Float, color2Float, pbd::settings::particleRenderScale);
 		if (mAddAmbientOcclusion) {
-			shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], mSphereVertexBuffer, mSphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(mSphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
+			shader_provider::render_ambient_occlusion(mCameraDataBuffer[ifi], sphereVertexBuffer, sphereIndexBuffer, position.buffer(), radius.buffer(), position.length(), mImages[ifi].mNormal, mImages[ifi].mDepth, mImages[ifi].mOcclusion, static_cast<uint32_t>(sphereIndexBuffer->meta_at_index<avk::generic_buffer_meta>().num_elements()), fragToVS, pbd::settings::particleRenderScale);
 			shader_provider::darken_image(mImages[ifi].mOcclusion, mImages[ifi].mColor, mImages[ifi].mResult, 0.7f);
 			result = &mImages[ifi].mResult;
 		}
@@ -309,8 +317,10 @@ private: // v== Member variables ==v
 
 	std::unique_ptr<SCENE_NAME> mPool;
 
-	avk::buffer mSphereVertexBuffer;
-	avk::buffer mSphereIndexBuffer;
+	avk::buffer mSphereVertexBuffer_lq;
+	avk::buffer mSphereVertexBuffer_hq;
+	avk::buffer mSphereIndexBuffer_lq;
+	avk::buffer mSphereIndexBuffer_hq;
 
 	std::vector<images> mImages;
 

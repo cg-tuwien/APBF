@@ -102,10 +102,12 @@ void waterfall::update(float aDeltaTime)
 			mSpreadKernelWidth.apply();
 		}
 
+		measurements::record_timing_interval_start("Constraint Solver");
 		for (auto i = 0; i < pbd::settings::solverIterations; i++) {
 			mBoxCollision.apply();
 			mIncompressibility.apply();
 		}
+		measurements::record_timing_interval_end("Constraint Solver");
 
 		//if (pbd::settings::merge || pbd::settings::split || pbd::settings::baseKernelWidthOnTargetRadius || pbd::settings::color == 1 || pbd::settings::color == 2) // TODO reactivate?
 		if (!pbd::settings::basicPbf)

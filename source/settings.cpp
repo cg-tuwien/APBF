@@ -15,6 +15,7 @@ bool  pbd::settings::neighborListSorted                = false;
 bool  pbd::settings::groundTruthBoundaryDistance       = false;
 bool  pbd::settings::renderBoxes                       = true;
 bool  pbd::settings::basicPbf                          = false;
+bool  pbd::settings::useHighQualityModel               = false;
 float pbd::settings::boundarinessAdaptionSpeed         = 0.5f;
 float pbd::settings::kernelWidthAdaptionSpeed          = 0.01f;
 float pbd::settings::boundarinessSelfGradLengthFactor  = 2.0f;
