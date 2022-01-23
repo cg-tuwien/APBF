@@ -17,7 +17,7 @@ waterdrop::waterdrop(const glm::vec3& aMin, const glm::vec3& aMax, const glm::ve
 	mParticles.hidden_list().write(); // TODO workaround for the case that no particles are created => find better solution
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::source>().share_hidden_data_from(mParticles);
 	mTransfers.hidden_list().get<pbd::hidden_transfers::id::target>().share_hidden_data_from(mParticles);
-	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin + glm::vec3(2, 2, 2), aMax - glm::vec3(2, 4, 2), aRadius);
+	mFluid.get<pbd::fluid::id::particle>() = pbd::initialize::add_box_shape(mParticles, aMin, aMax, aRadius);
 	pbd::initialize::add_sphere_shape(mFluid.get<pbd::fluid::id::particle>(), aDropCenter, aDropRadius, 0, false, aRadius);
 	mFluid.set_length(mFluid.get<pbd::fluid::id::particle>().length());
 	shader_provider::write_sequence_float(mFluid.get<pbd::fluid::id::kernel_width     >().write().buffer(), mFluid.length(), aRadius * static_cast<float>(KERNEL_SCALE), 0);
